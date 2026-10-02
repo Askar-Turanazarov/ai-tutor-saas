@@ -224,3 +224,14 @@ model PaymentMethod {
   createdAt     DateTime       @default(now())
   subscriptions Subscription[]
 }
+
+/// Click SHOP API transaction. The numeric id is our merchant_prepare_id / merchant_confirm_id.
+model ClickTransaction {
+  id           Int      @id @default(autoincrement())
+  clickTransId String   @unique
+  invoiceId    String
+  amount       Int
+  status       String   @default("prepared") // prepared | completed | cancelled
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

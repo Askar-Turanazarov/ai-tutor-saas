@@ -364,7 +364,14 @@
     "errCode": "6 ta raqam kiriting",
     "errExpired": "Tasdiqlash vaqti tugadi. Kartani qaytadan kiriting.",
     "errInvoice": "Bu hisob allaqachon toʻlangan yoki bekor qilingan",
-    "declined": "Bank toʻlovni rad etdi: mablagʻ yetarli emas"
+    "declined": "Bank toʻlovni rad etdi: mablagʻ yetarli emas",
+    "clickTitle": "Click emulyatori",
+    "clickNote": "my.click.uz oʻrnida. “Toʻlov”dan soʻng server API'mizga haqiqiy imzolangan Prepare va Complete soʻrovlarini yuboradi.",
+    "clickWallet": "Click hamyoni",
+    "clickStep1": "Click buyurtmani tekshiradi (Prepare)",
+    "clickStep2": "Karta yoki hamyondan pul yechadi",
+    "clickStep3": "Toʻlovni tasdiqlaydi (Complete) — tarif yoqiladi",
+    "clickDecline": "Mablagʻ yetishmasligini sinash"
   },
   "billing": {
     "successTitle": "Toʻlov muvaffaqiyatli",

@@ -17,6 +17,7 @@ import {
   startTrial,
 } from "@/lib/billing/subscription";
 import { declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
+import { clickConfig, clickSign } from "@/lib/billing/providers/click";
 
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
 
@@ -166,4 +167,56 @@ export async function removeCard(id: string) {
   const user = await requireUser();
   await db.paymentMethod.deleteMany({ where: { id, userId: user.id } });
   refresh();
+}
+
+/* ───── Click emulator ───── */
+
+/**
+ * Plays Click's part: sends the signed Prepare and Complete requests to our own
+ * SHOP API endpoints over HTTP, exactly as my.click.uz would after the user pays.
+ */
+export async function clickEmulatePay(input: { invoiceId: string; outcome: "success" | "insufficient" }) {
+  const { invoice } = await ownPendingInvoice(input.invoiceId);
+  if (!invoice || invoice.status !== "pending" || invoice.provider !== "click") return { error: "invoice" as const };
+  const cfg = clickConfig();
+  const base = await origin();
+  const clickTransId = String(Date.now());
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const d = new Date();
+  const signTime = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  const common = {
+    click_trans_id: clickTransId,
+    service_id: cfg.serviceId,
+    click_paydoc_id: String(Math.floor(Math.random() * 1e9)),
+    merchant_trans_id: invoice.id,
+    amount: invoice.amount.toFixed(2),
+    sign_time: signTime,
+  };
+  const call = async (path: string, p: Record<string, string>) => {
+    const body = new URLSearchParams({ ...p, sign_string: clickSign(p, cfg.secretKey) });
+    const res = await fetch(`${base}/api/billing/click/${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body,
+      cache: "no-store",
+    });
+    return ((await res.json().catch(() => null)) ?? { error: -8, error_note: `HTTP ${res.status}` }) as {
+      error: number;
+      error_note: string;
+      merchant_prepare_id?: number;
+    };
+  };
+
+  const prepared = await call("prepare", { ...common, action: "0", error: "0", error_note: "Success" });
+  if (prepared.error !== 0 || !prepared.merchant_prepare_id) return { error: "provider" as const, note: prepared.error_note };
+  const failed = input.outcome === "insufficient";
+  await call("complete", {
+    ...common,
+    action: "1",
+    merchant_prepare_id: String(prepared.merchant_prepare_id),
+    error: failed ? "-5017" : "0",
+    error_note: failed ? "Insufficient funds" : "Success",
+  });
+  refresh();
+  return { invoiceId: invoice.id };
 }

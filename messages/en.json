@@ -364,7 +364,14 @@
     "errCode": "Enter 6 digits",
     "errExpired": "Confirmation timed out. Enter the card again.",
     "errInvoice": "This invoice is already paid or cancelled",
-    "declined": "The bank declined the payment: insufficient funds"
+    "declined": "The bank declined the payment: insufficient funds",
+    "clickTitle": "Click emulator",
+    "clickNote": "Stands in for my.click.uz. After you “pay”, the server sends real signed Prepare and Complete requests to our API.",
+    "clickWallet": "Click wallet",
+    "clickStep1": "Click checks the order (Prepare)",
+    "clickStep2": "Charges the card or wallet",
+    "clickStep3": "Confirms the payment (Complete) — the plan turns on",
+    "clickDecline": "Simulate insufficient funds"
   },
   "billing": {
     "successTitle": "Payment successful",

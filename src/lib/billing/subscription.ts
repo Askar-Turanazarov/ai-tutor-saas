@@ -6,6 +6,7 @@ import { FREE_LEVELS, type Level } from "../levels";
 import {
   discountSettingKey,
   isPaidTier,
+  isPeriod,
   priceSettingKey,
   TIER_RANK,
   type Currency,
@@ -13,7 +14,9 @@ import {
   type Period,
   type Tier,
 } from "./catalog";
-import { getProvider } from "./providers";
+
+/** Loaded lazily: providers import this module back (they apply paid invoices). */
+const providerById = async (id: string) => (await import("./providers")).getProvider(id);
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -39,34 +42,39 @@ export type Quote = {
   period: Period;
   currency: Currency;
   kind: "new" | "renewal" | "upgrade";
+  /** Full price of the chosen plan and period. */
   list: number;
-  /** Unused value of the current lower plan, subtracted on upgrade. */
+  /** Discount for the days already paid on the lower plan (upgrade only). */
   credit: number;
   amount: number;
+  /** Upgrade only: the current period end, which stays the same. */
+  until?: Date;
 };
 
-/** What the user pays right now for `tier`/`period`. Upgrades credit the unused part of the current plan. */
+/**
+ * What the user pays right now. An upgrade keeps the current billing period and charges
+ * the price difference for the days that are left (the usual proration).
+ */
 export async function quote(userId: string, tier: PaidTier, period: Period, currency: Currency): Promise<Quote> {
-  const list = await priceFor(tier, period, currency);
   const sub = await db.subscription.findUnique({ where: { userId } });
-  let kind: Quote["kind"] = "new";
-  let credit = 0;
-  if (sub && isLive(sub) && sub.status !== "trialing") {
-    if (TIER_RANK[tier] > TIER_RANK[sub.tier as Tier]) {
-      kind = "upgrade";
-      const paid = await db.invoice.findFirst({
-        where: { subscriptionId: sub.id, status: "paid", currency },
-        orderBy: { paidAt: "desc" },
-      });
-      if (paid) {
-        const total = sub.currentPeriodEnd.getTime() - sub.currentPeriodStart.getTime();
-        const left = Math.max(0, sub.currentPeriodEnd.getTime() - Date.now());
-        credit = Math.min(paid.amount, Math.round((paid.amount * left) / Math.max(total, 1)));
-        if (currency === "UZS") credit = Math.floor(credit / 100) * 100;
-      }
-    } else if (tier === sub.tier) kind = "renewal";
+  const paidAndLive = sub && isLive(sub) && sub.status !== "trialing" && isPaidTier(sub.tier);
+
+  if (paidAndLive && TIER_RANK[tier] > TIER_RANK[sub.tier as Tier]) {
+    const subPeriod = (isPeriod(sub.period) ? sub.period : 1) as Period;
+    const [list, current] = await Promise.all([
+      priceFor(tier, subPeriod, currency),
+      priceFor(sub.tier as PaidTier, subPeriod, currency),
+    ]);
+    const total = sub.currentPeriodEnd.getTime() - sub.currentPeriodStart.getTime();
+    const left = Math.min(1, Math.max(0, (sub.currentPeriodEnd.getTime() - Date.now()) / Math.max(total, 1)));
+    let amount = Math.round((list - current) * left);
+    amount = currency === "UZS" ? Math.max(1000, Math.round(amount / 1000) * 1000) : Math.max(50, amount);
+    return { tier, period: subPeriod, currency, kind: "upgrade", list, credit: Math.max(0, list - amount), amount, until: sub.currentPeriodEnd };
   }
-  return { tier, period, currency, kind, list, credit, amount: Math.max(0, list - credit) };
+
+  const list = await priceFor(tier, period, currency);
+  const kind = paidAndLive && tier === sub.tier ? "renewal" : "new";
+  return { tier, period, currency, kind, list, credit: 0, amount: list };
 }
 
 /* ───────────── State ───────────── */
@@ -112,10 +120,12 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
   const sub = await db.subscription.findUnique({ where: { userId: invoice.userId } });
   const live = sub && isLive(sub, now) && sub.status !== "trialing";
 
-  // A renewal continues the current period; anything else starts a fresh one today.
-  const start = invoice.kind === "renewal" && live ? sub.currentPeriodEnd : now;
-  const tier = invoice.kind === "renewal" && sub?.pendingTier && isPaidTier(sub.pendingTier) ? sub.pendingTier : invoice.tier;
-  const period = invoice.kind === "renewal" && sub?.pendingPeriod ? sub.pendingPeriod : invoice.period;
+  // A renewal continues after the current period, an upgrade keeps it, a new plan starts today.
+  const renewal = invoice.kind === "renewal" && live;
+  const upgrade = invoice.kind === "upgrade" && live;
+  const start = renewal ? sub.currentPeriodEnd : upgrade ? sub.currentPeriodStart : now;
+  const tier = renewal && sub.pendingTier && isPaidTier(sub.pendingTier) ? sub.pendingTier : invoice.tier;
+  const period = renewal && sub.pendingPeriod ? sub.pendingPeriod : invoice.period;
 
   const data = {
     tier,
@@ -123,7 +133,7 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
     status: "active",
     provider: invoice.provider,
     currentPeriodStart: start,
-    currentPeriodEnd: addMonths(start, period),
+    currentPeriodEnd: upgrade ? sub.currentPeriodEnd : addMonths(start, period),
     cancelAtPeriodEnd: false,
     graceUntil: null,
     pendingTier: null,
@@ -198,7 +208,7 @@ export async function startTrial(userId: string) {
 export async function setCancelAtPeriodEnd(userId: string, cancel: boolean) {
   const sub = await db.subscription.findUnique({ where: { userId } });
   if (!sub || !isLive(sub) || sub.status === "trialing") return null;
-  if (sub.providerRef) await getProvider(sub.provider)?.setCancelAtPeriodEnd?.(sub.providerRef, cancel);
+  if (sub.providerRef) await (await providerById(sub.provider))?.setCancelAtPeriodEnd?.(sub.providerRef, cancel);
   return db.subscription.update({ where: { id: sub.id }, data: { cancelAtPeriodEnd: cancel } });
 }
 
@@ -272,7 +282,7 @@ export async function reconcile(sub: Subscription, now = new Date()): Promise<Su
   });
   if (!lastTry) {
     const method = sub.paymentMethodId ? await db.paymentMethod.findUnique({ where: { id: sub.paymentMethodId } }) : null;
-    const provider = method ? getProvider(method.provider) : undefined;
+    const provider = method ? await providerById(method.provider) : undefined;
     if (method && provider?.chargeToken) {
       const tier = (sub.pendingTier ?? sub.tier) as PaidTier;
       const period = (sub.pendingPeriod ?? sub.period) as Period;
