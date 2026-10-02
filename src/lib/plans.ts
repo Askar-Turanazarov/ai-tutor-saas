@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { tashkentDate, previousDate } from "./time";
+import { tashkentDate } from "./time";
 import { limit } from "./billing/limits";
 
 export { can, canAccessLevel, canAccessTopic, tierOf, atLeast } from "./billing/entitlements";
@@ -33,10 +33,5 @@ export async function addUsage(userId: string, seconds: number) {
   });
 }
 
-/** Updates the daily streak; call on any learning activity. */
-export async function touchStreak(user: { id: string; streak: number; lastActiveDate: string | null }) {
-  const today = tashkentDate();
-  if (user.lastActiveDate === today) return;
-  const streak = user.lastActiveDate === previousDate(today) ? user.streak + 1 : 1;
-  await db.user.update({ where: { id: user.id }, data: { streak, lastActiveDate: today } });
-}
+/** Freezes cover missed days; see src/lib/gamification. */
+export { touchStreak } from "./gamification";

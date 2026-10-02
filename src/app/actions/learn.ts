@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { can, touchStreak } from "@/lib/plans";
+import { can } from "@/lib/plans";
+import { recordActivity } from "@/lib/gamification";
+import { comboBonus, longestRun } from "@/lib/gamification/rules";
 import { consumeQuota, limit, quotaLeft } from "@/lib/billing/limits";
 import { tashkentDate } from "@/lib/time";
 import { completeLesson, lessonAccess, parseLesson, recordAnswers } from "@/lib/learning/progress";
@@ -72,27 +74,22 @@ export async function reportPractice(input: { slug: string; answers: unknown }) 
   return { ok: true };
 }
 
-/** XP: 10 per correct answer, +20 for finishing, +15 for the mission; repeats give half. */
-export async function finishLesson(input: { slug: string; correct: number; total: number; missionDone: boolean }) {
+/** XP: 10 per correct answer, +20 for finishing, +15 for the mission, a combo bonus; repeats give half. */
+export async function finishLesson(input: { slug: string; correct: number; total: number; maxCombo?: number; missionDone: boolean }) {
   const user = await requireUser();
   const lesson = await findLesson(user.id, input.slug);
   if (!lesson) return null;
   const total = Math.max(1, Math.min(input.total, 40));
   const correct = Math.max(0, Math.min(input.correct, total));
   const res = await completeLesson(user.id, lesson, { correct, total }, input.missionDone);
-  let xp = correct * 10 + 20 + (input.missionDone ? 15 : 0);
+  const combo = comboBonus(Math.min(input.maxCombo ?? 0, correct));
+  let xp = correct * 10 + 20 + (input.missionDone ? 15 : 0) + combo;
   if (!res.firstTime) xp = Math.round(xp / 2);
-  await db.user.update({ where: { id: user.id }, data: { xp: { increment: xp } } });
-  await touchStreak(user);
+  const act = await recordActivity(user, { source: "lesson", xp, lesson: true, perfect: res.stars === 3, mission: input.missionDone, correct });
   revalidatePath("/", "layout");
-  return { ...res, xp };
+  return { ...res, xp, combo, quests: act.quests };
 }
 
-async function addXp(user: Awaited<ReturnType<typeof requireUser>>, xp: number) {
-  if (xp > 0) await db.user.update({ where: { id: user.id }, data: { xp: { increment: xp } } });
-  await touchStreak(user);
-  revalidatePath("/", "layout");
-}
 
 /* ───────────── Review (SRS) ───────────── */
 
@@ -108,14 +105,16 @@ export async function startReview() {
   return reviewSession(user.id, n);
 }
 
-/** 2 XP per remembered chunk. */
+/** 2 XP per remembered chunk, plus a combo bonus. */
 export async function reportReview(input: { answers: unknown }) {
   const user = await requireUser();
   const parsed = z.array(Answer).max(60).safeParse(input.answers);
   if (!parsed.success) return { xp: 0 };
   await recordAnswers(user, parsed.data, "review");
-  const xp = parsed.data.filter((a) => a.ok && !a.retry).length * 2;
-  await addXp(user, xp);
+  const correct = parsed.data.filter((a) => a.ok && !a.retry).length;
+  const xp = correct * 2 + comboBonus(longestRun(parsed.data));
+  await recordActivity(user, { source: "review", xp, correct, reviewed: parsed.data.filter((a) => !a.retry).length });
+  revalidatePath("/", "layout");
   return { xp };
 }
 
@@ -137,8 +136,10 @@ export async function reportMistakeTraining(input: { answers: unknown }) {
   const resolved = await applyMistakeResults(user.id, first.map((a) => ({ id: a.key.slice(2), ok: a.ok })));
   // given/answer dropped: these are already in the bank, recordAnswers shouldn't add them again.
   await recordAnswers(user, first.filter((a) => a.item).map((a) => ({ ...a, given: undefined, answer: undefined })), "review");
-  const xp = first.filter((a) => a.ok).length * 3;
-  await addXp(user, xp);
+  const correct = first.filter((a) => a.ok).length;
+  const xp = correct * 3 + comboBonus(longestRun(first));
+  await recordActivity(user, { source: "mistakes", xp, correct });
+  revalidatePath("/", "layout");
   return { xp, resolved };
 }
 

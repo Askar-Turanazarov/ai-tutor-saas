@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, ArrowRight, Check, Circle, Clock, Layers, Play, RotateCcw, Star, Target, Theater, X, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCheck, Circle, Clock, Flame, Layers, Play, RotateCcw, Star, Target, Theater, X, Zap } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, TypingDots } from "@/components/ui/primitives";
@@ -25,7 +25,7 @@ type Stage = "goal" | "cards" | "practice" | "mission" | "done";
 const STAGES: Stage[] = ["goal", "cards", "practice", "mission"];
 
 type MissionInfo = { role: string; scene: string; opener: string; goals: { id: string; text: string }[] };
-type Result = { stars: number; percent: number; added: number; xp: number; missionDone: boolean };
+type Result = { stars: number; percent: number; added: number; xp: number; combo: number; quests: string[]; missionDone: boolean };
 
 /**
  * One lesson, start to finish: the real-life task and can-do goal, the new phrases as cards,
@@ -49,7 +49,7 @@ export function LessonPlayer(props: {
   const [stage, setStage] = useState<Stage>("goal");
   const [round, setRound] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
-  const score = useRef({ correct: 0, total: 0 });
+  const score = useRef({ correct: 0, total: 0, maxCombo: 0 });
 
   const goal = <GoalStage {...props} onStart={() => setStage("cards")} />;
   if (props.access !== "open")
@@ -95,7 +95,7 @@ export function LessonPlayer(props: {
               onFinish={async (s: RunSummary) => {
                 // A skipped speaking step (no microphone) doesn't count against the learner.
                 const total = Math.max(1, s.answers.filter((a) => !a.retry && !(a.type === "speak" && !a.ok && a.ms < 50)).length);
-                score.current = { correct: s.correct, total };
+                score.current = { correct: s.correct, total, maxCombo: s.maxCombo };
                 setStage("mission");
                 await reportPractice({ slug: props.slug, answers: s.answers }).catch(() => {});
               }}
@@ -494,7 +494,17 @@ function DoneStage({ result, score, nextSlug, onRetry }: { result: Result; score
             <Theater className="size-4" /> {t("missionBadge")}
           </span>
         )}
+        {result.combo > 0 && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-4 py-1.5 text-[15px] font-semibold text-danger">
+            <Flame className="size-4" /> {t("comboBonus", { xp: result.combo })}
+          </span>
+        )}
       </div>
+      {result.quests.length > 0 && (
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[15px] font-semibold text-teal">
+          <CheckCheck className="size-4" /> {t("questsDone", { n: result.quests.length })}
+        </p>
+      )}
       <p className="mt-4 flex items-center gap-2 text-[15px] text-label-2">
         <Layers className="size-4 text-teal" />
         {result.added ? t("added", { n: result.added }) : t("addedNone")}

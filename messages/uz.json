@@ -50,7 +50,8 @@
     "pronunciation": "Talaffuz",
     "settings": "Sozlamalar",
     "vocab": "Lugʻat",
-    "mistakes": "Xatolar"
+    "mistakes": "Xatolar",
+    "progress": "Natijalar"
   },
   "landing": {
     "badge": "Toshkentda yaratilgan",
@@ -666,7 +667,9 @@
     "lockedTitle": "Bu dars {tier} tarifida",
     "lockedText": "B1–C2 darajalari, cheksiz darslar va AI suhbatdosh bilan jonli missiyalar.",
     "error": "Server bilan bogʻlanib boʻlmadi. Qayta urinib koʻring.",
-    "quit": "Darsdan chiqish"
+    "quit": "Darsdan chiqish",
+    "comboBonus": "Kombo +{xp} XP",
+    "questsDone": "{n, plural, one {Topshiriq bajarildi} other {# ta topshiriq bajarildi}}"
   },
   "vocab": {
     "title": "Lugʻat",
@@ -777,5 +780,109 @@
     "lockedBadge": "Pro",
     "lockedText": "C1–C2 darajalari va oʻz vaziyatingiz uchun darslar — xatolaringiz hisobga olinadi.",
     "lockedCta": "Pro bilan ochish"
+  },
+  "progress": {
+    "title": "Natijalar",
+    "subtitle": "Daraja, ketma-ket kunlar, bugungi maqsad, topshiriqlar va mukofotlar.",
+    "level": "{n}-daraja",
+    "totalXp": "Jami {n} XP",
+    "streakDays": "{n} kun ketma-ket",
+    "freezes": "{n, plural, =0 {muzlatish yoʻq} other {# ta muzlatish}}",
+    "atRisk": "bugun shugʻullaning",
+    "best": "Rekord: {n}",
+    "freezeInfo": "muzlatish kun oʻtkazib yuborilganda seriyani saqlaydi; oyiga {n} ta",
+    "freezeUpsell": "Seriyani muzlatish — Plus bilan",
+    "goalTitle": "Kunlik maqsad",
+    "goalReached": "Bugungi maqsad bajarildi!",
+    "goalLeft": "Maqsadgacha yana {n} XP",
+    "goalDone": "maqsad",
+    "goals": {
+      "light": "yengil",
+      "regular": "oddiy",
+      "serious": "jiddiy"
+    },
+    "questsTitle": "Bugungi topshiriqlar",
+    "quests": {
+      "xp": "{n} XP toʻplang",
+      "lesson": "Darsni yakunlang",
+      "correct": "{n} ta toʻgʻri javob bering",
+      "review": "{n} ta iborani takrorlang",
+      "chat": "Ustozga {n} ta xabar yuboring",
+      "mission": "Dars topshirigʻini bajaring",
+      "perfect": "Darsni 3 yulduz bilan oʻting"
+    },
+    "achievements": {
+      "title": "Mukofotlar",
+      "locked": "Ochilmagan",
+      "items": {
+        "first-lesson": {
+          "title": "Birinchi qadam",
+          "text": "Birinchi dars oʻtildi"
+        },
+        "lessons-10": {
+          "title": "Oʻnta dars",
+          "text": "10 ta dars oʻtildi"
+        },
+        "lessons-24": {
+          "title": "Butun kurs",
+          "text": "A1–B2 ning barcha 24 darsi"
+        },
+        "perfect-1": {
+          "title": "Uch yulduz",
+          "text": "Xatosiz dars"
+        },
+        "perfect-10": {
+          "title": "Aʼlochi",
+          "text": "3 yulduzli 10 ta dars"
+        },
+        "mission-5": {
+          "title": "Aktyor",
+          "text": "5 ta rolli topshiriq"
+        },
+        "streak-3": {
+          "title": "Qizish",
+          "text": "Ketma-ket 3 kun"
+        },
+        "streak-7": {
+          "title": "Bir hafta",
+          "text": "Ketma-ket 7 kun"
+        },
+        "streak-30": {
+          "title": "Bir oy",
+          "text": "Ketma-ket 30 kun"
+        },
+        "xp-1000": {
+          "title": "Ming",
+          "text": "1 000 XP"
+        },
+        "xp-5000": {
+          "title": "Gavhar",
+          "text": "5 000 XP"
+        },
+        "deck-50": {
+          "title": "Kolleksioner",
+          "text": "Lugʻatda 50 ta ibora"
+        },
+        "learned-20": {
+          "title": "Kuchli xotira",
+          "text": "20 ta ibora puxta oʻrganildi"
+        },
+        "fixed-10": {
+          "title": "Xatolar ustida ish",
+          "text": "10 ta xato yopildi"
+        },
+        "chat-50": {
+          "title": "Suhbatdosh",
+          "text": "Ustozga 50 ta xabar"
+        }
+      }
+    },
+    "celebrateLabel": "Yangi mukofot",
+    "levelUp": "Yangi daraja",
+    "levelUpText": "Davom eting — har bir daraja biroz koʻproq tajriba talab qiladi.",
+    "newAchievement": "Mukofot olindi",
+    "next": "Keyingi",
+    "great": "Ajoyib",
+    "freeNote": "Plus bilan — seriyani muzlatish va kuniga koʻproq dars"
   }
 }

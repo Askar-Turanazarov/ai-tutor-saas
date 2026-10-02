@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { TOPICS } from "../src/lib/content/topics";
 import { lessonRows } from "../src/lib/content/lessons";
+import { ACHIEVEMENTS, levelFromXp } from "../src/lib/gamification/rules";
 
 const db = new PrismaClient();
 
@@ -27,6 +28,8 @@ async function main() {
   for (const it of items) await db.lexicalItem.upsert({ where: { id: it.id }, update: it, create: it });
   for (const l of rows) await db.lesson.upsert({ where: { slug: l.slug }, update: l, create: l });
 
+  for (const [order, a] of ACHIEVEMENTS.entries()) await db.achievement.upsert({ where: { id: a.id }, update: { ...a, order }, create: { ...a, order } });
+
   const userPw = await bcrypt.hash(process.env.SEED_USER_PASSWORD || "demo12345", 10);
   const adminPw = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || "admin12345", 10);
   const users = [
@@ -40,7 +43,15 @@ async function main() {
     const user = await db.user.upsert({
       where: { email: u.email },
       update: { role: u.role, plan: u.plan },
-      create: { ...u, onboarded: true, xp: u.plan === "FREE" ? 60 : 340, streak: u.plan === "FREE" ? 1 : 5 },
+      create: {
+        ...u,
+        onboarded: true,
+        xp: u.plan === "FREE" ? 60 : 340,
+        streak: u.plan === "FREE" ? 1 : 5,
+        bestStreak: u.plan === "FREE" ? 1 : 5,
+        // Seeded XP is not something to celebrate on first login.
+        levelSeen: levelFromXp(u.plan === "FREE" ? 60 : 340).level,
+      },
     });
     if (u.plan === "FREE" || (await db.subscription.findUnique({ where: { userId: user.id } }))) continue;
 

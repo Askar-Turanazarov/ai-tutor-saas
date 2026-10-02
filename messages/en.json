@@ -50,7 +50,8 @@
     "pronunciation": "Pronunciation",
     "settings": "Settings",
     "vocab": "Vocabulary",
-    "mistakes": "Mistakes"
+    "mistakes": "Mistakes",
+    "progress": "Progress"
   },
   "landing": {
     "badge": "Made in Tashkent",
@@ -666,7 +667,9 @@
     "lockedTitle": "This lesson is part of {tier}",
     "lockedText": "Levels B1–C2, unlimited lessons and live missions with an AI partner.",
     "error": "Could not reach the server. Please try again.",
-    "quit": "Leave the lesson"
+    "quit": "Leave the lesson",
+    "comboBonus": "Combo +{xp} XP",
+    "questsDone": "{n, plural, one {Quest complete} other {# quests complete}}"
   },
   "vocab": {
     "title": "Vocabulary",
@@ -777,5 +780,109 @@
     "lockedBadge": "Pro",
     "lockedText": "C1–C2 and lessons for your own situations, written around your mistakes.",
     "lockedCta": "Unlock with Pro"
+  },
+  "progress": {
+    "title": "Progress",
+    "subtitle": "Your level, streak, today's goal, quests and awards.",
+    "level": "Level {n}",
+    "totalXp": "{n} XP in total",
+    "streakDays": "{n, plural, one {# day streak} other {# day streak}}",
+    "freezes": "{n, plural, =0 {no freezes} one {# freeze} other {# freezes}}",
+    "atRisk": "practise today",
+    "best": "Best: {n}",
+    "freezeInfo": "a freeze saves your streak when you miss a day; {n} a month",
+    "freezeUpsell": "Streak freezes come with Plus",
+    "goalTitle": "Daily goal",
+    "goalReached": "Today's goal is done!",
+    "goalLeft": "{n} XP to go",
+    "goalDone": "goal",
+    "goals": {
+      "light": "light",
+      "regular": "regular",
+      "serious": "serious"
+    },
+    "questsTitle": "Today's quests",
+    "quests": {
+      "xp": "Earn {n} XP",
+      "lesson": "Finish a lesson",
+      "correct": "Give {n} correct answers",
+      "review": "Review {n} phrases",
+      "chat": "Send the tutor {n} messages",
+      "mission": "Complete a lesson mission",
+      "perfect": "Get 3 stars in a lesson"
+    },
+    "achievements": {
+      "title": "Awards",
+      "locked": "Locked",
+      "items": {
+        "first-lesson": {
+          "title": "First step",
+          "text": "Your first lesson"
+        },
+        "lessons-10": {
+          "title": "Ten lessons",
+          "text": "10 lessons done"
+        },
+        "lessons-24": {
+          "title": "The whole course",
+          "text": "All 24 lessons A1–B2"
+        },
+        "perfect-1": {
+          "title": "Three stars",
+          "text": "A flawless lesson"
+        },
+        "perfect-10": {
+          "title": "Top of the class",
+          "text": "10 three-star lessons"
+        },
+        "mission-5": {
+          "title": "Natural actor",
+          "text": "5 role-play missions"
+        },
+        "streak-3": {
+          "title": "Warming up",
+          "text": "3 days in a row"
+        },
+        "streak-7": {
+          "title": "One week",
+          "text": "7 days in a row"
+        },
+        "streak-30": {
+          "title": "One month",
+          "text": "30 days in a row"
+        },
+        "xp-1000": {
+          "title": "A thousand",
+          "text": "1,000 XP"
+        },
+        "xp-5000": {
+          "title": "Gem",
+          "text": "5,000 XP"
+        },
+        "deck-50": {
+          "title": "Collector",
+          "text": "50 phrases in your deck"
+        },
+        "learned-20": {
+          "title": "Strong memory",
+          "text": "20 phrases learned for good"
+        },
+        "fixed-10": {
+          "title": "Mistakes fixed",
+          "text": "10 mistakes fixed"
+        },
+        "chat-50": {
+          "title": "Conversationalist",
+          "text": "50 messages to the tutor"
+        }
+      }
+    },
+    "celebrateLabel": "New award",
+    "levelUp": "Level up",
+    "levelUpText": "Keep going: each level takes a bit more XP than the last.",
+    "newAchievement": "Award unlocked",
+    "next": "Next",
+    "great": "Great",
+    "freeNote": "Plus adds streak freezes and more lessons a day"
   }
 }

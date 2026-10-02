@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "@/i18n/navigation";
 import { LEVELS, type Level } from "@/lib/levels";
-import { can, canAccessLevel, canAccessTopic, remainingSeconds, touchStreak } from "@/lib/plans";
+import { can, canAccessLevel, canAccessTopic, remainingSeconds } from "@/lib/plans";
+import { recordActivity } from "@/lib/gamification";
 import { consumeQuota, limit } from "@/lib/billing/limits";
 import { PLACEMENT, levelFromScore } from "@/lib/content/placement";
 import { asLang, completeUnit, ensurePlan, randomPhrase, rebuildPlan, topicTitle } from "@/lib/learning";
@@ -109,8 +110,7 @@ export async function submitQuiz(input: { quizId: string; score: number; total: 
   const score = Math.max(0, Math.min(input.score, total));
   const xp = score * 10 + (score === total ? 20 : 0);
   await db.quizAttempt.create({ data: { quizId: quiz.id, userId: user.id, score, total, xp } });
-  await db.user.update({ where: { id: user.id }, data: { xp: { increment: xp } } });
-  await touchStreak(user);
+  await recordActivity(user, { source: "quiz", xp, correct: score });
   if (quiz.unitId) await completeUnit(quiz.unitId, score / total);
   revalidatePath("/", "layout");
   return { xp };
@@ -135,10 +135,7 @@ export async function pronunciationCheck(input: { target: string; heard: string 
     score,
     lang: asLang(await getLocale()),
   });
-  if (score >= 60) {
-    await db.user.update({ where: { id: user.id }, data: { xp: { increment: 5 } } });
-    await touchStreak(user);
-  }
+  if (score >= 60) await recordActivity(user, { source: "pronunciation", xp: 5 });
   return { words, score, ...res.data };
 }
 

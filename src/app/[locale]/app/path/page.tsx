@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { lessonAccess, lessonMap, overallRating, skills } from "@/lib/learning/progress";
 import { suggestLesson } from "@/lib/learning/adaptive";
 import { LessonMap, type MapLesson } from "@/components/learn/LessonMap";
-import { AiLessons } from "@/components/learn/AiLessons";
 import { personalLessons } from "@/lib/learning/ai-lessons";
 import { can } from "@/lib/plans";
 import type { L3 } from "@/lib/content/types";
@@ -46,20 +45,18 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   return (
     <LessonMap
       lessons={lessons.map((l): MapLesson => ({ ...l, recommended: l.id === next?.id }))}
-      personal={
-        <AiLessons
-          allowed={aiAllowed}
-          level={user.level}
-          lessons={mine.map((l) => ({
-            slug: l.slug,
-            title: pick({ ru: l.titleRu, en: l.titleEn, uz: l.titleUz }),
-            level: l.level,
-            icon: l.icon,
-            done: l.progress?.status === "done",
-            stars: l.progress?.stars ?? 0,
-          }))}
-        />
-      }
+      ai={{
+        allowed: aiAllowed,
+        level: user.level,
+        lessons: mine.map((l) => ({
+          slug: l.slug,
+          title: pick({ ru: l.titleRu, en: l.titleEn, uz: l.titleUz }),
+          level: l.level,
+          icon: l.icon,
+          done: l.progress?.status === "done",
+          stars: l.progress?.stars ?? 0,
+        })),
+      }}
     />
   );
 }

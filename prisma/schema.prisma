@@ -21,6 +21,14 @@ model User {
   xp               Int              @default(0)
   streak           Int              @default(0)
   lastActiveDate   String?
+  bestStreak       Int              @default(0)
+  /// Daily XP goal: 30 | 60 | 120
+  dailyGoal        Int              @default(60)
+  /// Streak freezes in stock; refilled monthly from the plan
+  streakFreezes    Int              @default(0)
+  freezeMonth      String? // YYYY-MM of the last refill
+  /// Profile level the learner has already seen celebrated
+  levelSeen        Int              @default(1)
   trialUsedAt      DateTime?
   stripeCustomerId String?
   createdAt        DateTime         @default(now())
@@ -38,6 +46,9 @@ model User {
   reviewCards      ReviewCard[]
   skills           Skill[]
   lessons          Lesson[]
+  xpEvents         XpEvent[]
+  achievements     UserAchievement[]
+  quests           DailyQuest[]
 }
 
 model Conversation {
@@ -338,4 +349,57 @@ model Skill {
   rating Int
 
   @@unique([userId, area])
+}
+
+/* ───────────── Gamification ───────────── */
+
+/// Every XP award: the daily goal, quests and the weekly league are sums over these.
+model XpEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  source    String // lesson | review | mistakes | chat | quiz | pronunciation | mission | quest | achievement
+  date      String // YYYY-MM-DD, Tashkent
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+  @@index([date])
+}
+
+/// Definitions live in code (src/lib/gamification/achievements.ts) and are synced here.
+model Achievement {
+  id        String            @id // key, e.g. "streak-7"
+  icon      String
+  metric    String
+  threshold Int
+  xp        Int
+  order     Int
+  users     UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+  seen          Boolean     @default(false)
+
+  @@unique([userId, achievementId])
+}
+
+model DailyQuest {
+  id       String    @id @default(cuid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date     String // YYYY-MM-DD, Tashkent
+  key      String // xp | lesson | correct | review | chat | mission | perfect
+  target   Int
+  progress Int       @default(0)
+  xp       Int
+  doneAt   DateTime?
+
+  @@unique([userId, date, key])
 }

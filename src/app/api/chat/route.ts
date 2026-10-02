@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { can, canAccessTopic, remainingSeconds, touchStreak } from "@/lib/plans";
+import { recordActivity } from "@/lib/gamification";
 import { missionReply, tutorReply } from "@/lib/ai/tutor";
 import { missionGoalsByKeywords } from "@/lib/ai/mock";
 import { consumeQuota, limit, usedToday } from "@/lib/billing/limits";
@@ -97,8 +98,7 @@ export async function POST(req: Request) {
         explanation: c.explanation,
       })),
     });
-  await db.user.update({ where: { id: user.id }, data: { xp: { increment: 2 } } });
-  await touchStreak(user);
+  await recordActivity(user, { source: "chat", xp: 2, chat: 1 });
 
   return NextResponse.json({
     conversationId: conv.id,

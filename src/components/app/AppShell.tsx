@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { AudioLines, ChevronsUpDown, Crown, House, Layers, LayoutGrid, MessageCircle, PenLine, Route, Settings, Shield, Sparkles, type LucideIcon } from "lucide-react";
+import { AudioLines, ChevronsUpDown, Crown, House, Layers, LayoutGrid, MessageCircle, PenLine, Route, Settings, Shield, Sparkles, Trophy, type LucideIcon } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Logo, LogoMark } from "@/components/ui/brand";
 import { Badge } from "@/components/ui/primitives";
@@ -13,6 +13,7 @@ import { iconAnims, spring } from "@/components/ui/motion";
 import { stopImpersonating } from "@/app/actions/auth";
 import { tierLabel } from "@/lib/billing/catalog";
 import { cn } from "@/lib/cn";
+import { Celebrations } from "@/components/progress/Celebrations";
 import { useUsage } from "./usage";
 
 /** `tab: false` — sidebar only; the phone tab bar keeps five items (topics open from the chat, mistakes from the deck). */
@@ -25,6 +26,7 @@ const NAV: NavItem[] = [
   { href: "/app/path", icon: Route, key: "path", anim: "tilt" },
   { href: "/app/vocab", icon: Layers, key: "vocab", anim: "tilt" },
   { href: "/app/mistakes", icon: PenLine, key: "mistakes", anim: "wiggle", tab: false },
+  { href: "/app/progress", icon: Trophy, key: "progress", anim: "bounce", tab: false },
   { href: "/app/pronunciation", icon: AudioLines, key: "pronunciation", anim: "bounce", pro: true },
 ];
 
@@ -35,10 +37,12 @@ export { Avatar };
 export function AppShell({
   user,
   impersonating,
+  celebrations,
   children,
 }: {
   user: ShellUser;
   impersonating: boolean;
+  celebrations: { achievements: string[]; level: number | null };
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -57,6 +61,7 @@ export function AppShell({
         <div className="mx-auto w-full max-w-5xl px-4 pt-5 sm:px-6 lg:pt-10">{children}</div>
       </main>
       {!focus && <TabBar isActive={isActive} />}
+      <Celebrations {...celebrations} paused={focus} />
     </div>
   );
 }
