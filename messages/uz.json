@@ -48,7 +48,9 @@
     "topics": "Mavzular",
     "path": "Darslar",
     "pronunciation": "Talaffuz",
-    "settings": "Sozlamalar"
+    "settings": "Sozlamalar",
+    "vocab": "Lugʻat",
+    "mistakes": "Xatolar"
   },
   "landing": {
     "badge": "Toshkentda yaratilgan",
@@ -665,5 +667,81 @@
     "lockedText": "B1–C2 darajalari, cheksiz darslar va AI suhbatdosh bilan jonli missiyalar.",
     "error": "Server bilan bogʻlanib boʻlmadi. Qayta urinib koʻring.",
     "quit": "Darsdan chiqish"
+  },
+  "vocab": {
+    "title": "Lugʻat",
+    "subtitle": "Oʻtilgan darslardagi iboralar. Har biri unutila boshlaganda takrorlashga qaytadi.",
+    "total": "Jami",
+    "due": "Takrorlash",
+    "learned": "Oʻrganildi",
+    "reviewNow": "Hozir takrorlash",
+    "reviewCount": "{n} ta karta takrorlashni kutmoqda",
+    "allDone": "Hammasi takrorlandi",
+    "nextReview": "Keyingi takrorlash — {when}",
+    "filters": {
+      "all": "Hammasi",
+      "due": "Takrorlash",
+      "learned": "Oʻrganilgan",
+      "idiom": "Idiomalar",
+      "phrasal": "Frazali feʼllar",
+      "collocation": "Kollokatsiyalar"
+    },
+    "search": "Iboralar va maʼnolar boʻyicha qidirish",
+    "emptyTitle": "Kartalar hali yoʻq",
+    "emptyText": "Darsni oʻting — uning iboralari shu yerga tushadi va takrorlashga qaytadi.",
+    "toLessons": "Darslarga",
+    "nothingFound": "Hech narsa topilmadi",
+    "strength": {
+      "new": "Yangi",
+      "learning": "Oʻrganilmoqda",
+      "strong": "Oʻrganilgan"
+    },
+    "now": "hozir",
+    "examples": "Misollar",
+    "mistakesLink": "Xatolar banki",
+    "mistakesLinkText": "{n, plural, =0 {Hozircha xatolar yoʻq} other {# ta xato ustida ishlash kerak}}",
+    "review": {
+      "title": "Takrorlash",
+      "loading": "Kartalar tayyorlanmoqda…",
+      "doneTitle": "Takrorlash yakunlandi",
+      "doneText": "{total} tadan {correct} tasini esladingiz",
+      "back": "Lugʻatga",
+      "nothing": "Hozir takrorlash uchun hech narsa yoʻq — kartalar vaqti kelganda qaytadi.",
+      "quota": "Bugungi takrorlashlar tugadi",
+      "quotaText": "Free tarifida kuniga {n} ta takrorlash. Plus bilan — cheklovsiz."
+    }
+  },
+  "mistakes": {
+    "title": "Xatolar banki",
+    "subtitle": "Chat va mashqlardagi xatolar. Xato ketma-ket uchta toʻgʻri javobdan keyin yopiladi.",
+    "active": "Faol",
+    "resolved": "Tuzatildi",
+    "train": "Xatolarimni mashq qilish",
+    "trainText": "Xatolaringizdan qisqa mashq — 10 tagacha topshiriq.",
+    "lockedTitle": "Xatolar mashqi — Plus bilan",
+    "lockedText": "Free tarifida oxirgi 10 ta xato koʻrinadi. Plus bilan — butun bank va xatolarni yopadigan mashq.",
+    "freeNote": "Oxirgi 10 ta xato koʻrsatilgan",
+    "categories": {
+      "grammar": "Grammatika",
+      "vocabulary": "Leksika",
+      "spelling": "Imlo",
+      "punctuation": "Tinish belgilari",
+      "style": "Uslub"
+    },
+    "source": {
+      "chat": "chatdan",
+      "exercise": "mashqdan",
+      "review": "takrorlashdan"
+    },
+    "hits": "×{n}",
+    "streak": "Ketma-ket {n}/3 toʻgʻri",
+    "emptyTitle": "Hozircha xatolar yoʻq",
+    "emptyText": "Ustoz bilan yozishing va darslarni oʻting — topilgan xatolar shu yerda yigʻiladi.",
+    "doneTitle": "Mashq yakunlandi",
+    "doneResolved": "{n} ta xato yopildi",
+    "doneNone": "Xato ketma-ket uchta toʻgʻri javobdan keyin yopiladi — ertaga yana mashq qiling.",
+    "back": "Xatolar bankiga",
+    "nothing": "Faol xatolar yoʻq — ajoyib!",
+    "showResolved": "Tuzatilganlar ({n})"
   }
 }

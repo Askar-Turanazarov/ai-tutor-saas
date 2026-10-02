@@ -41,17 +41,17 @@ export async function quotaLeft(u: UserLike, key: CounterKey): Promise<number | 
 }
 
 /**
- * Takes one unit of a daily quota. Returns false when the plan doesn't include it
- * or today's quota is used up (nothing is counted then).
+ * Takes `amount` units of a daily quota (all or nothing). Returns false when the plan doesn't
+ * include it or today's quota can't cover it (nothing is counted then).
  */
-export async function consumeQuota(u: UserLike, key: CounterKey): Promise<{ ok: boolean; left: number | null }> {
+export async function consumeQuota(u: UserLike, key: CounterKey, amount = 1): Promise<{ ok: boolean; left: number | null }> {
   const left = await quotaLeft(u, key);
-  if (left !== null && left <= 0) return { ok: false, left: 0 };
+  if (left !== null && left < amount) return { ok: false, left };
   const date = tashkentDate();
   await db.dailyCounter.upsert({
     where: { userId_date_key: { userId: u.id, date, key } },
-    update: { count: { increment: 1 } },
-    create: { userId: u.id, date, key, count: 1 },
+    update: { count: { increment: amount } },
+    create: { userId: u.id, date, key, count: amount },
   });
-  return { ok: true, left: left === null ? null : left - 1 };
+  return { ok: true, left: left === null ? null : left - amount };
 }

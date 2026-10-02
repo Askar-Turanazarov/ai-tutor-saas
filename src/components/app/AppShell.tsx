@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { AudioLines, ChevronsUpDown, Crown, House, LayoutGrid, MessageCircle, Route, Settings, Shield, Sparkles, type LucideIcon } from "lucide-react";
+import { AudioLines, ChevronsUpDown, Crown, House, Layers, LayoutGrid, MessageCircle, PenLine, Route, Settings, Shield, Sparkles, type LucideIcon } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Logo, LogoMark } from "@/components/ui/brand";
 import { Badge } from "@/components/ui/primitives";
@@ -15,13 +15,16 @@ import { tierLabel } from "@/lib/billing/catalog";
 import { cn } from "@/lib/cn";
 import { useUsage } from "./usage";
 
-type NavItem = { href: string; icon: LucideIcon; key: string; anim: keyof typeof iconAnims; pro?: boolean };
+/** `tab: false` — sidebar only; the phone tab bar keeps five items (topics open from the chat, mistakes from the deck). */
+type NavItem = { href: string; icon: LucideIcon; key: string; anim: keyof typeof iconAnims; pro?: boolean; tab?: false };
 
 const NAV: NavItem[] = [
   { href: "/app", icon: House, key: "home", anim: "bounce" },
   { href: "/app/chat", icon: MessageCircle, key: "chat", anim: "wiggle" },
-  { href: "/app/topics", icon: LayoutGrid, key: "topics", anim: "spin" },
+  { href: "/app/topics", icon: LayoutGrid, key: "topics", anim: "spin", tab: false },
   { href: "/app/path", icon: Route, key: "path", anim: "tilt" },
+  { href: "/app/vocab", icon: Layers, key: "vocab", anim: "tilt" },
+  { href: "/app/mistakes", icon: PenLine, key: "mistakes", anim: "wiggle", tab: false },
   { href: "/app/pronunciation", icon: AudioLines, key: "pronunciation", anim: "bounce", pro: true },
 ];
 
@@ -43,7 +46,7 @@ export function AppShell({
   // Path and pronunciation open from Plus; the upsell card is for Free only.
   const pro = user.plan !== "FREE";
   // Quizzes are a focused, full-screen flow: no tab bar competing with the answer buttons.
-  const focus = pathname.startsWith("/app/quiz/") || pathname.startsWith("/app/learn/");
+  const focus = /^\/app\/(quiz\/|learn\/|vocab\/review|mistakes\/train)/.test(pathname);
 
   return (
     <div className="min-h-dvh">
@@ -175,7 +178,7 @@ function TabBar({ isActive }: { isActive: (h: string) => boolean }) {
       className="glass-thick glass-refract fixed inset-x-3 bottom-3 z-40 flex h-[64px] items-center justify-around rounded-[22px] border px-1 lg:hidden"
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
-      {NAV.map((item) => {
+      {NAV.filter((item) => item.tab !== false).map((item) => {
         const active = isActive(item.href);
         return (
           <Link

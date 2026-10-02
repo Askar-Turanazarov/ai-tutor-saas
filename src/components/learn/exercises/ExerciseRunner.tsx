@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/primitives";
 import { spring } from "@/components/ui/motion";
 import { Correction, SpeakButton } from "@/components/learn/primitives";
-import { answerLength, check, pick, type ItemInfo, type Response, type RunExercise, type Verdict } from "@/lib/learning/exercises";
+import { answerLength, bankEntry, check, pick, type ItemInfo, type Response, type RunExercise, type Verdict } from "@/lib/learning/exercises";
 import { gradeAnswer } from "@/lib/learning/srs";
 import { cn } from "@/lib/cn";
 import { ChoiceView, GapView, ListenView, MatchView, OrderView, SpeakView, SpotView, TranslateView, type ViewProps } from "./views";
@@ -25,7 +25,7 @@ export type AnswerEvent = {
   grade: number;
   /** A repeat of a step answered wrong earlier in the session; not scored again. */
   retry: boolean;
-  /** For the mistake bank: what the learner gave and what was expected. */
+  /** For the mistake bank (wrong answers only): what the learner gave and what was expected. */
   given?: string;
   answer?: string;
 };
@@ -87,7 +87,7 @@ export function ExerciseRunner({
       const v = skipped ? { ok: false } : check(step.ex, r ?? { kind: "text", value: "" });
       const ms = Date.now() - started.current;
       const grade = gradeAnswer({ correct: v.ok, ms, hinted: hint, answerLength: answerLength(step.ex) });
-      const ev: AnswerEvent = { key: step.key, type: step.ex.type, item: step.item, difficulty: step.difficulty, ok: v.ok, ms, hinted: hint, grade, retry: isRetry, given: v.given, answer: v.answer };
+      const ev: AnswerEvent = { key: step.key, type: step.ex.type, item: step.item, difficulty: step.difficulty, ok: v.ok, ms, hinted: hint, grade, retry: isRetry, ...bankEntry(step.ex, v) };
       answers.current.push(ev);
       if (!skipped) onAnswer?.(ev);
       setVerdict(v);

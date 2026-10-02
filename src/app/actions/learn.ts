@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { touchStreak } from "@/lib/plans";
-import { consumeQuota, limit } from "@/lib/billing/limits";
+import { can, touchStreak } from "@/lib/plans";
+import { consumeQuota, limit, quotaLeft } from "@/lib/billing/limits";
 import { tashkentDate } from "@/lib/time";
 import { completeLesson, lessonAccess, parseLesson, recordAnswers } from "@/lib/learning/progress";
+import { applyMistakeResults, dueCount, mistakeSession, reviewSession, SESSION_SIZE } from "@/lib/learning/deck";
 
 async function requireUser() {
   const u = await getCurrentUser();
@@ -51,6 +52,8 @@ const Answer = z.object({
   ms: z.number().int().min(0).max(600_000),
   hinted: z.boolean(),
   retry: z.boolean(),
+  // SRS grade worked out on the client from time, hints and answer length (same gradeAnswer()).
+  grade: z.number().int().min(0).max(5).optional(),
   given: z.string().max(300).optional(),
   answer: z.string().max(300).optional(),
 });
@@ -81,4 +84,58 @@ export async function finishLesson(input: { slug: string; correct: number; total
   await touchStreak(user);
   revalidatePath("/", "layout");
   return { ...res, xp };
+}
+
+async function addXp(user: Awaited<ReturnType<typeof requireUser>>, xp: number) {
+  if (xp > 0) await db.user.update({ where: { id: user.id }, data: { xp: { increment: xp } } });
+  await touchStreak(user);
+  revalidatePath("/", "layout");
+}
+
+/* ───────────── Review (SRS) ───────────── */
+
+/** Due cards for one session. The daily review quota is taken for the whole session up front. */
+export async function startReview() {
+  const user = await requireUser();
+  const due = await dueCount(user.id);
+  if (!due) return { steps: [], items: [] };
+  const left = await quotaLeft(user, "reviewsPerDay");
+  const n = Math.min(SESSION_SIZE, due, left ?? Infinity);
+  if (n <= 0) return { error: "quota" as const, limit: (await limit(user, "reviewsPerDay")) ?? 0 };
+  await consumeQuota(user, "reviewsPerDay", n);
+  return reviewSession(user.id, n);
+}
+
+/** 2 XP per remembered chunk. */
+export async function reportReview(input: { answers: unknown }) {
+  const user = await requireUser();
+  const parsed = z.array(Answer).max(60).safeParse(input.answers);
+  if (!parsed.success) return { xp: 0 };
+  await recordAnswers(user, parsed.data, "review");
+  const xp = parsed.data.filter((a) => a.ok && !a.retry).length * 2;
+  await addXp(user, xp);
+  return { xp };
+}
+
+/* ───────────── Mistake bank ───────────── */
+
+export async function startMistakeTraining() {
+  const user = await requireUser();
+  if (!can(user, "mistakeTraining")) return { error: "locked" as const };
+  return mistakeSession(user.id);
+}
+
+/** First answers per mistake move its streak; the chunk ones also feed Elo and SRS. 3 XP per fixed answer. */
+export async function reportMistakeTraining(input: { answers: unknown }) {
+  const user = await requireUser();
+  if (!can(user, "mistakeTraining")) return { xp: 0, resolved: 0 };
+  const parsed = z.array(Answer.extend({ key: z.string().max(80) })).max(60).safeParse(input.answers);
+  if (!parsed.success) return { xp: 0, resolved: 0 };
+  const first = parsed.data.filter((a) => !a.retry && a.key.startsWith("m:"));
+  const resolved = await applyMistakeResults(user.id, first.map((a) => ({ id: a.key.slice(2), ok: a.ok })));
+  // given/answer dropped: these are already in the bank, recordAnswers shouldn't add them again.
+  await recordAnswers(user, first.filter((a) => a.item).map((a) => ({ ...a, given: undefined, answer: undefined })), "review");
+  const xp = first.filter((a) => a.ok).length * 3;
+  await addXp(user, xp);
+  return { xp, resolved };
 }

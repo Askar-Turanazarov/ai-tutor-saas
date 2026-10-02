@@ -94,7 +94,7 @@ export function lessonSession(lesson: { slug: string; difficulty: number; exerci
 
 /* ───────────── Answers ───────────── */
 
-export type AnswerIn = { type: Exercise["type"]; item?: string; difficulty: number; ok: boolean; ms: number; hinted: boolean; retry: boolean; given?: string; answer?: string };
+export type AnswerIn = { type: Exercise["type"]; item?: string; difficulty: number; ok: boolean; ms: number; hinted: boolean; retry: boolean; grade?: number; given?: string; answer?: string };
 
 /**
  * Applies a batch of answers: Elo for the learner's skills and the chunks' difficulty,
@@ -125,7 +125,7 @@ export async function recordAnswers(user: { id: string; level: string }, answers
     let state = { intervalDays: c.intervalDays, ease: c.ease, reps: c.reps, lapses: c.lapses, avgMs: c.avgMs };
     let next = null as ReturnType<typeof schedule> | null;
     for (const a of mine) {
-      next = schedule(state, gradeAnswer({ correct: a.ok, ms: a.ms, hinted: a.hinted, answerLength: a.answer?.length }), a.ms);
+      next = schedule(state, a.grade ?? gradeAnswer({ correct: a.ok, ms: a.ms, hinted: a.hinted, answerLength: a.answer?.length }), a.ms);
       state = next;
     }
     if (next) await db.reviewCard.update({ where: { id: c.id }, data: { ...next } });

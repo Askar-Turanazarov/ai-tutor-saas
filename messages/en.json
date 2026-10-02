@@ -48,7 +48,9 @@
     "topics": "Topics",
     "path": "Lessons",
     "pronunciation": "Pronunciation",
-    "settings": "Settings"
+    "settings": "Settings",
+    "vocab": "Vocabulary",
+    "mistakes": "Mistakes"
   },
   "landing": {
     "badge": "Made in Tashkent",
@@ -665,5 +667,81 @@
     "lockedText": "Levels B1–C2, unlimited lessons and live missions with an AI partner.",
     "error": "Could not reach the server. Please try again.",
     "quit": "Leave the lesson"
+  },
+  "vocab": {
+    "title": "Vocabulary",
+    "subtitle": "Phrases from your lessons. Each one comes back for review just as it starts to fade.",
+    "total": "Total",
+    "due": "Due",
+    "learned": "Learned",
+    "reviewNow": "Review now",
+    "reviewCount": "{n, plural, one {# card is} other {# cards are}} due for review",
+    "allDone": "All caught up",
+    "nextReview": "Next review {when}",
+    "filters": {
+      "all": "All",
+      "due": "Due",
+      "learned": "Learned",
+      "idiom": "Idioms",
+      "phrasal": "Phrasal verbs",
+      "collocation": "Collocations"
+    },
+    "search": "Search phrases and meanings",
+    "emptyTitle": "Your deck is empty",
+    "emptyText": "Finish a lesson: its phrases land here and come back for review.",
+    "toLessons": "Go to lessons",
+    "nothingFound": "Nothing found",
+    "strength": {
+      "new": "New",
+      "learning": "Learning",
+      "strong": "Learned"
+    },
+    "now": "now",
+    "examples": "Examples",
+    "mistakesLink": "Mistake bank",
+    "mistakesLinkText": "{n, plural, =0 {No mistakes yet} one {# mistake to work on} other {# mistakes to work on}}",
+    "review": {
+      "title": "Review",
+      "loading": "Getting your cards…",
+      "doneTitle": "Review complete",
+      "doneText": "You remembered {correct} of {total}",
+      "back": "Back to vocabulary",
+      "nothing": "Nothing to review right now: cards come back when it's time.",
+      "quota": "No reviews left today",
+      "quotaText": "Free includes {n} reviews a day. Plus has no limit."
+    }
+  },
+  "mistakes": {
+    "title": "Mistake bank",
+    "subtitle": "Mistakes from the chat and exercises. A mistake closes after three correct answers in a row.",
+    "active": "Active",
+    "resolved": "Fixed",
+    "train": "Train my mistakes",
+    "trainText": "A short session built from your mistakes, up to 10 tasks.",
+    "lockedTitle": "Mistake training comes with Plus",
+    "lockedText": "Free shows your last 10 mistakes. Plus gives you the whole bank and training that closes them.",
+    "freeNote": "Showing your last 10 mistakes",
+    "categories": {
+      "grammar": "Grammar",
+      "vocabulary": "Vocabulary",
+      "spelling": "Spelling",
+      "punctuation": "Punctuation",
+      "style": "Style"
+    },
+    "source": {
+      "chat": "from chat",
+      "exercise": "from an exercise",
+      "review": "from a review"
+    },
+    "hits": "×{n}",
+    "streak": "{n} of 3 correct in a row",
+    "emptyTitle": "No mistakes yet",
+    "emptyText": "Chat with the tutor and take lessons: the mistakes you make will gather here.",
+    "doneTitle": "Training complete",
+    "doneResolved": "{n, plural, one {# mistake fixed} other {# mistakes fixed}}",
+    "doneNone": "A mistake closes after three correct answers in a row: train again tomorrow.",
+    "back": "Back to mistakes",
+    "nothing": "No active mistakes. Great work!",
+    "showResolved": "Fixed ({n})"
   }
 }

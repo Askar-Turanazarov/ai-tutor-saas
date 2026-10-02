@@ -51,7 +51,7 @@ export function UsageProvider({
   const pathname = usePathname();
   const lastInput = useRef(Date.now());
   const lastBeat = useRef(Date.now());
-  const tracking = initial !== null && /\/app\/(chat|quiz|pronunciation|learn)/.test(pathname);
+  const tracking = initial !== null && /\/app\/(chat|quiz|pronunciation|learn|vocab\/review|mistakes\/train)/.test(pathname);
 
   useEffect(() => {
     if (!tracking) return;

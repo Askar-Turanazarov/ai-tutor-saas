@@ -72,7 +72,7 @@ export function spotFromAnti(a: AntiExample): { sentence: string; wrong: string;
 export function reviewExercise(item: ItemInfo, distractors: ItemInfo[], random = Math.random): Exercise {
   const core = item.chunk.replace(/\s*[…?.!].*$/, "").replace(/ \/ .*$/, "").trim();
   const example = item.examples.find((e) => e.toLowerCase().includes(core.toLowerCase()));
-  if (example && core.split(" ").length <= 4 && random() < 0.6) {
+  if (example && core.split(" ").length <= 4 && (!distractors.length || random() < 0.6)) {
     const at = example.toLowerCase().indexOf(core.toLowerCase());
     return { type: "gap", prompt: example.slice(0, at) + "___" + example.slice(at + core.length), answer: core, hint: item.meaning, item: item.id };
   }
@@ -151,6 +151,17 @@ export function check(ex: Exercise, r: Response): Verdict {
       return { ok: hit >= 0.7, answer: ex.text, given: r.kind === "text" ? r.value : "" };
     }
   }
+}
+
+/**
+ * What goes into the mistake bank for a wrong answer: blanks are filled into the sentence so the
+ * entry makes sense on its own later. Mishearing (listen) and speaking aren't language mistakes.
+ */
+export function bankEntry(ex: Exercise, v: Verdict): { given?: string; answer?: string } {
+  if (v.ok || ex.type === "listen" || ex.type === "speak" || !v.given || !v.answer) return {};
+  const prompt = ex.type === "gap" || ex.type === "choice" || ex.type === "collocate" ? ex.prompt : "";
+  if (prompt.includes("___")) return { given: prompt.replace("___", v.given), answer: prompt.replace("___", v.answer) };
+  return { given: v.given, answer: v.answer };
 }
 
 /** Length of the expected answer, used to normalise answer time for SRS grading. */
