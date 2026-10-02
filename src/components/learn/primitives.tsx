@@ -12,7 +12,8 @@ import { cn } from "@/lib/cn";
  * so the learner always sees which text is "the language I'm learning".
  */
 
-export type ChunkKind = "collocation" | "phrasal" | "idiom" | "fixed" | "word";
+import type { ChunkKind } from "@/lib/content/types";
+export type { ChunkKind };
 
 const KIND_CLASS: Record<ChunkKind, string> = {
   collocation: "bg-chunk-collocation-soft text-chunk-collocation",

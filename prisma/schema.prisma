@@ -8,22 +8,22 @@ datasource db {
 }
 
 model User {
-  id               String          @id @default(cuid())
-  email            String          @unique
+  id               String           @id @default(cuid())
+  email            String           @unique
   name             String
   passwordHash     String
-  role             String          @default("USER") // USER | ADMIN
-  plan             String          @default("FREE") // FREE | PLUS | PRO — cache of the active subscription
-  level            String          @default("A1") // A1..C2
+  role             String           @default("USER") // USER | ADMIN
+  plan             String           @default("FREE") // FREE | PLUS | PRO — cache of the active subscription
+  level            String           @default("A1") // A1..C2
   goal             String?
-  locale           String          @default("ru")
-  onboarded        Boolean         @default(false)
-  xp               Int             @default(0)
-  streak           Int             @default(0)
+  locale           String           @default("ru")
+  onboarded        Boolean          @default(false)
+  xp               Int              @default(0)
+  streak           Int              @default(0)
   lastActiveDate   String?
   trialUsedAt      DateTime?
   stripeCustomerId String?
-  createdAt        DateTime        @default(now())
+  createdAt        DateTime         @default(now())
   conversations    Conversation[]
   usages           DailyUsage[]
   mistakes         Mistake[]
@@ -34,6 +34,10 @@ model User {
   invoices         Invoice[]
   paymentMethods   PaymentMethod[]
   dailyCounters    DailyCounter[]
+  lessonProgress   LessonProgress[]
+  reviewCards      ReviewCard[]
+  skills           Skill[]
+  lessons          Lesson[]
 }
 
 model Conversation {
@@ -77,14 +81,23 @@ model Topic {
 }
 
 model Mistake {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    String
   original    String
   corrected   String
   explanation String
-  createdAt   DateTime @default(now())
+  source      String    @default("chat") // chat | exercise | review
+  itemId      String?
+  hits        Int       @default(1)
+  /// Correct answers in a row while training; 3 resolves the mistake.
+  streak      Int       @default(0)
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  @@index([userId, resolvedAt])
 }
 
 model PlanUnit {
@@ -233,4 +246,96 @@ model ClickTransaction {
   status       String   @default("prepared") // prepared | completed | cancelled
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+/// A lexical chunk: the unit of vocabulary (collocation, phrasal verb, idiom, fixed phrase).
+model LexicalItem {
+  id           String       @id // stable content key, e.g. "a1.chaikhana.a-pot-of-tea"
+  chunk        String
+  kind         String // collocation | phrasal | idiom | fixed | word
+  level        String
+  difficulty   Int // Elo scale, ~400 (A1) … 900 (C2)
+  meaningRu    String
+  meaningEn    String
+  meaningUz    String
+  examples     String // JSON string[]
+  antiExamples String       @default("[]") // JSON [{ wrong, right, why: {ru,en,uz} }]
+  register     String       @default("neutral") // neutral | informal | formal
+  tags         String       @default("") // comma-separated situation tags
+  reviewCards  ReviewCard[]
+}
+
+/// A lesson built around a real-life task. Exercises and the mission are JSON (see src/lib/content/types.ts).
+model Lesson {
+  id         String           @id @default(cuid())
+  slug       String           @unique
+  level      String
+  order      Int              @default(0)
+  difficulty Int
+  icon       String
+  titleRu    String
+  titleEn    String
+  titleUz    String
+  situation  String // JSON {ru,en,uz}
+  canDo      String // JSON {ru,en,uz}
+  itemIds    String // JSON string[]
+  exercises  String // JSON Exercise[]
+  mission    String // JSON Mission
+  minTier    String           @default("FREE")
+  source     String           @default("bank") // bank | ai
+  /// Personal AI lessons belong to one user; bank lessons are shared.
+  ownerId    String?
+  owner      User?            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime         @default(now())
+  progress   LessonProgress[]
+
+  @@index([level, order])
+}
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  status      String    @default("started") // started | done
+  stars       Int       @default(0)
+  bestScore   Int       @default(0) // percent
+  missionDone Boolean   @default(false)
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+/// Spaced-repetition state of one chunk for one learner (simplified SM-2).
+model ReviewCard {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId       String
+  item         LexicalItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  due          DateTime
+  intervalDays Float       @default(0)
+  ease         Float       @default(2.3)
+  reps         Int         @default(0)
+  lapses       Int         @default(0)
+  avgMs        Int         @default(0)
+  lastGrade    Int?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, itemId])
+  @@index([userId, due])
+}
+
+/// Elo-style ability per skill area.
+model Skill {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  area   String // vocab | grammar | listening | speaking
+  rating Int
+
+  @@unique([userId, area])
 }
