@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Semantic, Apple-style: background / elevated / fill / label 1-3 / separator.
+ * Accent is a calm indigo; teal nods to the turquoise tiles of Tashkent and Samarkand.
+ * All text colours meet WCAG AA (4.5:1) on both background and elevated surfaces.
+ */
+:root {
+  --bg: #f5f5f7;
+  --bg-elevated: #ffffff;
+  --fill: rgba(118, 118, 128, 0.1);
+  --fill-2: rgba(118, 118, 128, 0.17);
+  --label: #1d1d1f;
+  --label-2: #5e5e66;
+  --label-3: #8a8a92;
+  --separator: rgba(60, 60, 67, 0.13);
+
+  --accent: #4357d6;
+  --accent-solid: #4a5ddb;
+  --accent-soft: rgba(74, 93, 219, 0.1);
+  --teal: #127a75;
+  --teal-soft: rgba(18, 122, 117, 0.1);
+  --success: #1e8549;
+  --success-soft: rgba(30, 133, 73, 0.1);
+  --danger: #c43a33;
+  --danger-soft: rgba(196, 58, 51, 0.09);
+  --warning: #9c5c00;
+  --warning-soft: rgba(214, 140, 20, 0.12);
+  --gold: #b0701a;
+  --gold-soft: rgba(224, 160, 48, 0.14);
+
+  --glass: rgba(250, 250, 252, 0.72);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.04);
+  --shadow-float: 0 10px 40px rgba(30, 30, 60, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0d0d10;
+  --bg-elevated: #1a1a1f;
+  --fill: rgba(120, 120, 128, 0.18);
+  --fill-2: rgba(120, 120, 128, 0.27);
+  --label: #ececf1;
+  --label-2: #a3a3ad;
+  --label-3: #6c6c76;
+  --separator: rgba(255, 255, 255, 0.09);
+
+  --accent: #95a2f8;
+  --accent-solid: #5363dc;
+  --accent-soft: rgba(149, 162, 248, 0.14);
+  --teal: #62c4ba;
+  --teal-soft: rgba(98, 196, 186, 0.13);
+  --success: #5cc48a;
+  --success-soft: rgba(92, 196, 138, 0.13);
+  --danger: #f0857e;
+  --danger-soft: rgba(240, 133, 126, 0.13);
+  --warning: #e6ae55;
+  --warning-soft: rgba(230, 174, 85, 0.13);
+  --gold: #ebb04f;
+  --gold-soft: rgba(235, 176, 79, 0.14);
+
+  --glass: rgba(22, 22, 27, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-elevated: var(--bg-elevated);
+  --color-fill: var(--fill);
+  --color-fill-2: var(--fill-2);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-separator: var(--separator);
+  --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-soft: var(--accent-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), system-ui, sans-serif;
+  --radius-control: 12px;
+  --radius-card: 20px;
+  --radius-sheet: 28px;
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+}
+
+@utility glass {
+  background-color: var(--glass);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-color: var(--glass-border);
+}
+
+@utility surface {
+  background-color: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--bg-elevated);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.022em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(4deg);
+  }
+}

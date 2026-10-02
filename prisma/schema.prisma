@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  name           String
+  passwordHash   String
+  role           String         @default("USER") // USER | ADMIN
+  plan           String         @default("FREE") // FREE | PRO
+  level          String         @default("A1") // A1..C2
+  goal           String?
+  locale         String         @default("ru")
+  onboarded      Boolean        @default(false)
+  xp             Int            @default(0)
+  streak         Int            @default(0)
+  lastActiveDate String?
+  upgradeRequested Boolean      @default(false)
+  createdAt      DateTime       @default(now())
+  conversations  Conversation[]
+  usages         DailyUsage[]
+  mistakes       Mistake[]
+  units          PlanUnit[]
+  quizzes        Quiz[]
+  attempts       QuizAttempt[]
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicSlug String?
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String // user | assistant
+  content        String
+  corrections    String? // JSON
+  tips           String? // JSON (pronunciation tips)
+  provider       String?
+  model          String?
+  createdAt      DateTime     @default(now())
+}
+
+model Topic {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  level   String
+  icon    String
+  proOnly Boolean @default(false)
+  order   Int     @default(0)
+  titleRu String
+  titleEn String
+  titleUz String
+  descRu  String
+  descEn  String
+  descUz  String
+  starter String // first tutor line, English
+}
+
+model Mistake {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String
+  original    String
+  corrected   String
+  explanation String
+  createdAt   DateTime @default(now())
+}
+
+model PlanUnit {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order     Int
+  topicSlug String
+  level     String
+  status    String  @default("locked") // locked | current | done
+  stars     Int     @default(0)
+  quizzes   Quiz[]
+}
+
+model Quiz {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String?
+  unit      PlanUnit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  title     String
+  level     String
+  questions String // JSON
+  source    String // provider id
+  createdAt DateTime      @default(now())
+  attempts  QuizAttempt[]
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Int
+  total     Int
+  xp        Int
+  createdAt DateTime @default(now())
+}
+
+model DailyUsage {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date    String // YYYY-MM-DD in Asia/Tashkent
+  seconds Int    @default(0)
+
+  @@unique([userId, date])
+}
+
+model AILog {
+  id        String   @id @default(cuid())
+  task      String
+  provider  String
+  model     String
+  ok        Boolean
+  latencyMs Int
+  attempt   Int
+  error     String?
+  userId    String?
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}
