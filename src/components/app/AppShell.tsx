@@ -3,25 +3,15 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import {
-  AudioLines,
-  Crown,
-  House,
-  LayoutGrid,
-  LogOut,
-  MessageCircle,
-  Route,
-  Settings,
-  Shield,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
+import { AudioLines, ChevronsUpDown, Crown, House, LayoutGrid, MessageCircle, Route, Settings, Shield, Sparkles, type LucideIcon } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Logo, LogoMark } from "@/components/ui/brand";
 import { Badge } from "@/components/ui/primitives";
-import { LocaleCycleButton, LocaleSwitcher, ThemeCycleButton, ThemeSwitcher } from "@/components/ui/switchers";
+import { AccountMenu, Avatar, PrefsMenu } from "@/components/shell/menus";
+import { SiteHeader } from "@/components/shell/SiteHeader";
 import { iconAnims, spring } from "@/components/ui/motion";
-import { logout, stopImpersonating } from "@/app/actions/auth";
+import { stopImpersonating } from "@/app/actions/auth";
+import { tierLabel } from "@/lib/billing/catalog";
 import { cn } from "@/lib/cn";
 import { useUsage } from "./usage";
 
@@ -35,7 +25,9 @@ const NAV: NavItem[] = [
   { href: "/app/pronunciation", icon: AudioLines, key: "pronunciation", anim: "bounce", pro: true },
 ];
 
-export type ShellUser = { name: string; plan: string; level: string; role: string; xp: number; streak: number };
+export type ShellUser = { name: string; plan: string; level: string; role: string; xp: number; streak: number; guest?: boolean };
+
+export { Avatar };
 
 export function AppShell({
   user,
@@ -58,7 +50,7 @@ export function AppShell({
       {impersonating && <ImpersonationBar name={user.name} />}
       <Sidebar user={user} isActive={isActive} pro={pro} />
       <MobileTopBar user={user} />
-      <main className={cn("lg:pb-10 lg:pl-[264px]", focus ? "pb-6" : "pb-28")}>
+      <main className={cn("lg:pb-10 lg:pl-[276px]", focus ? "pb-6" : "pb-28")}>
         <div className="mx-auto w-full max-w-5xl px-4 pt-5 sm:px-6 lg:pt-10">{children}</div>
       </main>
       {!focus && <TabBar isActive={isActive} />}
@@ -69,7 +61,7 @@ export function AppShell({
 function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: string) => boolean; pro: boolean }) {
   const t = useTranslations();
   return (
-    <aside className="glass fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r px-4 py-6 lg:flex">
+    <aside className="glass fixed inset-y-3 left-3 z-30 hidden w-[252px] flex-col rounded-[26px] border px-3.5 py-5 shadow-card lg:flex">
       <Link href="/" className="px-3" aria-label="Ustoz AI">
         <Logo />
       </Link>
@@ -126,54 +118,32 @@ function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: strin
             </motion.div>
           </Link>
         )}
-        {/* Quiet, always-visible display prefs: no trip to Settings needed. */}
-        <div className="flex items-center justify-between gap-1 border-t border-separator pt-3">
-          <ThemeSwitcher size="sm" showLabels={false} />
-          <LocaleSwitcher size="sm" persist />
+        <div className="flex items-center gap-1 border-t border-separator pt-3">
+          <AccountMenu
+            user={user}
+            where="app"
+            placement="top start"
+            className="min-w-0 flex-1 rounded-[14px]"
+            trigger={
+              <span className="flex min-w-0 items-center gap-2.5 rounded-[14px] p-1.5 text-left transition-colors hover:bg-fill">
+                <Avatar name={user.name} size={34} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14px] font-semibold text-label">{user.name}</span>
+                  <span className="mt-0.5 flex items-center gap-1.5">
+                    <Badge tone={user.plan === "FREE" ? "neutral" : "accent"} className="px-1.5 py-0 text-[11px]">
+                      {tierLabel(user.plan)}
+                    </Badge>
+                    <span className="text-[12px] text-label-2">{user.level}</span>
+                  </span>
+                </span>
+                <ChevronsUpDown className="size-4 shrink-0 text-label-3" />
+              </span>
+            }
+          />
         </div>
-        <UserChip user={user} />
+        <PrefsMenu persist className="w-full justify-center" />
       </div>
     </aside>
-  );
-}
-
-function UserChip({ user }: { user: ShellUser }) {
-  const t = useTranslations("common");
-  return (
-    <div className="flex items-center gap-3 rounded-[14px] p-2">
-      <Avatar name={user.name} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-[14px] font-semibold">{user.name}</div>
-        <div className="mt-0.5 flex items-center gap-1.5">
-          <Badge tone={user.plan === "PRO" ? "accent" : "neutral"} className="px-1.5 py-0 text-[11px]">
-            {user.plan === "PRO" ? "Pro" : "Free"}
-          </Badge>
-          <span className="text-[12px] text-label-2">{user.level}</span>
-        </div>
-      </div>
-      <form action={logout}>
-        <button
-          type="submit"
-          aria-label={t("logout")}
-          title={t("logout")}
-          className="grid size-9 place-items-center rounded-full text-label-2 transition-colors hover:bg-fill hover:text-label"
-        >
-          <LogOut className="size-[18px]" />
-        </button>
-      </form>
-    </div>
-  );
-}
-
-export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
-  return (
-    <span
-      className="grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent-solid/90 to-teal-solid font-semibold text-white"
-      style={{ width: size, height: size, fontSize: size * 0.42 }}
-      aria-hidden
-    >
-      {name.trim().charAt(0).toUpperCase() || "U"}
-    </span>
   );
 }
 
@@ -181,27 +151,20 @@ function MobileTopBar({ user }: { user: ShellUser }) {
   const { remaining } = useUsage();
   const t = useTranslations();
   return (
-    <header className="glass sticky top-0 z-30 flex h-14 items-center gap-3 border-b px-4 lg:hidden">
-      <Link href="/app" aria-label="Ustoz AI">
-        <LogoMark size={28} />
-      </Link>
-      <div className="flex-1" />
-      <div className="-mr-1 flex items-center">
-        <LocaleCycleButton />
-        <ThemeCycleButton />
-      </div>
-      {remaining !== null && (
-        <Badge tone={remaining < 120 ? "gold" : "neutral"}>{t("dashboard.minutesLeft", { n: Math.ceil(remaining / 60) })}</Badge>
-      )}
-      {user.role === "ADMIN" && (
-        <Link href="/admin" aria-label={t("common.admin")} className="grid size-9 place-items-center rounded-full text-label-2 hover:bg-fill">
-          <Shield className="size-5" />
-        </Link>
-      )}
-      <Link href="/app/settings" aria-label={t("nav.settings")}>
-        <Avatar name={user.name} size={32} />
-      </Link>
-    </header>
+    <SiteHeader
+      className="lg:hidden"
+      brandHref="/app"
+      brand={<LogoMark size={28} />}
+      right={
+        <>
+          {remaining !== null && (
+            <Badge tone={remaining < 120 ? "gold" : "neutral"}>{t("dashboard.minutesLeft", { n: Math.ceil(remaining / 60) })}</Badge>
+          )}
+          <PrefsMenu persist className="px-2" />
+          <AccountMenu user={user} where="app" />
+        </>
+      }
+    />
   );
 }
 
@@ -246,7 +209,7 @@ function TabBar({ isActive }: { isActive: (h: string) => boolean }) {
 function ImpersonationBar({ name }: { name: string }) {
   const t = useTranslations("common");
   return (
-    <div className="sticky top-0 z-50 flex items-center justify-center gap-3 bg-gold-solid px-4 py-2 text-[13px] font-medium text-on-solid">
+    <div className="relative z-50 flex items-center justify-center gap-3 bg-gold-solid px-4 py-2 text-[13px] font-medium text-on-solid">
       {t("impersonating", { name })}
       <form action={stopImpersonating}>
         <button type="submit" className="rounded-full bg-black/15 px-3 py-1 font-semibold hover:bg-black/25">

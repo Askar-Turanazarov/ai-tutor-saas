@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { setRequestLocale } from "next-intl/server";
 import { redirect as nextRedirect } from "next/navigation";
 import { redirect } from "@/i18n/navigation";
-import { getCurrentUser, getSession } from "@/lib/auth";
+import { getCurrentUser, getSession, isGuest } from "@/lib/auth";
 import { remainingSeconds } from "@/lib/plans";
 import { limit } from "@/lib/billing/limits";
 import { AppShell } from "@/components/app/AppShell";
@@ -19,7 +19,7 @@ export default async function AppLayout({ children, params }: { children: ReactN
   return (
     <UsageProvider initial={remaining} limitMinutes={minutes ?? 0}>
       <AppShell
-        user={{ name: user.name, plan: user.plan, level: user.level, role: user.role, xp: user.xp, streak: user.streak }}
+        user={{ name: user.name, plan: user.plan, level: user.level, role: user.role, xp: user.xp, streak: user.streak, guest: isGuest(user) }}
         impersonating={!!session?.imp}
       >
         {children}

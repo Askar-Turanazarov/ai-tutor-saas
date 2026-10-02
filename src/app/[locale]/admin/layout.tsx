@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isGuest } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -15,5 +15,5 @@ export default async function AdminLayout({ children, params }: { children: Reac
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
   if (user.role !== "ADMIN") return redirect({ href: "/app", locale });
-  return <AdminShell>{children}</AdminShell>;
+  return <AdminShell user={{ name: user.name, plan: user.plan, role: user.role, guest: isGuest(user) }}>{children}</AdminShell>;
 }

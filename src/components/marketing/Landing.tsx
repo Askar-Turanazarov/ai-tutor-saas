@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import {
   ArrowRight,
@@ -16,11 +16,12 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, Card, Reveal } from "@/components/ui/primitives";
 import { Logo, LogoMark, Ornament } from "@/components/ui/brand";
-import { LocaleSwitcher, ThemeSwitcher } from "@/components/ui/switchers";
+import { ThemeSwitcher } from "@/components/ui/switchers";
+import { SiteHeader } from "@/components/shell/SiteHeader";
+import { PrefsMenu } from "@/components/shell/menus";
 import { iconAnims, spring } from "@/components/ui/motion";
 import { cn } from "@/lib/cn";
 
@@ -40,30 +41,16 @@ export function Landing({ loggedIn }: { loggedIn: boolean }) {
 
 function Header({ loggedIn }: { loggedIn: boolean }) {
   const t = useTranslations();
-  const { scrollY } = useScroll();
-  const border = useTransform(scrollY, [0, 40], ["rgba(0,0,0,0)", "var(--separator)"]);
   return (
-    <motion.header style={{ borderBottomColor: border }} className="glass sticky top-0 z-40 border-b">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" aria-label="Ustoz AI">
-          <Logo />
-        </Link>
-        <nav className="ml-6 hidden items-center gap-1 text-[14px] text-label-2 md:flex">
-          {[
-            ["#features", t("landing.featuresTitle")],
-            ["#pricing", t("landing.pricingTitle")],
-            ["#faq", t("landing.faqTitle")],
-          ].map(([href, label]) => (
-            <a key={href} href={href} className="rounded-full px-3 py-1.5 transition-colors hover:bg-fill hover:text-label">
-              {label}
-            </a>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <LocaleSwitcher size="sm" />
-          <div className="hidden lg:block">
-            <ThemeSwitcher size="sm" showLabels={false} />
-          </div>
+    <SiteHeader
+      links={[
+        { href: "#features", label: t("landing.featuresTitle") },
+        { href: "#pricing", label: t("landing.pricingTitle") },
+        { href: "#faq", label: t("landing.faqTitle") },
+      ]}
+      right={
+        <>
+          <PrefsMenu />
           {!loggedIn && (
             <ButtonLink href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
               {t("common.login")}
@@ -72,9 +59,9 @@ function Header({ loggedIn }: { loggedIn: boolean }) {
           <ButtonLink href="/app" size="sm">
             {loggedIn ? t("common.continue") : t("common.start")}
           </ButtonLink>
-        </div>
-      </div>
-    </motion.header>
+        </>
+      }
+    />
   );
 }
 

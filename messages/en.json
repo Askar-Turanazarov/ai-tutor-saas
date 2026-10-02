@@ -554,5 +554,17 @@
       "fixed": "Fixed phrase",
       "word": "Word"
     }
+  },
+  "shell": {
+    "account": "Account",
+    "preferences": "Language and theme",
+    "subscription": "Subscription",
+    "plans": "Plans",
+    "toApp": "Open the app",
+    "toSite": "Home page",
+    "admin": "Admin",
+    "saveProgress": "Save my progress",
+    "guest": "Guest",
+    "mainNav": "Main navigation"
   }
 }

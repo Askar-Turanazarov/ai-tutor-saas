@@ -554,5 +554,17 @@
       "fixed": "Turgʻun ibora",
       "word": "Soʻz"
     }
+  },
+  "shell": {
+    "account": "Akkaunt",
+    "preferences": "Til va mavzu",
+    "subscription": "Obuna",
+    "plans": "Tariflar",
+    "toApp": "Ilovaga oʻtish",
+    "toSite": "Bosh sahifa",
+    "admin": "Admin panel",
+    "saveProgress": "Natijalarni saqlash",
+    "guest": "Mehmon",
+    "mainNav": "Asosiy navigatsiya"
   }
 }
