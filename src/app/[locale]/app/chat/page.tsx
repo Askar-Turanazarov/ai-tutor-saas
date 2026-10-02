@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { canAccessTopic, isPro } from "@/lib/plans";
+import { can, canAccessTopic } from "@/lib/plans";
 import { topicTitle } from "@/lib/learning";
 import { levelIndex } from "@/lib/levels";
 import { ChatView, type ChatMessage } from "@/components/app/ChatView";
@@ -61,7 +61,7 @@ export default async function Page({
   return (
     <ChatView
       key={active?.id ?? "new"}
-      pro={isPro(user)}
+      pro={can(user, "detailedFeedback")}
       conversationId={active?.id ?? null}
       title={activeTopic ? topicTitle(activeTopic, locale) : active?.title || null}
       topicIcon={activeTopic?.icon ?? null}

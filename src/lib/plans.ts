@@ -1,23 +1,15 @@
 import { db } from "./db";
-import { getSetting } from "./settings";
 import { tashkentDate, previousDate } from "./time";
-import { FREE_LEVELS, type Level } from "./levels";
+import { limit } from "./billing/limits";
 
-export type Plan = "FREE" | "PRO";
-type UserLike = { id: string; plan: string; level: string };
+export { can, canAccessLevel, canAccessTopic, tierOf, atLeast } from "./billing/entitlements";
 
-export const isPro = (u: { plan: string }) => u.plan === "PRO";
+type UserLike = { id: string; plan: string };
 
-export function canAccessLevel(u: { plan: string }, level: string) {
-  return isPro(u) || FREE_LEVELS.includes(level as Level);
-}
-
-export function canAccessTopic(u: { plan: string }, t: { proOnly: boolean; level: string }) {
-  return isPro(u) || (!t.proOnly && canAccessLevel(u, t.level));
-}
-
-export async function freeLimitSeconds() {
-  return Number(await getSetting("free.dailyMinutes")) * 60;
+/** Daily active-time limit in seconds; null = unlimited. */
+export async function dailyLimitSeconds(u: { plan: string }) {
+  const minutes = await limit(u, "dailyMinutes");
+  return minutes === null ? null : minutes * 60;
 }
 
 export async function usageToday(userId: string) {
@@ -27,9 +19,9 @@ export async function usageToday(userId: string) {
 
 /** Remaining seconds today; null means unlimited. */
 export async function remainingSeconds(u: UserLike): Promise<number | null> {
-  if (isPro(u)) return null;
-  const [limit, used] = await Promise.all([freeLimitSeconds(), usageToday(u.id)]);
-  return Math.max(0, limit - used);
+  const max = await dailyLimitSeconds(u);
+  if (max === null) return null;
+  return Math.max(0, max - (await usageToday(u.id)));
 }
 
 export async function addUsage(userId: string, seconds: number) {

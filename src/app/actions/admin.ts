@@ -11,6 +11,7 @@ import { PROVIDERS, providerModels, resetBreakers } from "@/lib/ai/router";
 import { tutorReply } from "@/lib/ai/tutor";
 import { asLang, rebuildPlan } from "@/lib/learning";
 import { LEVELS, type Level } from "@/lib/levels";
+import { grantPlan } from "@/lib/billing/subscription";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -20,14 +21,10 @@ async function requireAdmin() {
 
 const refresh = () => revalidatePath("/", "layout");
 
-export async function setUserPlan(userId: string, plan: "FREE" | "PRO") {
+/** Grants a plan for 30 days without payment (or ends the subscription for FREE). */
+export async function setUserPlan(userId: string, plan: "FREE" | "PLUS" | "PRO", days = 30) {
   await requireAdmin();
-  const u = await db.user.findUnique({ where: { id: userId } });
-  if (!u) return;
-  // Free users can't stay on Pro-only levels.
-  const level = plan === "FREE" && !["A1", "A2"].includes(u.level) ? "A2" : u.level;
-  await db.user.update({ where: { id: userId }, data: { plan, level, upgradeRequested: plan === "PRO" ? false : u.upgradeRequested } });
-  if (level !== u.level) await rebuildPlan(userId);
+  await grantPlan(userId, plan, days);
   refresh();
 }
 
@@ -70,7 +67,8 @@ export async function toggleTopicPro(topicId: string, proOnly: boolean) {
 export async function saveSetting(key: SettingKey, value: string) {
   await requireAdmin();
   if (!(key in SETTING_DEFAULTS)) return;
-  if (key === "free.dailyMinutes") value = String(Math.max(1, Math.min(240, Math.round(Number(value) || 15))));
+  if (key.startsWith("limit.") && value !== "unlimited") value = String(Math.max(0, Math.min(1000, Math.round(Number(value) || 0))));
+  if (key.startsWith("price.")) value = String(Math.max(0, Math.round(Number(value) || 0)));
   await setSetting(key, value);
   if (key.startsWith("ai.")) resetBreakers();
   refresh();

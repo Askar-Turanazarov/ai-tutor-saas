@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { canAccessTopic, freeLimitSeconds, isPro, usageToday } from "@/lib/plans";
+import { atLeast, canAccessTopic, dailyLimitSeconds, usageToday } from "@/lib/plans";
 import { tashkentHour } from "@/lib/time";
 import { topicDesc, topicTitle } from "@/lib/learning";
 import { levelIndex } from "@/lib/levels";
@@ -21,7 +21,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
 
   const [used, limit, mistakes, topics] = await Promise.all([
     usageToday(user.id),
-    freeLimitSeconds(),
+    dailyLimitSeconds(user),
     db.mistake.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 }),
     db.topic.findMany({ orderBy: { order: "asc" } }),
   ]);
@@ -36,9 +36,9 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   return (
     <Dashboard
       greeting={greeting}
-      user={{ name: user.name, level: user.level, xp: user.xp, streak: user.streak, pro: isPro(user) }}
+      user={{ name: user.name, level: user.level, xp: user.xp, streak: user.streak, pro: atLeast(user, "PLUS") }}
       usedSeconds={used}
-      limitSeconds={isPro(user) ? null : limit}
+      limitSeconds={limit}
       mistakes={mistakes.map((m) => ({ id: m.id, original: m.original, corrected: m.corrected, explanation: m.explanation }))}
       topics={recommended.map((t) => ({
         slug: t.slug,

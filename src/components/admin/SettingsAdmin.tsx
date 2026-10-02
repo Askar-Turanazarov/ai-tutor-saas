@@ -9,11 +9,11 @@ import { saveSetting } from "@/app/actions/admin";
 import type { SettingKey } from "@/lib/settings";
 import { Switch } from "./Switch";
 
-export function SettingsAdmin({ settings }: { settings: Record<SettingKey, string> }) {
+export function SettingsAdmin({ settings }: { settings: Record<string, string> }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const [pending, start] = useTransition();
-  const [minutes, setMinutes] = useState(Number(settings["free.dailyMinutes"]) || 15);
+  const [minutes, setMinutes] = useState(Number(settings["limit.FREE.dailyMinutes"]) || 15);
   const [order, setOrder] = useState(settings["ai.providerOrder"].split(",").map((s) => s.trim()).filter(Boolean));
   const [saved, setSaved] = useState<string | null>(null);
 
@@ -47,8 +47,8 @@ export function SettingsAdmin({ settings }: { settings: Record<SettingKey, strin
               <Plus className="size-4" />
             </button>
           </div>
-          <Button size="sm" loading={pending && saved === null} icon={saved === "free.dailyMinutes" ? Check : undefined} onClick={() => save("free.dailyMinutes", String(minutes))}>
-            {saved === "free.dailyMinutes" ? tc("saved") : tc("save")}
+          <Button size="sm" loading={pending && saved === null} icon={saved === "limit.FREE.dailyMinutes" ? Check : undefined} onClick={() => save("limit.FREE.dailyMinutes", String(minutes))}>
+            {saved === "limit.FREE.dailyMinutes" ? tc("saved") : tc("save")}
           </Button>
         </div>
       </div>

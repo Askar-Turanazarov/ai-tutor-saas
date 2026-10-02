@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { isPro } from "@/lib/plans";
+import { can } from "@/lib/plans";
 import { ensurePlan, topicTitle } from "@/lib/learning";
 import { PathView } from "@/components/app/PathView";
 
@@ -16,7 +16,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   setRequestLocale(locale);
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
-  const pro = isPro(user);
+  const pro = can(user, "path");
   const units = pro ? await ensurePlan(user) : [];
   const topics = await db.topic.findMany();
   const bySlug = new Map(topics.map((t) => [t.slug, t]));

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { canAccessTopic, isPro, remainingSeconds, touchStreak } from "@/lib/plans";
+import { can, canAccessTopic, remainingSeconds, touchStreak } from "@/lib/plans";
 import { tutorReply } from "@/lib/ai/tutor";
 import { asLang, topicTitle } from "@/lib/learning";
 import type { Level } from "@/lib/levels";
@@ -39,18 +39,19 @@ export async function POST(req: Request) {
     select: { role: true, content: true },
   });
 
-  const pro = isPro(user);
+  const detailed = can(user, "detailedFeedback");
+  const withTips = can(user, "chatTips");
   const res = await tutorReply({
     userId: user.id,
     history: [...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })), { role: "user", content: text }],
     level: user.level as Level,
     lang: asLang(locale),
-    pro,
+    pro: detailed,
     topic: topic ? { slug: topic.slug, title: topic.titleEn } : null,
   });
   const { reply, corrections, tips } = res.data;
   // Free users get the simple review even if a model returns more.
-  const shownCorrections = pro ? corrections : corrections.map(({ rule: _r, examples: _e, ...c }) => c);
+  const shownCorrections = detailed ? corrections : corrections.map(({ rule: _r, examples: _e, ...c }) => c);
 
   const userMsg = await db.message.create({
     data: {
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
       conversationId: conv.id,
       role: "assistant",
       content: reply,
-      tips: pro && tips.length ? JSON.stringify(tips) : null,
+      tips: withTips && tips.length ? JSON.stringify(tips) : null,
       provider: res.provider,
       model: res.model,
     },
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
     conversationId: conv.id,
     title: conv.title || text.slice(0, 60),
     user: { id: userMsg.id, content: text, corrections: shownCorrections },
-    assistant: { id: botMsg.id, content: reply, tips: pro ? tips : [] },
+    assistant: { id: botMsg.id, content: reply, tips: withTips ? tips : [] },
     remaining: await remainingSeconds(user),
     topicTitle: topic ? topicTitle(topic, locale) : null,
   });

@@ -34,6 +34,7 @@ model User {
   subscription     Subscription?
   invoices         Invoice[]
   paymentMethods   PaymentMethod[]
+  dailyCounters    DailyCounter[]
 }
 
 model Conversation {
@@ -133,6 +134,18 @@ model DailyUsage {
   seconds Int    @default(0)
 
   @@unique([userId, date])
+}
+
+/// Per-day quota counters (lessons, missions, pronunciation…), day in Asia/Tashkent.
+model DailyCounter {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   String
+  key    String
+  count  Int    @default(0)
+
+  @@unique([userId, date, key])
 }
 
 model AILog {

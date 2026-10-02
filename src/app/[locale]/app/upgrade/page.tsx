@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { isPro } from "@/lib/plans";
+import { tierOf } from "@/lib/plans";
 import { UpgradeView } from "@/components/app/UpgradeView";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -14,5 +14,5 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   setRequestLocale(locale);
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
-  return <UpgradeView pro={isPro(user)} requested={user.upgradeRequested} />;
+  return <UpgradeView pro={tierOf(user) === "PRO"} requested={user.upgradeRequested} />;
 }

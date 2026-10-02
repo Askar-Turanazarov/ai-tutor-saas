@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "@/i18n/navigation";
 import { LEVELS, type Level } from "@/lib/levels";
-import { canAccessLevel, canAccessTopic, isPro, remainingSeconds, touchStreak } from "@/lib/plans";
+import { can, canAccessLevel, canAccessTopic, remainingSeconds, touchStreak } from "@/lib/plans";
+import { consumeQuota } from "@/lib/billing/limits";
 import { PLACEMENT, levelFromScore } from "@/lib/content/placement";
 import { asLang, completeUnit, ensurePlan, randomPhrase, rebuildPlan, topicTitle } from "@/lib/learning";
 import { generateQuiz, pronunciationFeedback } from "@/lib/ai/tutor";
@@ -70,7 +71,8 @@ export async function deleteConversation(id: string) {
 /** Creates a quiz for a plan unit (Pro) and returns its id. */
 export async function createQuiz(unitId: string) {
   const user = await requireUser();
-  if (!isPro(user)) return { error: "pro" as const };
+  if (!can(user, "path")) return { error: "pro" as const };
+  if (!(await consumeQuota(user, "lessonsPerDay")).ok) return { error: "quota" as const };
   const unit = await db.planUnit.findFirst({ where: { id: unitId, userId: user.id } });
   if (!unit || unit.status === "locked") return { error: "locked" as const };
   const topic = await db.topic.findUnique({ where: { slug: unit.topicSlug } });
@@ -86,7 +88,7 @@ export async function createQuiz(unitId: string) {
     userId: user.id,
     level,
     lang: asLang(locale),
-    pro: true,
+    pro: can(user, "detailedFeedback"),
     topicTitle: topic ? topicTitle(topic, locale) : unit.topicSlug,
     mistakes,
     speakText: randomPhrase(level),
@@ -121,7 +123,8 @@ export async function submitQuiz(input: { quizId: string; score: number; total: 
 
 export async function pronunciationCheck(input: { target: string; heard: string }) {
   const user = await requireUser();
-  if (!isPro(user)) return null;
+  if (!can(user, "pronunciation")) return null;
+  if (!(await consumeQuota(user, "pronunciationPerDay")).ok) return null;
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z'\s]/g, " ").split(/\s+/).filter(Boolean);
   const target = norm(input.target);
   const heard = new Set(norm(input.heard));

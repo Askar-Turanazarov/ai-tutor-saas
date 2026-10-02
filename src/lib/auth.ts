@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
+import { reconcileUser } from "./billing/subscription";
 
 const COOKIE = "ustoz_session";
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
@@ -50,7 +51,9 @@ export async function getSession(): Promise<SessionPayload | null> {
 export async function getCurrentUser() {
   const s = await getSession();
   if (!s) return null;
-  return db.user.findUnique({ where: { id: s.uid } });
+  const user = await db.user.findUnique({ where: { id: s.uid }, include: { subscription: true } });
+  // Renewals and expiry are applied lazily, so the plan is always right without a cron job.
+  return user ? reconcileUser(user) : null;
 }
 
 /** Guests are created by /api/guest so the app can be tried without signing up. */
