@@ -1,5 +1,7 @@
 import {
   BookOpen,
+  Car,
+  MapPin,
   Briefcase,
   Building2,
   CalendarDays,
@@ -32,6 +34,8 @@ import {
 
 const ICONS: Record<string, LucideIcon> = {
   BookOpen,
+  Car,
+  MapPin,
   Briefcase,
   Building2,
   CalendarDays,

@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { TOPICS } from "../src/lib/content/topics";
+import { lessonRows } from "../src/lib/content/lessons";
 
 const db = new PrismaClient();
 
@@ -21,6 +22,10 @@ async function main() {
     };
     await db.topic.upsert({ where: { slug: t.slug }, update: data, create: { slug: t.slug, ...data } });
   }
+
+  const { items, rows } = lessonRows();
+  for (const it of items) await db.lexicalItem.upsert({ where: { id: it.id }, update: it, create: it });
+  for (const l of rows) await db.lesson.upsert({ where: { slug: l.slug }, update: l, create: l });
 
   const userPw = await bcrypt.hash(process.env.SEED_USER_PASSWORD || "demo12345", 10);
   const adminPw = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || "admin12345", 10);
@@ -81,7 +86,7 @@ async function main() {
       });
     }
   }
-  console.log(`Seeded ${TOPICS.length} topics and ${users.length} users.`);
+  console.log(`Seeded ${TOPICS.length} topics, ${rows.length} lessons, ${items.length} chunks and ${users.length} users.`);
 }
 
 main().finally(() => db.$disconnect());
