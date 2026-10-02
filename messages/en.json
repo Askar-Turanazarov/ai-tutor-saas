@@ -581,5 +581,38 @@
     "saveProgress": "Save my progress",
     "guest": "Guest",
     "mainNav": "Main navigation"
+  },
+  "ex": {
+    "prompt": {
+      "choice": "Choose the answer",
+      "collocate": "Which word goes with it?",
+      "dialogue": "Choose the best reply",
+      "gap": "Fill in the gap",
+      "order": "Build the sentence",
+      "translate": "Say it in English",
+      "spot": "Spot the mistake — tap the wrong words",
+      "match": "Match the pairs",
+      "listen": "Type what you hear",
+      "speak": "Say it out loud",
+      "meaning": "Which phrase means:"
+    },
+    "check": "Check",
+    "continue": "Continue",
+    "skip": "Skip",
+    "hint": "Hint",
+    "slower": "Slower",
+    "typeHere": "Type in English",
+    "correct": "Correct!",
+    "wrong": "Not quite",
+    "answer": "Correct answer:",
+    "combo": "Combo ×{n}",
+    "matchDone": "All pairs matched",
+    "mistakesInMatch": "Mistakes: {n}",
+    "record": "Record",
+    "stop": "Stop",
+    "heard": "We heard:",
+    "noMic": "Speech recognition isn't supported in this browser — skip this one.",
+    "quit": "Quit",
+    "progress": "Task {n} of {total}"
   }
 }

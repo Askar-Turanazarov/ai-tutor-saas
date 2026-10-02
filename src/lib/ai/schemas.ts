@@ -47,6 +47,27 @@ export const QuestionSchema = z.discriminatedUnion("type", [
     type: z.literal("speak"),
     text: z.string(),
   }),
+  z.object({
+    type: z.literal("gap"),
+    prompt: z.string().includes("___"),
+    answer: z.string(),
+    accept: z.array(z.string()).optional(),
+    explanation: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("spot"),
+    sentence: z.string(),
+    wrong: z.string(),
+    right: z.string(),
+    explanation: z.string(),
+  }),
+  z.object({
+    type: z.literal("dialogue"),
+    line: z.string(),
+    options: z.array(z.string()).min(2).max(4),
+    answer: z.number().int().min(0),
+    explanation: z.string().optional(),
+  }),
 ]);
 export type Question = z.infer<typeof QuestionSchema>;
 
@@ -55,7 +76,8 @@ export const QuizSchema = z.object({
   questions: z
     .array(QuestionSchema)
     .min(4)
-    .refine((qs) => qs.every((q) => q.type !== "choice" || q.answer < q.options.length), "answer out of range"),
+    .refine((qs) => qs.every((q) => (q.type !== "choice" && q.type !== "dialogue") || q.answer < q.options.length), "answer out of range")
+    .refine((qs) => qs.every((q) => q.type !== "spot" || q.sentence.includes(q.wrong)), "spot: wrong part not in sentence"),
 });
 export type QuizData = z.infer<typeof QuizSchema>;
 

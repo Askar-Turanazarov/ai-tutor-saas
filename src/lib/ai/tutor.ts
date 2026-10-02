@@ -92,8 +92,11 @@ Create 8 questions mixing these types:
 - {"type":"choice","prompt": English sentence with ___ or a question,"options":[3–4 options],"answer": index of correct option (0-based),"explanation": short explanation in ${LANG_NAME[opts.lang]}}
 - {"type":"order","prompt": ${opts.lang === "en" ? '"Put the words in order"' : `the meaning of the sentence in ${LANG_NAME[opts.lang]}`},"answer": an English sentence of 4–9 words without final punctuation}
 ${opts.lang === "en" ? "" : `- {"type":"translate","prompt": a sentence in ${LANG_NAME[opts.lang]},"answer": its natural English translation,"accept": [other correct translations]}`}
+- {"type":"gap","prompt": English sentence with ___ for a collocation or phrasal verb,"answer": the missing word(s),"explanation": short explanation in ${LANG_NAME[opts.lang]}}
+- {"type":"spot","sentence": a natural-looking English sentence with ONE typical learner mistake,"wrong": the exact wrong words as they appear in the sentence,"right": the correct words,"explanation": why, in ${LANG_NAME[opts.lang]}}
+- {"type":"dialogue","line": what someone says,"options": [3 possible replies],"answer": index of the most natural reply,"explanation": optional}
 ${opts.pro ? '- exactly one {"type":"speak","text": an English sentence of 5–10 words with sounds that are hard for Uzbek/Russian speakers}' : ""}
-At least 4 questions must be "choice". Exactly one option is correct. Title: a short title for the quiz in ${LANG_NAME[opts.lang]}.
+At least 3 questions must be "choice", at least one "gap" and one "spot". Exactly one option is correct. Title: a short title for the quiz in ${LANG_NAME[opts.lang]}.
 
 Return JSON: {"title": string, "questions": [...]}`;
 

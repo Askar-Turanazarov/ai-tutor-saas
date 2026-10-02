@@ -581,5 +581,38 @@
     "saveProgress": "Natijalarni saqlash",
     "guest": "Mehmon",
     "mainNav": "Asosiy navigatsiya"
+  },
+  "ex": {
+    "prompt": {
+      "choice": "Javobni tanlang",
+      "collocate": "Qaysi soʻz mos keladi?",
+      "dialogue": "Eng yaxshi javobni tanlang",
+      "gap": "Boʻsh joyni toʻldiring",
+      "order": "Gapni tuzing",
+      "translate": "Ingliz tiliga tarjima qiling",
+      "spot": "Xatoni toping — notoʻgʻri soʻzlarni bosing",
+      "match": "Juftliklarni moslang",
+      "listen": "Eshitganingizni yozing",
+      "speak": "Ovoz chiqarib ayting",
+      "meaning": "Qaysi ibora shuni anglatadi:"
+    },
+    "check": "Tekshirish",
+    "continue": "Davom etish",
+    "skip": "Oʻtkazib yuborish",
+    "hint": "Yordam",
+    "slower": "Sekinroq",
+    "typeHere": "Inglizcha yozing",
+    "correct": "Toʻgʻri!",
+    "wrong": "Unchalik emas",
+    "answer": "Toʻgʻri javob:",
+    "combo": "Kombo ×{n}",
+    "matchDone": "Barcha juftliklar topildi",
+    "mistakesInMatch": "Xatolar: {n}",
+    "record": "Yozib olish",
+    "stop": "Toʻxtatish",
+    "heard": "Eshitildi:",
+    "noMic": "Bu brauzerda nutqni aniqlash ishlamaydi — topshiriqni oʻtkazib yuboring.",
+    "quit": "Chiqish",
+    "progress": "{total} tadan {n}-topshiriq"
   }
 }
