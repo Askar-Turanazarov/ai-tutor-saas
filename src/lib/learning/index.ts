@@ -1,8 +1,8 @@
 import "server-only";
-import { db } from "./db";
-import { LEVELS, levelIndex } from "./levels";
-import { PHRASES } from "./content/phrases";
-import type { Level } from "./levels";
+import { db } from "../db";
+import { LEVELS, levelIndex } from "../levels";
+import { PHRASES } from "../content/phrases";
+import type { Level } from "../levels";
 
 type Loc = "ru" | "en" | "uz";
 
