@@ -33,6 +33,7 @@ Emails and passwords are set in `.env` (`SEED_*` variables):
 |-------|---------------------|
 | Admin | `admin@ustoz.local` |
 | Free  | `free@ustoz.local`  |
+| Plus  | `plus@ustoz.local`  |
 | Pro   | `pro@ustoz.local`   |
 
 ### Plans
@@ -89,6 +90,7 @@ Email va parollar `.env` faylida (`SEED_*` oʻzgaruvchilari) koʻrsatilgan:
 |-------|---------------------|
 | Admin | `admin@ustoz.local` |
 | Free  | `free@ustoz.local`  |
+| Plus  | `plus@ustoz.local`  |
 | Pro   | `pro@ustoz.local`   |
 
 ### Tariflar
@@ -145,6 +147,7 @@ npm run dev               # http://localhost:3000
 |-------|---------------------|
 | Админ | `admin@ustoz.local` |
 | Free  | `free@ustoz.local`  |
+| Plus  | `plus@ustoz.local`  |
 | Pro   | `pro@ustoz.local`   |
 
 ### Тарифы

@@ -27,14 +27,59 @@ async function main() {
   const users = [
     { email: process.env.SEED_ADMIN_EMAIL || "admin@ustoz.local", name: "Admin", role: "ADMIN", plan: "PRO", level: "B2", passwordHash: adminPw },
     { email: process.env.SEED_FREE_EMAIL || "free@ustoz.local", name: "Dilnoza", role: "USER", plan: "FREE", level: "A1", passwordHash: userPw },
+    { email: process.env.SEED_PLUS_EMAIL || "plus@ustoz.local", name: "Malika", role: "USER", plan: "PLUS", level: "A2", passwordHash: userPw },
     { email: process.env.SEED_PRO_EMAIL || "pro@ustoz.local", name: "Timur", role: "USER", plan: "PRO", level: "B1", passwordHash: userPw },
   ];
+  const day = 24 * 60 * 60 * 1000;
   for (const u of users) {
-    await db.user.upsert({
+    const user = await db.user.upsert({
       where: { email: u.email },
       update: { role: u.role, plan: u.plan },
-      create: { ...u, onboarded: true, xp: u.plan === "PRO" ? 340 : 60, streak: u.plan === "PRO" ? 5 : 1 },
+      create: { ...u, onboarded: true, xp: u.plan === "FREE" ? 60 : 340, streak: u.plan === "FREE" ? 1 : 5 },
     });
+    if (u.plan === "FREE" || (await db.subscription.findUnique({ where: { userId: user.id } }))) continue;
+
+    // Paid demo accounts get a real subscription so renewals and cancellation can be tried right away.
+    const start = new Date(Date.now() - 10 * day);
+    const months = u.role === "ADMIN" ? 12 : 1;
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + months);
+    const card =
+      u.role === "ADMIN"
+        ? null
+        : await db.paymentMethod.create({
+            data: { userId: user.id, provider: "card", brand: u.plan === "PRO" ? "humo" : "uzcard", last4: u.plan === "PRO" ? "4417" : "1234", expMonth: 12, expYear: 2029, token: `tok_seed_${user.id}` },
+          });
+    const sub = await db.subscription.create({
+      data: {
+        userId: user.id,
+        tier: u.plan,
+        period: months,
+        status: "active",
+        provider: card ? "card" : "admin",
+        currentPeriodStart: start,
+        currentPeriodEnd: end,
+        paymentMethodId: card?.id,
+      },
+    });
+    if (card) {
+      await db.invoice.create({
+        data: {
+          userId: user.id,
+          subscriptionId: sub.id,
+          tier: u.plan,
+          period: months,
+          amount: u.plan === "PRO" ? 89000 : 49000,
+          currency: "UZS",
+          provider: "card",
+          status: "paid",
+          saveCard: true,
+          providerTxId: `seed_${user.id}`,
+          paidAt: start,
+          createdAt: start,
+        },
+      });
+    }
   }
   console.log(`Seeded ${TOPICS.length} topics and ${users.length} users.`);
 }

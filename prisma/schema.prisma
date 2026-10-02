@@ -8,27 +8,32 @@ datasource db {
 }
 
 model User {
-  id             String         @id @default(cuid())
-  email          String         @unique
-  name           String
-  passwordHash   String
-  role           String         @default("USER") // USER | ADMIN
-  plan           String         @default("FREE") // FREE | PRO
-  level          String         @default("A1") // A1..C2
-  goal           String?
-  locale         String         @default("ru")
-  onboarded      Boolean        @default(false)
-  xp             Int            @default(0)
-  streak         Int            @default(0)
-  lastActiveDate String?
-  upgradeRequested Boolean      @default(false)
-  createdAt      DateTime       @default(now())
-  conversations  Conversation[]
-  usages         DailyUsage[]
-  mistakes       Mistake[]
-  units          PlanUnit[]
-  quizzes        Quiz[]
-  attempts       QuizAttempt[]
+  id               String          @id @default(cuid())
+  email            String          @unique
+  name             String
+  passwordHash     String
+  role             String          @default("USER") // USER | ADMIN
+  plan             String          @default("FREE") // FREE | PLUS | PRO — cache of the active subscription
+  level            String          @default("A1") // A1..C2
+  goal             String?
+  locale           String          @default("ru")
+  onboarded        Boolean         @default(false)
+  xp               Int             @default(0)
+  streak           Int             @default(0)
+  lastActiveDate   String?
+  upgradeRequested Boolean         @default(false)
+  trialUsedAt      DateTime?
+  stripeCustomerId String?
+  createdAt        DateTime        @default(now())
+  conversations    Conversation[]
+  usages           DailyUsage[]
+  mistakes         Mistake[]
+  units            PlanUnit[]
+  quizzes          Quiz[]
+  attempts         QuizAttempt[]
+  subscription     Subscription?
+  invoices         Invoice[]
+  paymentMethods   PaymentMethod[]
 }
 
 model Conversation {
@@ -83,14 +88,14 @@ model Mistake {
 }
 
 model PlanUnit {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   order     Int
   topicSlug String
   level     String
-  status    String  @default("locked") // locked | current | done
-  stars     Int     @default(0)
+  status    String @default("locked") // locked | current | done
+  stars     Int    @default(0)
   quizzes   Quiz[]
 }
 
@@ -146,4 +151,63 @@ model AILog {
 model Setting {
   key   String @id
   value String
+}
+
+/// One current subscription per user; history lives in Invoice.
+model Subscription {
+  id                 String         @id @default(cuid())
+  userId             String         @unique
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier               String // PLUS | PRO
+  period             Int // months: 1 | 3 | 12
+  status             String // trialing | active | past_due | canceled | expired
+  provider           String // card | click | stripe | trial | admin
+  providerRef        String? // e.g. Stripe subscription id
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean        @default(false)
+  graceUntil         DateTime?
+  pendingTier        String? // downgrade scheduled for the next period
+  pendingPeriod      Int?
+  paymentMethodId    String?
+  paymentMethod      PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  invoices           Invoice[]
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  tier           String
+  period         Int
+  amount         Int // whole UZS, or cents for USD
+  currency       String // UZS | USD
+  provider       String
+  kind           String        @default("new") // new | renewal | upgrade
+  status         String        @default("pending") // pending | paid | failed | canceled | refunded
+  saveCard       Boolean       @default(false)
+  providerTxId   String?
+  failureReason  String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+/// A tokenized card. Only the token and display data are stored, never the card number.
+model PaymentMethod {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider      String
+  brand         String // uzcard | humo | visa | mastercard
+  last4         String
+  expMonth      Int
+  expYear       Int
+  token         String
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
 }
