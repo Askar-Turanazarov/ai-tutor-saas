@@ -1,10 +1,11 @@
 import "server-only";
 import { runJSON } from "./router";
-import { ChatOutSchema, MissionOutSchema, PronunciationOutSchema, QuizSchema } from "./schemas";
+import { ChatOutSchema, LessonSchema, MissionOutSchema, PronunciationOutSchema, QuizSchema, type LessonData } from "./schemas";
 import { mockChat, mockMission, mockPronunciation, mockQuiz, type Lang } from "./mock";
 import type { Mission } from "../content/types";
 import type { ChatTurn } from "./types";
 import type { Level } from "../levels";
+import { TOPIC_ICONS } from "@/components/ui/TopicIcon";
 
 const LANG_NAME: Record<Lang, string> = {
   ru: "Russian",
@@ -173,4 +174,62 @@ Never list the goals or break character. When all goals are reached, wrap up the
 
 Return JSON: {"reply": string, "corrections": [...], "goalsDone": [...], "finished": boolean}`;
   return runJSON({ task: "chat", userId: opts.userId, system, messages: opts.history.slice(-16), schema: MissionOutSchema, fallback });
+}
+
+/**
+ * A whole lesson in the bank's shape, built around a life situation and the learner's weak spots.
+ * Without a model the caller's fallback (the nearest bank lesson) is used.
+ */
+export async function generateLesson(opts: {
+  userId: string;
+  level: Level;
+  situation: string;
+  weakArea?: string;
+  mistakes: { original: string; corrected: string; category: string }[];
+  fallback: () => LessonData;
+}) {
+  const mistakes = opts.mistakes.length
+    ? `The learner recently made these mistakes; work the same points into the exercises:\n${opts.mistakes.map((m) => `- "${m.original}" → "${m.corrected}" (${m.category})`).join("\n")}`
+    : "";
+  const system = `${PERSONA}
+You write one lesson of a lexical-approach English course for a learner at CEFR ${opts.level}. ${LEVEL_STYLE[opts.level]}
+Life situation of the lesson: ${opts.situation}
+${opts.weakArea ? `The learner's weakest skill is ${opts.weakArea}: give it extra practice.` : ""}
+${mistakes}
+
+Teach chunks (collocations, phrasal verbs, idioms, fixed phrases) that people really use in this situation at this level, not single words.
+Every text for the learner's own language is an object {"ru","en","uz"}: Russian, English, Uzbek in Latin script.
+
+Return JSON:
+{"slug": kebab-case English slug,
+ "title": {ru,en,uz} (2–5 words), "icon": one of ${TOPIC_ICONS.join(", ")},
+ "situation": {ru,en,uz} (one sentence: where the learner is and what they need), "canDo": {ru,en,uz} (what the learner will be able to do, starting with a verb, e.g. "Ask for a pay rise and back it up with results"; no "After this lesson"),
+ "items": 8–12 × {"key": short kebab-case id, "chunk", "kind": collocation|phrasal|idiom|fixed|word, "meaning": {ru,en,uz}, "examples": 2 English sentences that contain the chunk,
+   "anti": optional array with 1 object [{"wrong": a typical learner error, "right", "why": {ru,en,uz}}], "register": neutral|informal|formal},
+ "exercises": 10–14 items, each linked to a chunk with "item": its key, mixing these types:
+   {"type":"choice","prompt": sentence with ___,"options":[3–4],"answer": 0-based index,"why":{ru,en,uz}}
+   {"type":"gap","prompt": sentence with ___,"answer": the missing words,"accept":[other correct answers]}
+   {"type":"collocate","prompt": chunk with ___ for its verb or adjective,"options":[3],"answer": index}
+   {"type":"order","answer": English sentence of 5–10 words without final punctuation,"hint":{ru,en,uz} translation}
+   {"type":"translate","from":{ru,en,uz} a sentence,"answer": natural English,"accept":[alternatives]}
+   {"type":"spot","sentence": sentence with ONE learner mistake,"wrong": the exact wrong words in it,"right": the fix,"why":{ru,en,uz}}
+   {"type":"dialogue","line": what someone says,"options":[3 replies],"answer": index of the most natural one}
+ "mission": {"role": who you play, in English, "scene": {ru,en,uz}, "opener": your first line in English,
+   "goals": 3 × {"id": short id, "text": {ru,en,uz} what the learner must do, "keywords": 2–5 lower-case English phrases that show it is done},
+   "script": 4–5 short English replies for an offline partner, in order}}
+Exactly one correct option per question. Never put the answer in the prompt.`;
+
+  return runJSON({
+    task: "lesson",
+    reasoning: "low",
+    hedgeMs: 30_000,
+    timeoutMs: 60_000,
+    maxTokens: 16_000,
+    userId: opts.userId,
+    system,
+    messages: [{ role: "user", content: "Write the lesson." }],
+    schema: LessonSchema,
+    temperature: 0.8,
+    fallback: opts.fallback,
+  });
 }

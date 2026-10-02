@@ -4,6 +4,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { lessonAccess, lessonMap, overallRating, skills } from "@/lib/learning/progress";
 import { suggestLesson } from "@/lib/learning/adaptive";
 import { LessonMap, type MapLesson } from "@/components/learn/LessonMap";
+import { AiLessons } from "@/components/learn/AiLessons";
+import { personalLessons } from "@/lib/learning/ai-lessons";
+import { can } from "@/lib/plans";
 import type { L3 } from "@/lib/content/types";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -16,7 +19,8 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   setRequestLocale(locale);
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
-  const [rows, s] = await Promise.all([lessonMap(user.id), skills(user)]);
+  const aiAllowed = can(user, "aiLessons");
+  const [rows, s, mine] = await Promise.all([lessonMap(user.id), skills(user), aiAllowed ? personalLessons(user.id) : []]);
   const pick = (l: L3) => l[locale as keyof L3] ?? l.en;
 
   const lessons = rows.map((r) => {
@@ -42,6 +46,20 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   return (
     <LessonMap
       lessons={lessons.map((l): MapLesson => ({ ...l, recommended: l.id === next?.id }))}
+      personal={
+        <AiLessons
+          allowed={aiAllowed}
+          level={user.level}
+          lessons={mine.map((l) => ({
+            slug: l.slug,
+            title: pick({ ru: l.titleRu, en: l.titleEn, uz: l.titleUz }),
+            level: l.level,
+            icon: l.icon,
+            done: l.progress?.status === "done",
+            stars: l.progress?.stars ?? 0,
+          }))}
+        />
+      }
     />
   );
 }

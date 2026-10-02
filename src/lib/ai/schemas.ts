@@ -130,7 +130,8 @@ export const LessonSchema = z.object({
         kind: z.enum(["collocation", "phrasal", "idiom", "fixed", "word"]),
         meaning: L3Schema,
         examples: z.array(z.string()).min(1),
-        anti: z.array(z.object({ wrong: z.string(), right: z.string(), why: L3Schema })).optional(),
+        // Models often send one anti-example as a bare object.
+        anti: z.preprocess((v) => (v && !Array.isArray(v) ? [v] : v), z.array(z.object({ wrong: z.string(), right: z.string(), why: L3Schema }))).optional(),
         register: z.enum(["neutral", "informal", "formal"]).optional(),
       }),
     )

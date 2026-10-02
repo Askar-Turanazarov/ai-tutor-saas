@@ -63,6 +63,8 @@ const ICONS: Record<string, LucideIcon> = {
   Users,
 };
 
+export const TOPIC_ICONS = Object.keys(ICONS);
+
 export function TopicIcon({ name, ...props }: { name: string } & LucideProps) {
   const Icon = ICONS[name] ?? MessageCircle;
   return <Icon {...props} />;

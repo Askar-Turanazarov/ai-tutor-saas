@@ -183,6 +183,9 @@ export async function runJSON<T>(opts: {
   reasoning?: "off" | "low";
   hedgeMs?: number;
   only?: Candidate[];
+  /** Long answers (a whole lesson) need more time than chat replies. */
+  timeoutMs?: number;
+  maxTokens?: number;
 }): Promise<RunResult<T>> {
   const started = Date.now();
   const chain = (opts.only ?? (await candidateChain())).filter(
@@ -213,7 +216,7 @@ export async function runJSON<T>(opts: {
     };
 
     const exhausted = () =>
-      next >= chain.length || attempt >= MAX_ATTEMPTS || Date.now() - started > TOTAL_BUDGET_MS;
+      next >= chain.length || attempt >= MAX_ATTEMPTS || Date.now() - started > Math.max(TOTAL_BUDGET_MS, (opts.timeoutMs ?? 0) * 2);
 
     const launch = () => {
       if (done) return;
@@ -225,7 +228,7 @@ export async function runJSON<T>(opts: {
       const n = ++attempt;
       const key = breakerKey(c.provider.id, c.model);
       const ac = new AbortController();
-      const timeout = setTimeout(() => ac.abort(new DOMException("timeout", "TimeoutError")), ATTEMPT_TIMEOUT_MS);
+      const timeout = setTimeout(() => ac.abort(new DOMException("timeout", "TimeoutError")), opts.timeoutMs ?? ATTEMPT_TIMEOUT_MS);
       running.add(ac);
       inFlight++;
       const t0 = Date.now();
@@ -242,11 +245,12 @@ export async function runJSON<T>(opts: {
           json: true,
           temperature: opts.temperature,
           reasoning: opts.reasoning ?? "off",
+          maxTokens: opts.maxTokens,
           signal: ac.signal,
         })
         .then((text) => {
           const parsed = opts.schema.safeParse(extractJSON(text));
-          if (!parsed.success) throw new ProviderError("schema mismatch");
+          if (!parsed.success) throw new ProviderError(`schema mismatch: ${parsed.error.issues.slice(0, 2).map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
           return parsed.data;
         })
         .then(

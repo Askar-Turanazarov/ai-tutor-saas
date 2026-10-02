@@ -743,5 +743,39 @@
     "back": "Xatolar bankiga",
     "nothing": "Faol xatolar yoʻq — ajoyib!",
     "showResolved": "Tuzatilganlar ({n})"
+  },
+  "aiLessons": {
+    "title": "Shaxsiy darslar",
+    "subtitle": "Vaziyatni yozing — Ustoz unga, darajangizga va xatolaringizga mos dars tuzadi. C1–C2 ham bor.",
+    "level": "Daraja",
+    "situation": "Vaziyat",
+    "placeholder": "Masalan: rahbar bilan maosh oshirishni muhokama qilish",
+    "presets": {
+      "salary": "Maosh oshirish haqida suhbat",
+      "conference": "Konferensiyadagi savol-javob",
+      "interview": "Senior lavozimga suhbat",
+      "complaint": "Rasmiy shikoyat",
+      "debate": "Texnologiya va jamiyat haqida bahs",
+      "pitch": "Startapni investorga taqdim etish"
+    },
+    "create": "Dars yaratish",
+    "writing": {
+      "0": "Vaziyatga mos iboralarni tanlayapman…",
+      "1": "Xatolaringizni hisobga olyapman…",
+      "2": "Mashqlarni tuzyapman…",
+      "3": "Rolli topshiriqni tayyorlayapman…"
+    },
+    "adaptedTitle": "Dars bankdan yigʻildi",
+    "adaptedText": "AI hozir mavjud emas, shuning uchun eng yaqin tayyor darsni olib, shaxsiy darslaringizga qoʻshdim.",
+    "open": "Darsni ochish",
+    "another": "Boshqa vaziyat",
+    "quota": "Bugun {n} ta dars yaratildi — ertaga davom etamiz.",
+    "invalid": "Vaziyatni biroz batafsilroq yozing.",
+    "failed": "Darsni yaratib boʻlmadi. Qayta urinib koʻring.",
+    "delete": "Darsni oʻchirish",
+    "deleteConfirm": "Oʻchirilsinmi?",
+    "lockedBadge": "Pro",
+    "lockedText": "C1–C2 darajalari va oʻz vaziyatingiz uchun darslar — xatolaringiz hisobga olinadi.",
+    "lockedCta": "Pro bilan ochish"
   }
 }

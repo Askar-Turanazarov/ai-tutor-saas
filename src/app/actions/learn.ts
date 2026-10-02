@@ -9,6 +9,8 @@ import { consumeQuota, limit, quotaLeft } from "@/lib/billing/limits";
 import { tashkentDate } from "@/lib/time";
 import { completeLesson, lessonAccess, parseLesson, recordAnswers } from "@/lib/learning/progress";
 import { applyMistakeResults, dueCount, mistakeSession, reviewSession, SESSION_SIZE } from "@/lib/learning/deck";
+import { AI_LESSONS_PER_DAY, createPersonalLesson, deletePersonalLesson, generatedToday } from "@/lib/learning/ai-lessons";
+import { LEVELS } from "@/lib/levels";
 
 async function requireUser() {
   const u = await getCurrentUser();
@@ -138,4 +140,27 @@ export async function reportMistakeTraining(input: { answers: unknown }) {
   const xp = first.filter((a) => a.ok).length * 3;
   await addXp(user, xp);
   return { xp, resolved };
+}
+
+/* ───────────── Personal AI lessons (Pro) ───────────── */
+
+const NewLesson = z.object({ level: z.enum(LEVELS), situation: z.string().trim().min(3).max(200) });
+
+/** Writes a lesson for the learner's own situation and level. Takes a while: the client shows progress. */
+export async function createAiLesson(input: { level: string; situation: string }) {
+  const user = await requireUser();
+  if (!can(user, "aiLessons")) return { error: "plan" as const };
+  const parsed = NewLesson.safeParse(input);
+  if (!parsed.success) return { error: "invalid" as const };
+  if ((await generatedToday(user.id)) >= AI_LESSONS_PER_DAY) return { error: "quota" as const, limit: AI_LESSONS_PER_DAY };
+  const res = await createPersonalLesson(user, parsed.data);
+  revalidatePath("/[locale]/app/path", "page");
+  return { slug: res.slug, fallback: res.fallback };
+}
+
+export async function deleteAiLesson(slug: string) {
+  const user = await requireUser();
+  const ok = await deletePersonalLesson(user.id, z.string().max(80).parse(slug));
+  revalidatePath("/[locale]/app/path", "page");
+  return { ok };
 }

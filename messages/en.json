@@ -743,5 +743,39 @@
     "back": "Back to mistakes",
     "nothing": "No active mistakes. Great work!",
     "showResolved": "Fixed ({n})"
+  },
+  "aiLessons": {
+    "title": "Personal lessons",
+    "subtitle": "Describe a situation and Ustoz writes a lesson for it, your level and your mistakes. C1–C2 included.",
+    "level": "Level",
+    "situation": "Situation",
+    "placeholder": "For example: ask my manager for a pay rise",
+    "presets": {
+      "salary": "Asking for a pay rise",
+      "conference": "Q&A at a conference",
+      "interview": "Interview for a senior role",
+      "complaint": "A formal complaint",
+      "debate": "Debating tech and society",
+      "pitch": "Pitching a startup to an investor"
+    },
+    "create": "Create lesson",
+    "writing": {
+      "0": "Choosing phrases for the situation…",
+      "1": "Working in your mistakes…",
+      "2": "Writing the exercises…",
+      "3": "Setting up the role-play…"
+    },
+    "adaptedTitle": "Lesson built from the bank",
+    "adaptedText": "AI isn't available right now, so I took the closest ready-made lesson and added it to your personal ones.",
+    "open": "Open lesson",
+    "another": "Another situation",
+    "quota": "You've created {n} lessons today. Let's continue tomorrow.",
+    "invalid": "Describe the situation in a bit more detail.",
+    "failed": "Couldn't create the lesson. Please try again.",
+    "delete": "Delete lesson",
+    "deleteConfirm": "Delete?",
+    "lockedBadge": "Pro",
+    "lockedText": "C1–C2 and lessons for your own situations, written around your mistakes.",
+    "lockedCta": "Unlock with Pro"
   }
 }

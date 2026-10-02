@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Check, Lock, Play, Sparkles, Star } from "lucide-react";
@@ -27,7 +28,7 @@ export type MapLesson = {
 };
 
 /** The lesson path: levels as chapters, each lesson a majolica medallion on a winding road. */
-export function LessonMap({ lessons }: { lessons: MapLesson[] }) {
+export function LessonMap({ lessons, personal }: { lessons: MapLesson[]; personal?: ReactNode }) {
   const t = useTranslations("path");
   const done = lessons.filter((l) => l.done).length;
   const next = lessons.find((l) => l.recommended);
@@ -62,6 +63,8 @@ export function LessonMap({ lessons }: { lessons: MapLesson[] }) {
         <span className="shrink-0 text-[14px] font-medium text-label-2">{t("progress", { done, total: lessons.length })}</span>
         <ProgressBar value={done / Math.max(1, lessons.length)} className="flex-1" color="bg-teal-solid" />
       </div>
+
+      {personal}
 
       {levels.map((level) => {
         const group = lessons.filter((l) => l.level === level);

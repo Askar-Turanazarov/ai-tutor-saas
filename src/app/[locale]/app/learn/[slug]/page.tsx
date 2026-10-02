@@ -14,7 +14,8 @@ const pick3 = (l: L3, locale: string) => l[locale as keyof L3] ?? l.en;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
-  const l = await db.lesson.findFirst({ where: { slug, ownerId: null }, select: { titleRu: true, titleEn: true, titleUz: true } });
+  const user = await getCurrentUser();
+  const l = await db.lesson.findFirst({ where: { slug, OR: [{ ownerId: null }, ...(user ? [{ ownerId: user.id }] : [])] }, select: { titleRu: true, titleEn: true, titleUz: true } });
   return { title: l ? pick3({ ru: l.titleRu, en: l.titleEn, uz: l.titleUz }, locale) : undefined };
 }
 
