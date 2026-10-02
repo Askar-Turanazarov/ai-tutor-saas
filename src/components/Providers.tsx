@@ -3,11 +3,15 @@
 import type { ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
 import { MotionConfig } from "framer-motion";
+import { ToastRegion } from "./ui/overlays";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      <MotionConfig reducedMotion="user">
+        {children}
+        <ToastRegion />
+      </MotionConfig>
     </ThemeProvider>
   );
 }

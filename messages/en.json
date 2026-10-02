@@ -537,5 +537,22 @@
     "cancelText": "Auto-renewal turns off. Everything stays until {date}, then the account moves to Free. Your progress and words are kept.",
     "keep": "Keep subscription",
     "cancelConfirm": "Cancel"
+  },
+  "learn": {
+    "listen": "Listen",
+    "stop": "Stop",
+    "flip": "Flip card",
+    "wrong": "Not natural",
+    "right": "Correct",
+    "why": "Why",
+    "example": "Example",
+    "meaning": "Meaning",
+    "kinds": {
+      "collocation": "Collocation",
+      "phrasal": "Phrasal verb",
+      "idiom": "Idiom",
+      "fixed": "Fixed phrase",
+      "word": "Word"
+    }
   }
 }

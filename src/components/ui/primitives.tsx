@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion, useInView, type HTMLMotionProps } from "framer-motion";
+import { Modal, ProgressBar as HeroProgressBar } from "@heroui/react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { fadeUp, spring, stagger } from "./motion";
@@ -196,21 +197,39 @@ export function ProgressRing({
 
 /* ───────────── Progress bar ───────────── */
 
-export function ProgressBar({ value, className, color = "bg-accent-solid" }: { value: number; className?: string; color?: string }) {
+/** Linear progress (0–1) with progressbar semantics from React Aria. */
+export function ProgressBar({
+  value,
+  className,
+  color = "bg-accent-solid",
+  label = "Progress",
+}: {
+  value: number;
+  className?: string;
+  color?: string;
+  label?: string;
+}) {
+  const v = Math.max(0, Math.min(1, value));
   return (
-    <div className={cn("h-2.5 overflow-hidden rounded-full bg-fill", className)}>
-      <motion.div
-        className={cn("h-full rounded-full", color)}
-        initial={false}
-        animate={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }}
-        transition={spring}
-      />
-    </div>
+    <HeroProgressBar aria-label={label} value={Math.round(v * 100)} className="block">
+      <HeroProgressBar.Track className={cn("h-2.5 rounded-full bg-fill", className)}>
+        <motion.div
+          className={cn("absolute inset-y-0 start-0 rounded-full", color)}
+          initial={false}
+          animate={{ width: `${v * 100}%` }}
+          transition={spring}
+        />
+      </HeroProgressBar.Track>
+    </HeroProgressBar>
   );
 }
 
 /* ───────────── Sheet (modal) ───────────── */
 
+/**
+ * Modal dialog on HeroUI/React Aria: focus trap, Esc, outside click, scroll lock.
+ * Bottom sheet on phones, centred dialog from `sm`.
+ */
 export function Sheet({
   open,
   onClose,
@@ -222,43 +241,25 @@ export function Sheet({
   children: ReactNode;
   label: string;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal aria-label={label}>
-          <motion.div
-            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+    <Modal.Backdrop isOpen={open} onOpenChange={(o) => !o && onClose()} isDismissable variant="blur" className="bg-(--backdrop)">
+      <Modal.Container placement="auto" className="p-3 sm:p-6">
+        <Modal.Dialog
+          aria-label={label}
+          className="max-h-[calc(100dvh-24px)] w-full max-w-md overflow-y-auto rounded-sheet bg-elevated p-6 text-label shadow-float sm:p-7"
+        >
+          <button
+            type="button"
             onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: 40, opacity: 0, scale: 0.98 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 30, opacity: 0, scale: 0.98 }}
-            transition={spring}
-            className="relative m-3 max-h-[calc(100dvh-24px)] w-full max-w-md overflow-y-auto rounded-sheet bg-elevated p-6 shadow-float sm:p-7"
+            aria-label="Close"
+            className="absolute right-4 top-4 z-10 grid size-8 place-items-center rounded-full bg-fill text-label-2 transition-colors hover:bg-fill-2"
           >
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="absolute right-4 top-4 grid size-8 place-items-center rounded-full bg-fill text-label-2 transition-colors hover:bg-fill-2"
-            >
-              <X className="size-4" strokeWidth={2.5} />
-            </button>
-            {children}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+            <X className="size-4" strokeWidth={2.5} />
+          </button>
+          {children}
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
   );
 }
 

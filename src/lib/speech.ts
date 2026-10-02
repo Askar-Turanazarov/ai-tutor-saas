@@ -2,7 +2,7 @@
 
 /** Thin wrappers around the Web Speech API (TTS everywhere, recognition in Chromium browsers). */
 
-export function speak(text: string, rate = 0.95) {
+export function speak(text: string, rate = 0.95, onEnd?: () => void) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -13,6 +13,7 @@ export function speak(text: string, rate = 0.95) {
     voices.find((v) => v.lang === "en-US" && /natural|google|samantha|aria|jenny/i.test(v.name)) ??
     voices.find((v) => v.lang.startsWith("en"));
   if (voice) u.voice = voice;
+  if (onEnd) u.onend = u.onerror = () => onEnd();
   window.speechSynthesis.speak(u);
 }
 

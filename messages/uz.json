@@ -242,7 +242,7 @@
     "heard": "Biz eshitdik",
     "accuracy": "Aniqlik",
     "another": "Boshqa gap",
-    "unsupported": "Nutqni aniqlash Chrome va Edge’da ishlaydi. Tinglash hamma joyda ishlaydi.",
+    "unsupported": "Nutqni aniqlash Chrome va Edgeʼda ishlaydi. Tinglash hamma joyda ishlaydi.",
     "proTitle": "Talaffuz trenajyori — Plus dan",
     "proText": "Namunani tinglang, oʻzingizni yozib oling va shaxsiy maslahatlar oling.",
     "analyzing": "Tahlil qilinmoqda…",
@@ -537,5 +537,22 @@
     "cancelText": "Avtomatik uzaytirish oʻchadi. Barcha imkoniyatlar {date} gacha qoladi, keyin akkaunt Free ga oʻtadi. Natijalar va soʻzlar saqlanadi.",
     "keep": "Obunani qoldirish",
     "cancelConfirm": "Bekor qilish"
+  },
+  "learn": {
+    "listen": "Tinglash",
+    "stop": "Toʻxtatish",
+    "flip": "Kartani aylantirish",
+    "wrong": "Bunday deyilmaydi",
+    "right": "Toʻgʻri",
+    "why": "Nega",
+    "example": "Misol",
+    "meaning": "Maʼnosi",
+    "kinds": {
+      "collocation": "Kollokatsiya",
+      "phrasal": "Frazali feʼl",
+      "idiom": "Idioma",
+      "fixed": "Turgʻun ibora",
+      "word": "Soʻz"
+    }
   }
 }
