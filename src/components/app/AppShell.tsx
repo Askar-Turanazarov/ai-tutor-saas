@@ -19,6 +19,7 @@ import {
 import { Link, usePathname } from "@/i18n/navigation";
 import { Logo, LogoMark } from "@/components/ui/brand";
 import { Badge } from "@/components/ui/primitives";
+import { LocaleCycleButton, LocaleSwitcher, ThemeCycleButton, ThemeSwitcher } from "@/components/ui/switchers";
 import { iconAnims, spring } from "@/components/ui/motion";
 import { logout, stopImpersonating } from "@/app/actions/auth";
 import { cn } from "@/lib/cn";
@@ -124,6 +125,11 @@ function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: strin
             </motion.div>
           </Link>
         )}
+        {/* Quiet, always-visible display prefs: no trip to Settings needed. */}
+        <div className="flex items-center justify-between gap-1 border-t border-separator pt-3">
+          <ThemeSwitcher size="sm" showLabels={false} />
+          <LocaleSwitcher size="sm" persist />
+        </div>
         <UserChip user={user} />
       </div>
     </aside>
@@ -179,6 +185,10 @@ function MobileTopBar({ user }: { user: ShellUser }) {
         <LogoMark size={28} />
       </Link>
       <div className="flex-1" />
+      <div className="-mr-1 flex items-center">
+        <LocaleCycleButton />
+        <ThemeCycleButton />
+      </div>
       {remaining !== null && (
         <Badge tone={remaining < 120 ? "gold" : "neutral"}>{t("dashboard.minutesLeft", { n: Math.ceil(remaining / 60) })}</Badge>
       )}
