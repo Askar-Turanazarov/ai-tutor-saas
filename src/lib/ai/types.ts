@@ -7,6 +7,11 @@ export type GenerateInput = {
   json?: boolean;
   temperature?: number;
   maxTokens?: number;
+  /**
+   * How much the model may "think" before answering. Tutoring replies don't need it
+   * and it costs seconds, so chat runs with "off"; quiz generation allows "low".
+   */
+  reasoning?: "off" | "low";
   signal?: AbortSignal;
 };
 

@@ -20,7 +20,7 @@ export const openai: AIProvider = {
     const ids = (data.data ?? [])
       .map((m) => m.id)
       .filter((id) => /^gpt-\d/.test(id))
-      .filter((id) => !/(audio|realtime|transcribe|tts|image|search|codex|instruct|16k|0301|0613)/i.test(id));
+      .filter((id) => !/(audio|realtime|transcribe|tts|image|search|codex|instruct|thinking|deep-research|16k|0301|0613)/i.test(id));
     return ids.length
       ? rankModels(ids, [
           [/nano/i, 1],

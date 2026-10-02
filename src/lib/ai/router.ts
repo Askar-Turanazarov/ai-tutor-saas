@@ -14,17 +14,25 @@ const ATTEMPT_TIMEOUT_MS = 15_000;
 const TOTAL_BUDGET_MS = 40_000;
 const MAX_ATTEMPTS = 8;
 const MODELS_TTL_MS = 60 * 60 * 1000;
+/** If a model hasn't answered by then, the same request also goes to the next model; first valid answer wins. */
+const DEFAULT_HEDGE_MS = 4_500;
+const MAX_IN_FLIGHT = 2;
+/** Latency measurements older than this are ignored, so a once-slow model gets another chance. */
+const LATENCY_TTL_MS = 15 * 60_000;
 
 type ModelCache = { models: string[]; at: number; error?: string };
 type Breaker = { failures: number; openUntil: number; lastError?: string };
+type Latency = { ms: number; at: number };
 
 // Survives hot reloads in dev.
 const g = globalThis as unknown as {
   __aiModels?: Map<string, ModelCache>;
   __aiBreakers?: Map<string, Breaker>;
+  __aiLatency?: Map<string, Latency>;
 };
 const modelCache = (g.__aiModels ??= new Map());
 const breakers = (g.__aiBreakers ??= new Map());
+const latency = (g.__aiLatency ??= new Map<string, Latency>());
 
 export async function providerModels(p: AIProvider, force = false): Promise<ModelCache> {
   const cached = modelCache.get(p.id);
@@ -44,9 +52,18 @@ export function breakerState() {
   return Object.fromEntries(breakers);
 }
 
+/** Smoothed recent response time per model (ms), for the admin panel. */
+export function latencyState(): Record<string, number> {
+  const now = Date.now();
+  return Object.fromEntries(
+    [...latency].filter(([, l]) => now - l.at < LATENCY_TTL_MS).map(([k, l]) => [k, Math.round(l.ms)]),
+  );
+}
+
 export function resetBreakers() {
   breakers.clear();
   modelCache.clear();
+  latency.clear();
 }
 
 function breakerKey(p: string, m: string) {
@@ -58,6 +75,12 @@ function isOpen(key: string) {
   return !!b && b.openUntil > Date.now();
 }
 
+function recordLatency(key: string, ms: number) {
+  const prev = latency.get(key);
+  const fresh = prev && Date.now() - prev.at < LATENCY_TTL_MS;
+  latency.set(key, { ms: fresh ? prev.ms * 0.6 + ms * 0.4 : ms, at: Date.now() });
+}
+
 function recordFailure(key: string, err: unknown) {
   const b = breakers.get(key) ?? { failures: 0, openUntil: 0 };
   b.failures += 1;
@@ -66,8 +89,10 @@ function recordFailure(key: string, err: unknown) {
   let cooldown = 0;
   if (status === 404 || status === 400) cooldown = 60 * 60_000; // model gone or unsupported
   else if (status === 401 || status === 403) cooldown = 10 * 60_000;
-  else if (status === 429) cooldown = 60_000 * Math.min(b.failures, 5); // busy / quota
-  else if (b.failures >= 2) cooldown = 3 * 60_000; // timeouts, 5xx, bad output
+  else if (status === 429) cooldown = 60_000 * Math.min(b.failures, 5); // quota
+  else if (status === 503) cooldown = 2 * 60_000 * Math.min(b.failures, 3); // "high demand": skip it right away
+  else if (b.failures >= 2) cooldown = 3 * 60_000; // timeouts, other 5xx, bad output
+  if (errMsg(err) === "timeout") recordLatency(key, ATTEMPT_TIMEOUT_MS);
   if (cooldown) b.openUntil = Date.now() + cooldown;
   breakers.set(key, b);
 }
@@ -78,7 +103,7 @@ function recordSuccess(key: string) {
 
 export type Candidate = { provider: AIProvider; model: string };
 
-/** Full fallback chain: providers in configured order, each provider's models best-first. */
+/** Full fallback chain: providers in configured order, each provider's models fastest-first. */
 export async function candidateChain(): Promise<Candidate[]> {
   const s = await getAllSettings();
   if (s["ai.forceMock"] === "true") return [];
@@ -92,13 +117,32 @@ export async function candidateChain(): Promise<Candidate[]> {
   const slow: Candidate[] = [];
   for (const p of providers) {
     const { models } = await providerModels(p);
+    const own: Candidate[] = [];
     for (const model of models) {
       if (disabled.has(`${p.id}/${model}`)) continue;
-      (isProTier(model) ? slow : fast).push({ provider: p, model });
+      (isProTier(model) ? slow : own).push({ provider: p, model });
     }
+    fast.push(...bySpeed(own));
   }
   // Pro tiers are slow: try them only after every fast model of every provider.
   return s["ai.includePro"] === "true" ? [...fast, ...slow] : fast;
+}
+
+/**
+ * Inside one provider, order models by how fast they actually answered recently.
+ * Unmeasured models keep their static rank (an estimate that grows with position),
+ * so newly released models still get tried.
+ */
+function bySpeed(list: Candidate[]): Candidate[] {
+  const now = Date.now();
+  const score = (c: Candidate, i: number) => {
+    const l = latency.get(breakerKey(c.provider.id, c.model));
+    return l && now - l.at < LATENCY_TTL_MS ? l.ms : 2_500 + i * 400;
+  };
+  return list
+    .map((c, i) => ({ c, i, s: score(c, i) }))
+    .sort((a, b) => a.s - b.s || a.i - b.i)
+    .map((x) => x.c);
 }
 
 function idx(arr: string[], v: string) {
@@ -123,6 +167,10 @@ export type RunResult<T> = { data: T; provider: string; model: string; attempts:
 /**
  * Runs a JSON task through the fallback chain. Never throws: if every model fails
  * (or no keys are configured) the offline tutor answers instead.
+ *
+ * Switching is seamless: a failed model hands over to the next one immediately, and a
+ * slow one is "hedged": after `hedgeMs` the next model starts in parallel and whichever
+ * returns a valid answer first wins (the other request is cancelled and not penalised).
  */
 export async function runJSON<T>(opts: {
   task: string;
@@ -132,42 +180,100 @@ export async function runJSON<T>(opts: {
   fallback: () => T;
   userId?: string;
   temperature?: number;
+  reasoning?: "off" | "low";
+  hedgeMs?: number;
   only?: Candidate[];
 }): Promise<RunResult<T>> {
   const started = Date.now();
   const chain = (opts.only ?? (await candidateChain())).filter(
     (c) => opts.only || !isOpen(breakerKey(c.provider.id, c.model)),
   );
-  let attempt = 0;
+  const hedgeMs = opts.hedgeMs ?? DEFAULT_HEDGE_MS;
 
-  for (const c of chain) {
-    if (attempt >= MAX_ATTEMPTS || Date.now() - started > TOTAL_BUDGET_MS) break;
-    attempt += 1;
-    const key = breakerKey(c.provider.id, c.model);
-    const t0 = Date.now();
-    try {
-      const text = await c.provider.generate(c.model, {
-        system: opts.system,
-        messages: opts.messages,
-        json: true,
-        temperature: opts.temperature,
-        signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
-      });
-      const parsed = opts.schema.safeParse(extractJSON(text));
-      if (!parsed.success) throw new ProviderError("schema mismatch");
-      recordSuccess(key);
-      log(opts.task, c.provider.id, c.model, true, Date.now() - t0, attempt, undefined, opts.userId);
-      return { data: parsed.data, provider: c.provider.id, model: c.model, attempts: attempt };
-    } catch (e) {
-      recordFailure(key, e);
-      log(opts.task, c.provider.id, c.model, false, Date.now() - t0, attempt, errMsg(e), opts.userId);
-    }
-  }
+  return new Promise<RunResult<T>>((resolve) => {
+    let next = 0;
+    let attempt = 0;
+    let inFlight = 0;
+    let done = false;
+    let hedgeTimer: ReturnType<typeof setTimeout> | undefined;
+    const running = new Set<AbortController>();
 
-  const t0 = Date.now();
-  const data = opts.fallback();
-  log(opts.task, "mock", "offline-tutor", true, Date.now() - t0, attempt + 1, undefined, opts.userId);
-  return { data, provider: "mock", model: "offline-tutor", attempts: attempt + 1 };
+    const finish = (r: RunResult<T>) => {
+      done = true;
+      clearTimeout(hedgeTimer);
+      for (const ac of running) ac.abort();
+      resolve(r);
+    };
+
+    const offline = () => {
+      const t0 = Date.now();
+      const data = opts.fallback();
+      log(opts.task, "mock", "offline-tutor", true, Date.now() - t0, attempt + 1, undefined, opts.userId);
+      finish({ data, provider: "mock", model: "offline-tutor", attempts: attempt + 1 });
+    };
+
+    const exhausted = () =>
+      next >= chain.length || attempt >= MAX_ATTEMPTS || Date.now() - started > TOTAL_BUDGET_MS;
+
+    const launch = () => {
+      if (done) return;
+      if (exhausted()) {
+        if (inFlight === 0) offline();
+        return;
+      }
+      const c = chain[next++];
+      const n = ++attempt;
+      const key = breakerKey(c.provider.id, c.model);
+      const ac = new AbortController();
+      const timeout = setTimeout(() => ac.abort(new DOMException("timeout", "TimeoutError")), ATTEMPT_TIMEOUT_MS);
+      running.add(ac);
+      inFlight++;
+      const t0 = Date.now();
+
+      clearTimeout(hedgeTimer);
+      hedgeTimer = setTimeout(() => {
+        if (inFlight < MAX_IN_FLIGHT) launch();
+      }, hedgeMs);
+
+      c.provider
+        .generate(c.model, {
+          system: opts.system,
+          messages: opts.messages,
+          json: true,
+          temperature: opts.temperature,
+          reasoning: opts.reasoning ?? "off",
+          signal: ac.signal,
+        })
+        .then((text) => {
+          const parsed = opts.schema.safeParse(extractJSON(text));
+          if (!parsed.success) throw new ProviderError("schema mismatch");
+          return parsed.data;
+        })
+        .then(
+          (data) => {
+            const ms = Date.now() - t0;
+            recordSuccess(key);
+            recordLatency(key, ms);
+            if (done) return; // a parallel model already answered
+            log(opts.task, c.provider.id, c.model, true, ms, n, undefined, opts.userId);
+            finish({ data, provider: c.provider.id, model: c.model, attempts: n });
+          },
+          (e) => {
+            if (done) return; // cancelled because another model won
+            recordFailure(key, e);
+            log(opts.task, c.provider.id, c.model, false, Date.now() - t0, n, errMsg(e), opts.userId);
+          },
+        )
+        .finally(() => {
+          clearTimeout(timeout);
+          running.delete(ac);
+          inFlight--;
+          if (!done && inFlight < MAX_IN_FLIGHT) launch();
+        });
+    };
+
+    launch();
+  });
 }
 
 function errMsg(e: unknown) {

@@ -99,6 +99,9 @@ Return JSON: {"title": string, "questions": [...]}`;
 
   return runJSON({
     task: "quiz",
+    // A wrong answer key ruins a quiz, so allow a little reasoning here; it is also a longer answer.
+    reasoning: "low",
+    hedgeMs: 12_000,
     userId: opts.userId,
     system,
     messages: [{ role: "user", content: "Create the quiz." }],

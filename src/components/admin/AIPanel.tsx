@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/primitives";
 import { pingAI, refreshModels, toggleModel } from "@/app/actions/admin";
 import { cn } from "@/lib/cn";
 
-type Model = { id: string; name: string; pro: boolean; disabled: boolean; pausedUntil: number | null; lastError: string | null };
+type Model = { id: string; name: string; pro: boolean; disabled: boolean; pausedUntil: number | null; lastError: string | null; latencyMs: number | null };
 type Provider = { id: string; label: string; configured: boolean; error: string | null; models: Model[] };
 type Log = { id: string; task: string; provider: string; model: string; ok: boolean; latencyMs: number; attempt: number; error: string | null; createdAt: string };
 type Ping = Awaited<ReturnType<typeof pingAI>>;
@@ -108,6 +108,7 @@ function ModelRow({ m, skipped, format }: { m: Model; skipped: boolean; format: 
       <div className="min-w-0 flex-1">
         <div className="truncate font-mono text-[12.5px]" title={m.name}>
           {m.name} {m.pro && <span className="text-gold">· pro</span>}
+          {m.latencyMs !== null && <span className="ml-1 text-label-3">~{(m.latencyMs / 1000).toFixed(1)} s</span>}
         </div>
         {m.pausedUntil && (
           <div className="truncate text-[11px] text-warning" title={m.lastError ?? ""}>

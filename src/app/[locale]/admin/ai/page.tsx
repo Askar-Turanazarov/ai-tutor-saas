@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getAllSettings } from "@/lib/settings";
-import { PROVIDERS, breakerState, providerModels } from "@/lib/ai/router";
+import { PROVIDERS, breakerState, latencyState, providerModels } from "@/lib/ai/router";
 import { isProTier } from "@/lib/ai/rank";
 import { AdminTitle } from "@/components/admin/AdminShell";
 import { AIPanel } from "@/components/admin/AIPanel";
@@ -16,6 +16,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const disabled = new Set(s["ai.disabledModels"].split(",").map((x) => x.trim()).filter(Boolean));
   const order = s["ai.providerOrder"].split(",").map((x) => x.trim());
   const breakers = breakerState();
+  const speed = latencyState();
   const now = Date.now();
 
   const providers = await Promise.all(
@@ -39,6 +40,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
               disabled: disabled.has(key),
               pausedUntil: b && b.openUntil > now ? b.openUntil : null,
               lastError: b?.lastError ?? null,
+              latencyMs: speed[key] ?? null,
             };
           }),
         };
