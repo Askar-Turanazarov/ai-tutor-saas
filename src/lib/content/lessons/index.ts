@@ -1,8 +1,11 @@
 import { levelRating, type Exercise, type LessonSeed } from "../types";
 import { A1_LESSONS } from "./a1";
 import { A2_LESSONS } from "./a2";
+import { B1_LESSONS } from "./b1";
+import { B2_LESSONS } from "./b2";
+import { FREE_LEVELS, type Level } from "../../levels";
 
-export const LESSONS: LessonSeed[] = [...A1_LESSONS, ...A2_LESSONS];
+export const LESSONS: LessonSeed[] = [...A1_LESSONS, ...A2_LESSONS, ...B1_LESSONS, ...B2_LESSONS];
 
 const KIND_SHIFT = { fixed: -20, word: -10, collocation: 0, phrasal: 20, idiom: 40 } as const;
 
@@ -48,7 +51,7 @@ export function lessonRows(lessons: LessonSeed[] = LESSONS) {
       itemIds: JSON.stringify(l.items.map((it) => id(it.key))),
       exercises: JSON.stringify(exercises),
       mission: JSON.stringify(l.mission),
-      minTier: l.minTier ?? "FREE",
+      minTier: l.minTier ?? (FREE_LEVELS.includes(l.level as Level) ? "FREE" : "PLUS"),
     });
   }
   return { items, rows };
