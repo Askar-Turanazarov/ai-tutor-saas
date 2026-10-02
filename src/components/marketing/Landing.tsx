@@ -337,7 +337,7 @@ function Pricing() {
                 ))}
               </ul>
               <ButtonLink
-                href={p.pro ? "/app/upgrade" : "/app"}
+                href={p.pro ? "/app/plans" : "/app"}
                 variant={p.pro ? "primary" : "secondary"}
                 className="mt-8 w-full"
               >

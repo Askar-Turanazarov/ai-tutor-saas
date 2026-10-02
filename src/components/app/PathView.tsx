@@ -10,7 +10,8 @@ import { TopicIcon } from "@/components/ui/TopicIcon";
 import { spring } from "@/components/ui/motion";
 import { createQuiz } from "@/app/actions/user";
 import { cn } from "@/lib/cn";
-import { ProLock } from "./ProLock";
+import { Paywall } from "@/components/billing/Paywall";
+import { useUsage } from "./usage";
 
 type Unit = { id: string; title: string; icon: string; level: string; status: string; stars: number };
 
@@ -29,7 +30,7 @@ export function PathView({ pro, units }: { pro: boolean; units: Unit[] }) {
     return (
       <div className="space-y-6">
         {header}
-        <ProLock title={t("proTitle")} text={t("proText")} preview={<Path units={units} interactive={false} />} />
+        <Paywall feature="path" title={t("proTitle")} text={t("proText")} preview={<Path units={units} interactive={false} />} />
       </div>
     );
 
@@ -51,19 +52,21 @@ function Path({ units, interactive }: { units: Unit[]; interactive: boolean }) {
   const [openId, setOpenId] = useState<string | null>(units.find((u) => u.status === "current")?.id ?? null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [, start] = useTransition();
+  const { showQuota } = useUsage();
 
   const begin = (u: Unit) =>
     start(async () => {
       setLoadingId(u.id);
       const res = await createQuiz(u.id);
-      if ("id" in res && res.id) router.push(`/app/quiz/${res.id}`);
-      else setLoadingId(null);
+      if ("id" in res && res.id) return router.push(`/app/quiz/${res.id}`);
+      setLoadingId(null);
+      if (res.error === "quota") showQuota("lessonsPerDay", res.limit);
     });
 
   return (
     <div className="relative mx-auto flex max-w-md flex-col items-center py-6">
       {units.map((u, i) => {
-        const offset = Math.sin(i * 0.9) * 70;
+        const offset = Math.round(Math.sin(i * 0.9) * 70);
         const newLevel = i === 0 || units[i - 1].level !== u.level;
         const open = openId === u.id && interactive;
         return (

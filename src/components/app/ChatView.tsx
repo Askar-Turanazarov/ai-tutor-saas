@@ -350,7 +350,7 @@ function UserMessage({ m, pro }: { m: ChatMessage; pro: boolean }) {
               <CorrectionCard key={i} c={c} />
             ))}
             {!pro && (
-              <Link href="/app/upgrade" className="flex items-center justify-end gap-1 text-[12px] font-medium text-gold hover:underline">
+              <Link href="/app/plans" className="flex items-center justify-end gap-1 text-[12px] font-medium text-gold hover:underline">
                 <Crown className="size-3" /> {t("proFeedback")}
               </Link>
             )}

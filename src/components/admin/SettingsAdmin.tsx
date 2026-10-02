@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Reorder, motion } from "framer-motion";
+import { Reorder } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Check, GripVertical, Minus, Plus, Timer } from "lucide-react";
+import { Check, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { saveSetting } from "@/app/actions/admin";
 import type { SettingKey } from "@/lib/settings";
@@ -12,8 +12,7 @@ import { Switch } from "./Switch";
 export function SettingsAdmin({ settings }: { settings: Record<string, string> }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
-  const [pending, start] = useTransition();
-  const [minutes, setMinutes] = useState(Number(settings["limit.FREE.dailyMinutes"]) || 15);
+  const [, start] = useTransition();
   const [order, setOrder] = useState(settings["ai.providerOrder"].split(",").map((s) => s.trim()).filter(Boolean));
   const [saved, setSaved] = useState<string | null>(null);
 
@@ -24,35 +23,8 @@ export function SettingsAdmin({ settings }: { settings: Record<string, string> }
       setTimeout(() => setSaved((s) => (s === key ? null : s)), 1500);
     });
 
-  const row = "flex flex-wrap items-center justify-between gap-4 p-5";
-
   return (
     <div className="surface max-w-2xl divide-y divide-separator rounded-card">
-      <div className={row}>
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-[12px] bg-accent-soft text-accent">
-            <Timer className="size-5" />
-          </span>
-          <span className="text-[15px] font-medium">{t("freeMinutes")}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-[12px] bg-fill p-1">
-            <button aria-label="-" onClick={() => setMinutes((m) => Math.max(1, m - 1))} className="grid size-8 place-items-center rounded-[9px] hover:bg-elevated">
-              <Minus className="size-4" />
-            </button>
-            <motion.span key={minutes} initial={{ y: -6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-10 text-center text-[17px] font-semibold tabular-nums">
-              {minutes}
-            </motion.span>
-            <button aria-label="+" onClick={() => setMinutes((m) => Math.min(240, m + 1))} className="grid size-8 place-items-center rounded-[9px] hover:bg-elevated">
-              <Plus className="size-4" />
-            </button>
-          </div>
-          <Button size="sm" loading={pending && saved === null} icon={saved === "limit.FREE.dailyMinutes" ? Check : undefined} onClick={() => save("limit.FREE.dailyMinutes", String(minutes))}>
-            {saved === "limit.FREE.dailyMinutes" ? tc("saved") : tc("save")}
-          </Button>
-        </div>
-      </div>
-
       <Toggle label={t("forceMock")} initial={settings["ai.forceMock"] === "true"} onChange={(v) => save("ai.forceMock", String(v))} />
       <Toggle label={t("includePro")} initial={settings["ai.includePro"] === "true"} onChange={(v) => save("ai.includePro", String(v))} />
 

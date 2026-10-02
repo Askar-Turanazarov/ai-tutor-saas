@@ -5,13 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Check, Crown, Lock, LogOut, Sparkles, UserPlus } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Badge, Field, Reveal } from "@/components/ui/primitives";
+import { Field, Reveal } from "@/components/ui/primitives";
 import { LocaleSwitcher, ThemeSwitcher } from "@/components/ui/switchers";
 import { spring } from "@/components/ui/motion";
 import { updateProfile } from "@/app/actions/user";
 import { logout } from "@/app/actions/auth";
 import { LEVELS, FREE_LEVELS, type Level } from "@/lib/levels";
 import { cn } from "@/lib/cn";
+import { tierLabel } from "@/lib/billing/catalog";
 import { Avatar } from "./AppShell";
 
 function Section({ title, children, delay = 0 }: { title: string; children: React.ReactNode; delay?: number }) {
@@ -25,7 +26,7 @@ function Section({ title, children, delay = 0 }: { title: string; children: Reac
   );
 }
 
-export function SettingsView({ name, email, level, pro }: { name: string; email: string; level: string; pro: boolean }) {
+export function SettingsView({ name, email, level, pro, plan }: { name: string; email: string; level: string; pro: boolean; plan: string }) {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
   const tl = useTranslations("levels");
@@ -136,12 +137,11 @@ export function SettingsView({ name, email, level, pro }: { name: string; email:
             <div>
               <div className="text-[13px] text-label-2">{t("currentPlan")}</div>
               <div className="flex items-center gap-2 text-[18px] font-semibold">
-                {pro ? tc("pro") : tc("free")}
-                {pro && <Badge tone="gold">{tc("proBadge")}</Badge>}
+                {tierLabel(plan)}
               </div>
             </div>
           </div>
-          <ButtonLink href="/app/upgrade" variant={pro ? "secondary" : "primary"} icon={pro ? undefined : Sparkles}>
+          <ButtonLink href={pro ? "/app/billing" : "/app/plans"} variant={pro ? "secondary" : "primary"} icon={pro ? undefined : Sparkles}>
             {pro ? t("manage") : tc("upgrade")}
           </ButtonLink>
         </div>

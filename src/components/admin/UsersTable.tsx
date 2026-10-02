@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useFormatter, useTranslations } from "next-intl";
-import { Crown, LogIn, RotateCcw, Search, Trash2, UserRound } from "lucide-react";
+import { LogIn, RotateCcw, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge, Sheet } from "@/components/ui/primitives";
 import { deleteUser, impersonate, resetUserUsage, setUserLevel, setUserPlan } from "@/app/actions/admin";
 import { LEVELS } from "@/lib/levels";
+import { TIERS, tierLabel } from "@/lib/billing/catalog";
 import { Avatar } from "@/components/app/AppShell";
 
 type Row = {
@@ -19,7 +20,6 @@ type Row = {
   level: string;
   xp: number;
   seconds: number;
-  requested: boolean;
   created: string;
 };
 
@@ -72,7 +72,6 @@ function UserCard({ u, isMe }: { u: Row; isMe: boolean }) {
       await fn();
       setBusy(null);
     });
-  const pro = u.plan === "PRO";
 
   return (
     <div className="surface flex flex-col gap-4 rounded-card p-4 md:flex-row md:items-center">
@@ -82,8 +81,7 @@ function UserCard({ u, isMe }: { u: Row; isMe: boolean }) {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="truncate font-semibold">{u.name}</span>
             {u.role === "ADMIN" && <Badge tone="accent">{tc("admin")}</Badge>}
-            <Badge tone={pro ? "gold" : "neutral"}>{pro ? tc("pro") : tc("free")}</Badge>
-            {u.requested && !pro && <Badge tone="teal">{t("upgradeRequests")}</Badge>}
+            <Badge tone={u.plan === "PRO" ? "gold" : u.plan === "PLUS" ? "teal" : "neutral"}>{tierLabel(u.plan)}</Badge>
           </div>
           <div className="truncate text-[13px] text-label-2">{u.email}</div>
           <div className="mt-0.5 text-[12px] text-label-3">
@@ -104,15 +102,20 @@ function UserCard({ u, isMe }: { u: Row; isMe: boolean }) {
             <option key={l}>{l}</option>
           ))}
         </select>
-        <Button
-          size="sm"
-          variant={pro ? "secondary" : "tinted"}
-          icon={pro ? UserRound : Crown}
-          loading={busy === "plan"}
-          onClick={() => run("plan", () => setUserPlan(u.id, pro ? "FREE" : "PRO"))}
+        <select
+          value={u.plan}
+          aria-label={t("plan")}
+          title={t("grantHint")}
+          disabled={pending}
+          onChange={(e) => run("plan", () => setUserPlan(u.id, e.target.value as "FREE" | "PLUS" | "PRO"))}
+          className="h-9 rounded-[10px] bg-fill px-2.5 text-[14px] font-medium outline-none"
         >
-          {pro ? t("makeFree") : t("makePro")}
-        </Button>
+          {TIERS.map((tier) => (
+            <option key={tier} value={tier}>
+              {tierLabel(tier)}
+            </option>
+          ))}
+        </select>
         <Button size="sm" variant="secondary" icon={RotateCcw} iconAnim="spin" loading={busy === "usage"} onClick={() => run("usage", () => resetUserUsage(u.id))}>
           {t("resetUsage")}
         </Button>

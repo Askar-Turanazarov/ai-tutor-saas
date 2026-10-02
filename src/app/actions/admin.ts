@@ -11,7 +11,7 @@ import { PROVIDERS, providerModels, resetBreakers } from "@/lib/ai/router";
 import { tutorReply } from "@/lib/ai/tutor";
 import { asLang, rebuildPlan } from "@/lib/learning";
 import { LEVELS, type Level } from "@/lib/levels";
-import { grantPlan } from "@/lib/billing/subscription";
+import { grantPlan, reconcile, runRenewals, syncUserPlan } from "@/lib/billing/subscription";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -26,6 +26,56 @@ export async function setUserPlan(userId: string, plan: "FREE" | "PLUS" | "PRO",
   await requireAdmin();
   await grantPlan(userId, plan, days);
   refresh();
+}
+
+/** Marks a paid invoice refunded; refunding the invoice behind the current period ends the plan. */
+export async function refundInvoice(invoiceId: string) {
+  await requireAdmin();
+  const invoice = await db.invoice.findUnique({ where: { id: invoiceId } });
+  if (!invoice || invoice.status !== "paid") return;
+  await db.invoice.update({ where: { id: invoiceId }, data: { status: "refunded" } });
+  const latest = await db.invoice.findFirst({
+    where: { subscriptionId: invoice.subscriptionId ?? "", status: { in: ["paid", "refunded"] } },
+    orderBy: { paidAt: "desc" },
+  });
+  if (invoice.subscriptionId && latest?.id === invoice.id) {
+    await db.subscription.update({ where: { id: invoice.subscriptionId }, data: { status: "expired", cancelAtPeriodEnd: false } });
+    await syncUserPlan(invoice.userId);
+  }
+  refresh();
+}
+
+/**
+ * Test helper: moves the subscription to the end of its period (or past the grace period)
+ * and runs the same reconcile as a real request would.
+ */
+export async function timeTravel(userId: string, to: "periodEnd" | "graceEnd") {
+  await requireAdmin();
+  const sub = await db.subscription.findUnique({ where: { userId } });
+  if (!sub) return;
+  const now = Date.now();
+  const shift = to === "graceEnd" && sub.graceUntil ? sub.graceUntil.getTime() - now + 60_000 : sub.currentPeriodEnd.getTime() - now + 60_000;
+  const moved = await db.subscription.update({
+    where: { id: sub.id },
+    data: {
+      currentPeriodStart: new Date(sub.currentPeriodStart.getTime() - shift),
+      currentPeriodEnd: new Date(sub.currentPeriodEnd.getTime() - shift),
+      graceUntil: sub.graceUntil ? new Date(sub.graceUntil.getTime() - shift) : null,
+    },
+  });
+  // Recent renewal attempts travel too, otherwise the once-a-day retry rule would block the next try.
+  const attempts = await db.invoice.findMany({ where: { subscriptionId: sub.id, kind: "renewal", status: "failed", createdAt: { gt: new Date(now - 86_400_000) } } });
+  for (const a of attempts) await db.invoice.update({ where: { id: a.id }, data: { createdAt: new Date(a.createdAt.getTime() - shift) } });
+  await reconcile(moved);
+  await syncUserPlan(userId);
+  refresh();
+}
+
+export async function runRenewalsNow() {
+  await requireAdmin();
+  const res = await runRenewals();
+  refresh();
+  return res;
 }
 
 export async function setUserLevel(userId: string, level: string) {
@@ -64,13 +114,31 @@ export async function toggleTopicPro(topicId: string, proOnly: boolean) {
   refresh();
 }
 
+function cleanSetting(key: string, value: string) {
+  if (!(key in SETTING_DEFAULTS)) return null;
+  if (key.startsWith("limit.") && value !== "unlimited") return String(Math.max(0, Math.min(1000, Math.round(Number(value) || 0))));
+  if (key.startsWith("price.discount.")) return String(Math.max(0, Math.min(90, Math.round(Number(value) || 0))));
+  if (key.startsWith("price.")) return String(Math.max(0, Math.round(Number(value) || 0)));
+  if (key.startsWith("billing.")) return String(Math.max(0, Math.min(90, Math.round(Number(value) || 0))));
+  return value;
+}
+
 export async function saveSetting(key: SettingKey, value: string) {
   await requireAdmin();
-  if (!(key in SETTING_DEFAULTS)) return;
-  if (key.startsWith("limit.") && value !== "unlimited") value = String(Math.max(0, Math.min(1000, Math.round(Number(value) || 0))));
-  if (key.startsWith("price.")) value = String(Math.max(0, Math.round(Number(value) || 0)));
-  await setSetting(key, value);
+  const clean = cleanSetting(key, value);
+  if (clean === null) return;
+  await setSetting(key, clean);
   if (key.startsWith("ai.")) resetBreakers();
+  refresh();
+}
+
+/** Plan limits and prices are saved together from one form. */
+export async function saveSettings(entries: { key: string; value: string }[]) {
+  await requireAdmin();
+  for (const { key, value } of entries) {
+    const clean = cleanSetting(key, value);
+    if (clean !== null) await setSetting(key as SettingKey, clean);
+  }
   refresh();
 }
 

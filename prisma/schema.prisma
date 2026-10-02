@@ -21,7 +21,6 @@ model User {
   xp               Int             @default(0)
   streak           Int             @default(0)
   lastActiveDate   String?
-  upgradeRequested Boolean         @default(false)
   trialUsedAt      DateTime?
   stripeCustomerId String?
   createdAt        DateTime        @default(now())

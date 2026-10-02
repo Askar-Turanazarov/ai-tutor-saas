@@ -1,23 +1,22 @@
 "use client";
 
-import { useTransition } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Bot, CheckCircle2, Crown, GraduationCap, MessageSquare, Shuffle, Users, WifiOff, type LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Stagger, StaggerItem } from "@/components/ui/primitives";
-import { setUserPlan } from "@/app/actions/admin";
+import { Link } from "@/i18n/navigation";
+import { Badge, Stagger, StaggerItem } from "@/components/ui/primitives";
+import { tierLabel } from "@/lib/billing/catalog";
 import { cn } from "@/lib/cn";
 
 type Stats = { users: number; pro: number; messages: number; quizzes: number; calls: number; ok: number; fallbacks: number; mock: number };
 
 export function Overview({
   stats,
-  requests,
+  payments,
   models,
 }: {
   stats: Stats;
-  requests: { id: string; name: string; email: string }[];
+  payments: { id: string; name: string; tier: string; amount: string; provider: string; status: string }[];
   models: { id: string; ok: number; fail: number; avg: number }[];
 }) {
   const t = useTranslations("admin");
@@ -51,13 +50,29 @@ export function Overview({
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="surface rounded-card p-5">
-          <h2 className="text-[17px] font-semibold">{t("upgradeRequests")}</h2>
-          {requests.length === 0 ? (
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-[17px] font-semibold">{t("payments")}</h2>
+            <Link href="/admin/billing" className="text-[14px] font-medium text-accent hover:underline">
+              {t("billing")}
+            </Link>
+          </div>
+          {payments.length === 0 ? (
             <p className="mt-3 text-[14px] text-label-3">{t("empty")}</p>
           ) : (
             <ul className="mt-3 divide-y divide-separator">
-              {requests.map((r) => (
-                <RequestRow key={r.id} {...r} />
+              {payments.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 py-2.5 text-[14px]">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{p.name}</div>
+                    <div className="text-[13px] text-label-2">
+                      {tierLabel(p.tier)} · {p.provider}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold tabular-nums">{p.amount}</div>
+                    <Badge tone={p.status === "paid" ? "success" : p.status === "failed" ? "danger" : "neutral"}>{p.status}</Badge>
+                  </div>
+                </li>
               ))}
             </ul>
           )}
@@ -98,21 +113,5 @@ export function Overview({
         </section>
       </div>
     </div>
-  );
-}
-
-function RequestRow({ id, name, email }: { id: string; name: string; email: string }) {
-  const t = useTranslations("admin");
-  const [pending, start] = useTransition();
-  return (
-    <li className="flex items-center gap-3 py-2.5">
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{name}</div>
-        <div className="truncate text-[13px] text-label-2">{email}</div>
-      </div>
-      <Button size="sm" variant="tinted" icon={Crown} loading={pending} onClick={() => start(() => setUserPlan(id, "PRO"))}>
-        {t("makePro")}
-      </Button>
-    </li>
   );
 }

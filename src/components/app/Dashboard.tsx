@@ -183,7 +183,7 @@ function Action({
   anim: keyof typeof iconAnims;
 }) {
   return (
-    <Link href={locked ? "/app/upgrade" : href} className="block">
+    <Link href={locked ? "/app/plans" : href} className="block">
       <Card interactive className={cn("relative h-full p-5", className)}>
         <motion.span variants={iconAnims[anim]} className={cn("grid size-12 place-items-center rounded-[16px]", iconClass)}>
           <Icon className="size-6" />

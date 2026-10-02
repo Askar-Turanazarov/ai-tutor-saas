@@ -8,20 +8,35 @@ import { usePathname } from "@/i18n/navigation";
 import { Sheet } from "@/components/ui/primitives";
 import { ButtonLink } from "@/components/ui/Button";
 
+type QuotaKey = "lessonsPerDay" | "pronunciationPerDay" | "reviewsPerDay" | "missionsPerDay";
+
 type UsageCtx = {
-  /** Seconds left today; null = unlimited (Pro). */
+  /** Seconds left today; null = unlimited. */
   remaining: number | null;
   setRemaining: (n: number | null) => void;
   showLimit: () => void;
+  /** A daily quota (lessons, pronunciation…) is used up. */
+  showQuota: (key: QuotaKey, limit: number) => void;
 };
 
-const Ctx = createContext<UsageCtx>({ remaining: null, setRemaining: () => {}, showLimit: () => {} });
+const Ctx = createContext<UsageCtx>({ remaining: null, setRemaining: () => {}, showLimit: () => {}, showQuota: () => {} });
 export const useUsage = () => useContext(Ctx);
 
 const BEAT_MS = 20_000;
 const IDLE_MS = 90_000;
 
-/** Counts active practice time on learning screens and reports it to the server (Free daily limit). */
+/** Time until the next midnight in Tashkent (UTC+5, no DST), when daily limits reset. */
+function untilReset() {
+  const now = Date.now();
+  const tashkent = new Date(now + 5 * 3600_000);
+  const next = Date.UTC(tashkent.getUTCFullYear(), tashkent.getUTCMonth(), tashkent.getUTCDate() + 1) - 5 * 3600_000;
+  const mins = Math.max(1, Math.round((next - now) / 60_000));
+  return { h: Math.floor(mins / 60), m: mins % 60 };
+}
+
+type Limit = { kind: "minutes"; n: number } | { kind: QuotaKey; n: number };
+
+/** Counts active practice time on learning screens and reports it to the server (daily time limit). */
 export function UsageProvider({
   initial,
   limitMinutes,
@@ -32,7 +47,7 @@ export function UsageProvider({
   children: ReactNode;
 }) {
   const [remaining, setRemaining] = useState(initial);
-  const [limitOpen, setLimitOpen] = useState(false);
+  const [shown, setShown] = useState<Limit | null>(null);
   const pathname = usePathname();
   const lastInput = useRef(Date.now());
   const lastBeat = useRef(Date.now());
@@ -57,29 +72,31 @@ export function UsageProvider({
       if (!res?.ok) return;
       const data = (await res.json()) as { remaining: number | null };
       setRemaining(data.remaining);
-      if (data.remaining === 0) setLimitOpen(true);
+      if (data.remaining === 0) setShown({ kind: "minutes", n: limitMinutes });
     }, BEAT_MS);
     return () => {
       clearInterval(id);
       window.removeEventListener("keydown", mark);
       window.removeEventListener("pointerdown", mark);
     };
-  }, [tracking]);
+  }, [tracking, limitMinutes]);
 
-  const showLimit = useCallback(() => setLimitOpen(true), []);
+  const showLimit = useCallback(() => setShown({ kind: "minutes", n: limitMinutes }), [limitMinutes]);
+  const showQuota = useCallback((kind: QuotaKey, n: number) => setShown({ kind, n }), []);
 
   return (
-    <Ctx.Provider value={{ remaining, setRemaining, showLimit }}>
+    <Ctx.Provider value={{ remaining, setRemaining, showLimit, showQuota }}>
       {children}
-      <LimitSheet open={limitOpen} onClose={() => setLimitOpen(false)} minutes={limitMinutes} />
+      <LimitSheet limit={shown} onClose={() => setShown(null)} />
     </Ctx.Provider>
   );
 }
 
-function LimitSheet({ open, onClose, minutes }: { open: boolean; onClose: () => void; minutes: number }) {
-  const t = useTranslations("chat");
+function LimitSheet({ limit, onClose }: { limit: Limit | null; onClose: () => void }) {
+  const t = useTranslations("quota");
+  const reset = untilReset();
   return (
-    <Sheet open={open} onClose={onClose} label={t("limitTitle")}>
+    <Sheet open={!!limit} onClose={onClose} label={t("title")}>
       <motion.div
         initial={{ rotate: -20, scale: 0.6 }}
         animate={{ rotate: 0, scale: 1 }}
@@ -88,10 +105,11 @@ function LimitSheet({ open, onClose, minutes }: { open: boolean; onClose: () => 
       >
         <Hourglass className="size-8" />
       </motion.div>
-      <h2 className="mt-5 text-[24px] font-bold">{t("limitTitle")}</h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-label-2">{t("limitText", { n: minutes })}</p>
-      <ButtonLink href="/app/upgrade" size="lg" icon={Sparkles} className="mt-6 w-full" onClick={onClose}>
-        {t("limitCta")}
+      <h2 className="mt-5 text-[24px] font-bold">{t("title")}</h2>
+      <p className="mt-2 text-[15px] leading-relaxed text-label-2">{limit && t(limit.kind, { n: limit.n })}</p>
+      <p className="mt-3 rounded-[12px] bg-fill px-3.5 py-2.5 text-[14px] text-label-2">{t("reset", { h: reset.h, m: reset.m })}</p>
+      <ButtonLink href="/app/plans" size="lg" icon={Sparkles} className="mt-6 w-full" onClick={onClose}>
+        {t("cta")}
       </ButtonLink>
     </Sheet>
   );

@@ -43,7 +43,7 @@ export function TopicsGrid({ topics, userLevel }: { topics: Topic[]; userLevel: 
               exit={{ opacity: 0, scale: 0.95 }}
             >
               {topic.locked ? (
-                <Link href="/app/upgrade" className="block h-full">
+                <Link href="/app/plans" className="block h-full">
                   <TopicCard topic={topic} cta={tc("locked")} />
                 </Link>
               ) : (

@@ -245,7 +245,7 @@ export function Sheet({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 30, opacity: 0, scale: 0.98 }}
             transition={spring}
-            className="relative m-3 w-full max-w-md rounded-sheet bg-elevated p-6 shadow-float sm:p-7"
+            className="relative m-3 max-h-[calc(100dvh-24px)] w-full max-w-md overflow-y-auto rounded-sheet bg-elevated p-6 shadow-float sm:p-7"
           >
             <button
               onClick={onClose}

@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
+import { formatMoney } from "@/lib/billing/catalog";
 import { AdminTitle } from "@/components/admin/AdminShell";
 import { Overview } from "@/components/admin/Overview";
 
@@ -11,15 +12,20 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const t = await getTranslations("admin");
   const since = new Date(Date.now() - 24 * 3600_000);
 
-  const [users, pro, messages, quizzes, calls, ok, mock, requests, byModel] = await Promise.all([
+  const [users, pro, messages, quizzes, calls, ok, mock, payments, byModel] = await Promise.all([
     db.user.count(),
-    db.user.count({ where: { plan: "PRO" } }),
+    db.user.count({ where: { plan: { not: "FREE" } } }),
     db.message.count(),
     db.quizAttempt.count(),
     db.aILog.count({ where: { createdAt: { gte: since } } }),
     db.aILog.count({ where: { createdAt: { gte: since }, ok: true, NOT: { provider: "mock" } } }),
     db.aILog.count({ where: { createdAt: { gte: since }, provider: "mock" } }),
-    db.user.findMany({ where: { upgradeRequested: true, plan: "FREE" }, select: { id: true, name: true, email: true } }),
+    db.invoice.findMany({
+      where: { status: { not: "pending" } },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      include: { user: { select: { name: true } } },
+    }),
     db.aILog.groupBy({
       by: ["provider", "model", "ok"],
       where: { createdAt: { gte: since } },
@@ -46,7 +52,14 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
       <AdminTitle title={t("overview")} />
       <Overview
         stats={{ users, pro, messages, quizzes, calls, ok, fallbacks, mock }}
-        requests={requests}
+        payments={payments.map((p) => ({
+          id: p.id,
+          name: p.user.name,
+          tier: p.tier,
+          amount: formatMoney(p.amount, p.currency, locale),
+          provider: p.provider,
+          status: p.status,
+        }))}
         models={[...models.values()].sort((a, b) => b.ok + b.fail - (a.ok + a.fail))}
       />
     </>

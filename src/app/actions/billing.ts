@@ -16,7 +16,7 @@ import {
   setCancelAtPeriodEnd,
   startTrial,
 } from "@/lib/billing/subscription";
-import { declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
+import { cardMock, declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
 import { clickConfig, clickSign } from "@/lib/billing/providers/click";
 import { portalUrl } from "@/lib/billing/providers/stripe";
 
@@ -59,6 +59,21 @@ export async function startCheckout(input: { tier: string; period: number; provi
     await failInvoice(invoice.id, (e as Error).message);
     return { error: "provider" as const };
   }
+}
+
+/** One-click payment with a saved Uzcard/HUMO token: no gateway page, no SMS. */
+export async function payWithSavedCard(input: { tier: string; period: number; methodId: string }) {
+  const user = await requireUser();
+  if (isGuest(user)) return { error: "guest" as const };
+  if (!isPaidTier(input.tier) || !isPeriod(input.period)) return { error: "bad_request" as const };
+  const method = await db.paymentMethod.findFirst({ where: { id: input.methodId, userId: user.id } });
+  if (!method || !cardMock.chargeToken) return { error: "provider" as const };
+  const invoice = await createInvoice(user, { tier: input.tier, period: input.period, provider: "card", currency: "UZS", saveCard: true });
+  const res = await cardMock.chargeToken(method, invoice);
+  if (res.ok) await applyPaidInvoice(invoice.id, { txId: res.txId, paymentMethodId: method.id });
+  else await failInvoice(invoice.id, res.reason);
+  refresh();
+  return { invoiceId: invoice.id };
 }
 
 async function ownPendingInvoice(invoiceId: string) {

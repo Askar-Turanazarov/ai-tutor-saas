@@ -1,12 +1,12 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { can } from "@/lib/plans";
-import { SettingsView } from "@/components/app/SettingsView";
+import { billingData } from "@/lib/billing/overview";
+import { BillingView } from "@/components/billing/BillingView";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
-  const t = await getTranslations({ locale: (await params).locale, namespace: "nav" });
-  return { title: t("settings") };
+  const t = await getTranslations({ locale: (await params).locale, namespace: "manage" });
+  return { title: t("title") };
 }
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
@@ -14,5 +14,5 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   setRequestLocale(locale);
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
-  return <SettingsView name={user.name} email={user.email} level={user.level} pro={can(user, "allLevels")} plan={user.plan} />;
+  return <BillingView data={await billingData(user.id)} />;
 }

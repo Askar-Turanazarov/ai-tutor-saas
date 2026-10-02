@@ -32,7 +32,6 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
           level: u.level,
           xp: u.xp,
           seconds: used.get(u.id) ?? 0,
-          requested: u.upgradeRequested,
           created: u.createdAt.toISOString(),
         }))}
       />

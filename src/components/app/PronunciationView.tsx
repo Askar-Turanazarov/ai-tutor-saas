@@ -10,9 +10,10 @@ import { spring } from "@/components/ui/motion";
 import { nextPhrase, pronunciationCheck } from "@/app/actions/user";
 import { createRecognition, recognitionSupported, speak } from "@/lib/speech";
 import { cn } from "@/lib/cn";
-import { ProLock } from "./ProLock";
+import { Paywall } from "@/components/billing/Paywall";
+import { useUsage } from "./usage";
 
-type Result = NonNullable<Awaited<ReturnType<typeof pronunciationCheck>>>;
+type Result = Extract<NonNullable<Awaited<ReturnType<typeof pronunciationCheck>>>, { score: number }>;
 
 export function PronunciationView({ pro, initialPhrase }: { pro: boolean; initialPhrase: string }) {
   const t = useTranslations("pron");
@@ -26,7 +27,7 @@ export function PronunciationView({ pro, initialPhrase }: { pro: boolean; initia
     return (
       <div className="space-y-6">
         {header}
-        <ProLock title={t("proTitle")} text={t("proText")} preview={<Trainer phrase={initialPhrase} demo />} />
+        <Paywall feature="pronunciation" title={t("proTitle")} text={t("proText")} preview={<Trainer phrase={initialPhrase} demo />} />
       </div>
     );
   return (
@@ -39,6 +40,7 @@ export function PronunciationView({ pro, initialPhrase }: { pro: boolean; initia
 
 function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) {
   const t = useTranslations("pron");
+  const { showQuota } = useUsage();
   const [phrase, setPhrase] = useState(initial);
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState("");
@@ -64,7 +66,8 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
   const analyze = (text: string) =>
     startAnalyze(async () => {
       const res = await pronunciationCheck({ target: phrase, heard: text });
-      if (res) setResult(res);
+      if (res && "limit" in res) showQuota("pronunciationPerDay", res.limit ?? 0);
+      else if (res) setResult(res);
     });
 
   const toggle = () => {

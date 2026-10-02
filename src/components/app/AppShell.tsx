@@ -48,7 +48,8 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/app" ? pathname === "/app" : pathname.startsWith(href));
-  const pro = user.plan === "PRO";
+  // Path and pronunciation open from Plus; the upsell card is for Free only.
+  const pro = user.plan !== "FREE";
   // Quizzes are a focused, full-screen flow: no tab bar competing with the answer buttons.
   const focus = pathname.startsWith("/app/quiz/");
 
@@ -111,7 +112,7 @@ function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: strin
 
       <div className="mt-auto space-y-3">
         {!pro && (
-          <Link href="/app/upgrade" className="block">
+          <Link href="/app/plans" className="block">
             <motion.div
               whileHover="hover"
               whileTap={{ scale: 0.98 }}

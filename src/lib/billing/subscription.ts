@@ -121,9 +121,16 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
   const live = sub && isLive(sub, now) && sub.status !== "trialing";
 
   // A renewal continues after the current period, an upgrade keeps it, a new plan starts today.
-  const renewal = invoice.kind === "renewal" && live;
+  // An automatic renewal runs right after the period has ended, so "active" past its end still counts.
+  const renewal = invoice.kind === "renewal" && !!sub && (live || sub.status === "active");
   const upgrade = invoice.kind === "upgrade" && live;
-  const start = renewal ? sub.currentPeriodEnd : upgrade ? sub.currentPeriodStart : now;
+  const start = renewal
+    ? addMonths(sub.currentPeriodEnd, invoice.period) > now
+      ? sub.currentPeriodEnd
+      : now
+    : upgrade
+      ? sub.currentPeriodStart
+      : now;
   const tier = renewal && sub.pendingTier && isPaidTier(sub.pendingTier) ? sub.pendingTier : invoice.tier;
   const period = renewal && sub.pendingPeriod ? sub.pendingPeriod : invoice.period;
 
