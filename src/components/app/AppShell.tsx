@@ -21,7 +21,7 @@ const NAV: NavItem[] = [
   { href: "/app", icon: House, key: "home", anim: "bounce" },
   { href: "/app/chat", icon: MessageCircle, key: "chat", anim: "wiggle" },
   { href: "/app/topics", icon: LayoutGrid, key: "topics", anim: "spin" },
-  { href: "/app/path", icon: Route, key: "path", anim: "tilt", pro: true },
+  { href: "/app/path", icon: Route, key: "path", anim: "tilt" },
   { href: "/app/pronunciation", icon: AudioLines, key: "pronunciation", anim: "bounce", pro: true },
 ];
 
@@ -43,7 +43,7 @@ export function AppShell({
   // Path and pronunciation open from Plus; the upsell card is for Free only.
   const pro = user.plan !== "FREE";
   // Quizzes are a focused, full-screen flow: no tab bar competing with the answer buttons.
-  const focus = pathname.startsWith("/app/quiz/");
+  const focus = pathname.startsWith("/app/quiz/") || pathname.startsWith("/app/learn/");
 
   return (
     <div className="min-h-dvh">

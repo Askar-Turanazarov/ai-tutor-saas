@@ -87,6 +87,15 @@ export const PronunciationOutSchema = z.object({
 });
 export type PronunciationOut = z.infer<typeof PronunciationOutSchema>;
 
+export const MissionOutSchema = z.object({
+  reply: z.string().min(1),
+  corrections: z.array(CorrectionSchema).optional().default([]),
+  /** Ids of mission goals the learner has achieved so far (cumulative). */
+  goalsDone: z.array(z.string()).optional().default([]),
+  finished: z.boolean().optional().default(false),
+});
+export type MissionOut = z.infer<typeof MissionOutSchema>;
+
 export const PingSchema = z.object({ reply: z.string() });
 
 /* ───────────── Lessons (bank shape, also what AI-generated lessons must match) ───────────── */

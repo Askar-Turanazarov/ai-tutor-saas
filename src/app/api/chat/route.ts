@@ -3,7 +3,10 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { can, canAccessTopic, remainingSeconds, touchStreak } from "@/lib/plans";
-import { tutorReply } from "@/lib/ai/tutor";
+import { missionReply, tutorReply } from "@/lib/ai/tutor";
+import { missionGoalsByKeywords } from "@/lib/ai/mock";
+import { consumeQuota, limit, usedToday } from "@/lib/billing/limits";
+import { addMistake, lessonAccess, parseLesson } from "@/lib/learning/progress";
 import { asLang, topicTitle } from "@/lib/learning";
 import type { Level } from "@/lib/levels";
 
@@ -13,10 +16,22 @@ const Body = z.object({
   locale: z.string().default("ru"),
 });
 
+/** Lesson mission (role-play): the client keeps the dialogue, nothing is stored but mistakes. */
+const Scenario = z.object({
+  mode: z.literal("scenario"),
+  lesson: z.string(),
+  history: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(1500) })).max(40),
+  locale: z.string().default("ru"),
+  /** The previous turn was played by the scripted partner. */
+  scripted: z.boolean().default(false),
+});
+
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const parsed = Body.safeParse(await req.json().catch(() => null));
+  const json = await req.json().catch(() => null);
+  if (json?.mode === "scenario") return scenario(user, json);
+  const parsed = Body.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "bad_request" }, { status: 400 });
   const { text, locale } = parsed.data;
 
@@ -92,5 +107,38 @@ export async function POST(req: Request) {
     assistant: { id: botMsg.id, content: reply, tips: withTips ? tips : [] },
     remaining: await remainingSeconds(user),
     topicTitle: topic ? topicTitle(topic, locale) : null,
+  });
+}
+
+async function scenario(user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>, json: unknown) {
+  const parsed = Scenario.safeParse(json);
+  if (!parsed.success) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  const { history, locale } = parsed.data;
+  const row = await db.lesson.findFirst({ where: { slug: parsed.data.lesson, OR: [{ ownerId: null }, { ownerId: user.id }] } });
+  if (!row) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  const lesson = parseLesson(row);
+  if (lessonAccess(user, lesson) !== "open") return NextResponse.json({ error: "locked" }, { status: 403 });
+  const remaining = await remainingSeconds(user);
+  if (remaining !== null && remaining <= 0) return NextResponse.json({ limitReached: true, remaining: 0 });
+
+  // A live AI partner costs one mission from the daily quota (taken on the first turn);
+  // without it (Free, or Plus out of missions) the scripted partner plays the scene.
+  const firstTurn = history.filter((m) => m.role === "user").length === 1;
+  let live = can(user, "missions");
+  if (live && firstTurn) live = (await consumeQuota(user, "missionsPerDay")).ok;
+  else if (live) live = !parsed.data.scripted && ((await limit(user, "missionsPerDay")) === null || (await usedToday(user.id, "missionsPerDay")) > 0);
+  const scripted = !live;
+  const res = await missionReply({ userId: user.id, mission: lesson.mission, history, level: user.level as Level, lang: asLang(locale), scripted });
+  const goalsDone = [...new Set([...res.data.goalsDone, ...missionGoalsByKeywords(lesson.mission, history)])].filter((id) => lesson.mission.goals.some((g) => g.id === id));
+  const corrections = res.data.corrections.slice(0, 2);
+  for (const c of corrections) await addMistake(user.id, { original: c.original, corrected: c.corrected, category: c.category ?? "grammar", explanation: c.explanation, source: "chat" });
+  await touchStreak(user);
+  return NextResponse.json({
+    reply: res.data.reply,
+    corrections,
+    goalsDone,
+    finished: res.data.finished || goalsDone.length === lesson.mission.goals.length,
+    scripted: res.provider === "script" || res.provider === "mock",
+    remaining: await remainingSeconds(user),
   });
 }

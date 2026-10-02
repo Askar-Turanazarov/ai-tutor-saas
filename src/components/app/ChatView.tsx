@@ -447,18 +447,20 @@ function TutorMessage({ m }: { m: ChatMessage }) {
   );
 }
 
-function Composer({
+export function Composer({
   value,
   onChange,
   onSend,
   disabled,
   limited,
+  placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSend: () => void;
   disabled: boolean;
   limited: boolean;
+  placeholder?: string;
 }) {
   const t = useTranslations("chat");
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -506,8 +508,8 @@ function Composer({
               onSend();
             }
           }}
-          placeholder={t("placeholder")}
-          aria-label={t("placeholder")}
+          placeholder={placeholder ?? t("placeholder")}
+          aria-label={placeholder ?? t("placeholder")}
           disabled={limited}
           className="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent py-2 text-[16px] leading-snug outline-none placeholder:text-label-3 disabled:opacity-50"
         />

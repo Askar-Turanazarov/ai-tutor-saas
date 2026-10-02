@@ -70,7 +70,7 @@ export function Dashboard({ greeting, user, usedSeconds, limitSeconds, mistakes,
           textClass="text-white/80"
           anim="wiggle"
         />
-        <Action href="/app/path" icon={Route} title={t("practice")} text={t("practiceText")} locked={!user.pro} iconClass="bg-teal-soft text-teal" anim="tilt" />
+        <Action href="/app/path" icon={Route} title={t("practice")} text={t("practiceText")} iconClass="bg-teal-soft text-teal" anim="tilt" />
         <Action
           href="/app/pronunciation"
           icon={AudioLines}

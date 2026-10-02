@@ -1,10 +1,10 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { can } from "@/lib/plans";
-import { ensurePlan, topicTitle } from "@/lib/learning";
-import { PathView } from "@/components/app/PathView";
+import { lessonAccess, lessonMap, overallRating, skills } from "@/lib/learning/progress";
+import { suggestLesson } from "@/lib/learning/adaptive";
+import { LessonMap, type MapLesson } from "@/components/learn/LessonMap";
+import type { L3 } from "@/lib/content/types";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const t = await getTranslations({ locale: (await params).locale, namespace: "nav" });
@@ -16,34 +16,32 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   setRequestLocale(locale);
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
-  const pro = can(user, "path");
-  const units = pro ? await ensurePlan(user) : [];
-  const topics = await db.topic.findMany();
-  const bySlug = new Map(topics.map((t) => [t.slug, t]));
+  const [rows, s] = await Promise.all([lessonMap(user.id), skills(user)]);
+  const pick = (l: L3) => l[locale as keyof L3] ?? l.en;
 
-  const demo = topics
-    .filter((t) => t.level === "A1" || t.level === "A2")
-    .slice(0, 6)
-    .map((t, i) => ({ id: t.slug, title: topicTitle(t, locale), icon: t.icon, level: t.level, status: i < 2 ? "done" : i === 2 ? "current" : "locked", stars: i < 2 ? 3 - i : 0 }));
+  const lessons = rows.map((r) => {
+    const access = lessonAccess(user, r);
+    return {
+      id: r.id,
+      slug: r.slug,
+      level: r.level,
+      order: r.order,
+      icon: r.icon,
+      difficulty: r.difficulty,
+      title: pick({ ru: r.titleRu, en: r.titleEn, uz: r.titleUz }),
+      canDo: pick(JSON.parse(r.canDo) as L3),
+      access,
+      done: r.progress?.status === "done",
+      started: r.progress?.status === "started",
+      stars: r.progress?.stars ?? 0,
+    };
+  });
+  const started = lessons.find((l) => l.started && l.access === "open");
+  const next = started ?? suggestLesson(lessons.filter((l) => l.access === "open"), overallRating(s));
 
   return (
-    <PathView
-      pro={pro}
-      units={
-        pro
-          ? units.map((u) => {
-              const tp = bySlug.get(u.topicSlug);
-              return {
-                id: u.id,
-                title: tp ? topicTitle(tp, locale) : u.topicSlug,
-                icon: tp?.icon ?? "BookOpen",
-                level: u.level,
-                status: u.status,
-                stars: u.stars,
-              };
-            })
-          : demo
-      }
+    <LessonMap
+      lessons={lessons.map((l): MapLesson => ({ ...l, recommended: l.id === next?.id }))}
     />
   );
 }

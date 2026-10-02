@@ -2,7 +2,9 @@
  * Offline tutor: answers when no AI model is reachable, so the student never sees an error.
  * Rule-based corrections cover the mistakes Russian and Uzbek speakers make most often.
  */
-import type { ChatOut, Correction, PronunciationOut, QuizData, Question, Tip } from "./schemas";
+import type { ChatOut, Correction, MissionOut, PronunciationOut, QuizData, Question, Tip } from "./schemas";
+import type { Mission } from "../content/types";
+import type { ChatTurn } from "./types";
 import { QUIZ_BANK } from "../content/quiz-bank";
 import { IPA } from "../content/phrases";
 import { topicBySlug } from "../content/topics";
@@ -278,4 +280,23 @@ function shuffle<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+/** Goals whose keywords appear anywhere in the learner's messages. */
+export function missionGoalsByKeywords(mission: Mission, history: ChatTurn[]) {
+  const said = history.filter((m) => m.role === "user").map((m) => ` ${m.content.toLowerCase()} `).join(" ");
+  return mission.goals.filter((g) => g.keywords.some((k) => said.includes(k.toLowerCase()))).map((g) => g.id);
+}
+
+/** Scripted mission partner: follows the lesson's script and checks goals by keywords. */
+export function mockMission(opts: { mission: Mission; history: ChatTurn[]; lang: Lang }): MissionOut {
+  // The opener is the first assistant turn; the script answers the learner's replies after it.
+  const turn = Math.max(0, opts.history.filter((m) => m.role === "assistant").length - 1);
+  const last = opts.history[opts.history.length - 1]?.content ?? "";
+  const goalsDone = missionGoalsByKeywords(opts.mission, opts.history);
+  const script = opts.mission.script;
+  const finished = goalsDone.length === opts.mission.goals.length || turn >= script.length - 1;
+  // Once every goal is reached the partner wraps up with the script's last line.
+  const reply = (goalsDone.length === opts.mission.goals.length ? script.at(-1) : script[Math.min(turn, script.length - 1)]) ?? "Thank you!";
+  return { reply, corrections: mockCorrections(last, opts.lang, false), goalsDone, finished };
 }

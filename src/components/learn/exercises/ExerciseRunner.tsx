@@ -67,6 +67,10 @@ export function ExerciseRunner({
   const maxCombo = useRef(0);
   const started = useRef(Date.now());
   const retried = useRef(new Set<string>());
+  // Buttons of the previous step stay in the DOM while they animate out; these refs make sure
+  // each step is answered once and the run finishes once, whatever gets clicked meanwhile.
+  const answered = useRef(-1);
+  const finished = useRef(false);
   const shake = useAnimationControls();
   const step = steps[index];
   const firstRun = initial.length;
@@ -78,7 +82,8 @@ export function ExerciseRunner({
 
   const submit = useCallback(
     (r: Response | null, skipped = false) => {
-      if (verdict || !step) return;
+      if (verdict || !step || answered.current === index) return;
+      answered.current = index;
       const v = skipped ? { ok: false } : check(step.ex, r ?? { kind: "text", value: "" });
       const ms = Date.now() - started.current;
       const grade = gradeAnswer({ correct: v.ok, ms, hinted: hint, answerLength: answerLength(step.ex) });
@@ -99,10 +104,11 @@ export function ExerciseRunner({
         }
       }
     },
-    [verdict, step, hint, isRetry, combo, onAnswer, shake, repeatMistakes],
+    [verdict, step, index, hint, isRetry, combo, onAnswer, shake, repeatMistakes],
   );
 
   const next = useCallback(() => {
+    if (answered.current !== index || finished.current) return;
     if (index + 1 < steps.length) {
       setIndex(index + 1);
       setValue(null);
@@ -110,6 +116,7 @@ export function ExerciseRunner({
       setHint(false);
       return;
     }
+    finished.current = true;
     const scored = answers.current.filter((a) => !a.retry);
     onFinish({ correct: scored.filter((a) => a.ok).length, total: scored.length, maxCombo: maxCombo.current, answers: answers.current });
   }, [index, steps.length, onFinish]);

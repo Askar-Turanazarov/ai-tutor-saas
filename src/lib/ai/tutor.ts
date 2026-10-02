@@ -1,7 +1,8 @@
 import "server-only";
 import { runJSON } from "./router";
-import { ChatOutSchema, PronunciationOutSchema, QuizSchema } from "./schemas";
-import { mockChat, mockPronunciation, mockQuiz, type Lang } from "./mock";
+import { ChatOutSchema, MissionOutSchema, PronunciationOutSchema, QuizSchema } from "./schemas";
+import { mockChat, mockMission, mockPronunciation, mockQuiz, type Lang } from "./mock";
+import type { Mission } from "../content/types";
 import type { ChatTurn } from "./types";
 import type { Level } from "../levels";
 
@@ -143,4 +144,33 @@ Return JSON: {"summary": string, "tips": [...]}`;
     temperature: 0.4,
     fallback: () => mockPronunciation(opts.missed, opts.score, opts.lang),
   });
+}
+
+/**
+ * One turn of a lesson's role-play mission. The model stays in character, marks which goals
+ * the learner has reached and gives short corrections. Without a model: the scripted branch.
+ */
+export async function missionReply(opts: {
+  userId: string;
+  mission: Mission;
+  history: ChatTurn[];
+  level: Level;
+  lang: Lang;
+  scripted: boolean;
+}) {
+  const fallback = () => mockMission({ mission: opts.mission, history: opts.history, lang: opts.lang });
+  if (opts.scripted) return { data: fallback(), provider: "script", model: "script", attempts: 0 };
+  const goals = opts.mission.goals.map((g) => `- ${g.id}: ${g.text.en}`).join("\n");
+  const system = `${PERSONA}
+You are now role-playing for a lesson mission. Stay fully in character as: ${opts.mission.role}.
+Scene: ${opts.mission.scene.en}. Student level: ${opts.level}. ${LEVEL_STYLE[opts.level]}
+The student must achieve these goals by speaking English with you:
+${goals}
+Rules: reply in character in 1–3 short sentences and naturally steer the conversation so the student can reach the remaining goals.
+Never list the goals or break character. When all goals are reached, wrap up the scene politely and set "finished": true.
+"goalsDone": ids of ALL goals reached so far in the whole conversation.
+"corrections": only clear mistakes in the student's latest message, each {"original","corrected","category","explanation"} with a one-sentence explanation in ${LANG_NAME[opts.lang]}.
+
+Return JSON: {"reply": string, "corrections": [...], "goalsDone": [...], "finished": boolean}`;
+  return runJSON({ task: "chat", userId: opts.userId, system, messages: opts.history.slice(-16), schema: MissionOutSchema, fallback });
 }
