@@ -18,6 +18,7 @@ import {
 } from "@/lib/billing/subscription";
 import { declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
 import { clickConfig, clickSign } from "@/lib/billing/providers/click";
+import { portalUrl } from "@/lib/billing/providers/stripe";
 
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
 
@@ -219,4 +220,13 @@ export async function clickEmulatePay(input: { invoiceId: string; outcome: "succ
   });
   refresh();
   return { invoiceId: invoice.id };
+}
+
+/* ───── Stripe ───── */
+
+/** Stripe Customer Portal: card change, invoices, cancellation. */
+export async function openStripePortal() {
+  const user = await requireUser();
+  if (!process.env.STRIPE_SECRET_KEY || !user.stripeCustomerId) return { error: "provider" as const };
+  return { url: await portalUrl(user.id, `${await origin()}/${await getLocale()}/app/billing`) };
 }

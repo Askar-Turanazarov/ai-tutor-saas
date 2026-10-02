@@ -131,15 +131,20 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
     tier,
     period,
     status: "active",
-    provider: invoice.provider,
+    // An upgrade is a one-off top-up: renewals stay with the provider and card already on the subscription.
+    provider: upgrade ? sub.provider : invoice.provider,
     currentPeriodStart: start,
     currentPeriodEnd: upgrade ? sub.currentPeriodEnd : addMonths(start, period),
     cancelAtPeriodEnd: false,
     graceUntil: null,
     pendingTier: null,
     pendingPeriod: null,
-    ...(opts.providerRef ? { providerRef: opts.providerRef } : {}),
-    ...(opts.paymentMethodId ? { paymentMethodId: opts.paymentMethodId } : {}),
+    ...(upgrade || renewal
+      ? {
+          ...(opts.providerRef ? { providerRef: opts.providerRef } : {}),
+          ...(opts.paymentMethodId ? { paymentMethodId: opts.paymentMethodId } : {}),
+        }
+      : { providerRef: opts.providerRef ?? null, paymentMethodId: opts.paymentMethodId ?? null }),
   };
   const saved = sub
     ? await db.subscription.update({ where: { id: sub.id }, data })
