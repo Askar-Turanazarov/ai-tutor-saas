@@ -15,8 +15,6 @@ import {
   MessageCirclePlus,
   Square,
   Trash2,
-  Volume2,
-  Wand2,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge, Sheet, TypingDots } from "@/components/ui/primitives";
@@ -26,14 +24,15 @@ import { iconAnims, spring } from "@/components/ui/motion";
 import { deleteConversation, startConversation } from "@/app/actions/user";
 import { createRecognition, recognitionSupported, speak } from "@/lib/speech";
 import { cn } from "@/lib/cn";
-import type { Correction, Tip } from "@/lib/ai/schemas";
+import type { Correction as Fix, Tip } from "@/lib/ai/schemas";
+import { Correction, Phrase, SpeakButton } from "@/components/learn/primitives";
 import { useUsage } from "./usage";
 
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  corrections?: Correction[];
+  corrections?: Fix[];
   tips?: Tip[];
   fresh?: boolean;
 };
@@ -334,7 +333,8 @@ function UserMessage({ m, pro }: { m: ChatMessage; pro: boolean }) {
         initial={{ opacity: 0, y: 10, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={spring}
-        className="max-w-[85%] whitespace-pre-wrap rounded-[20px] rounded-br-md bg-accent-solid px-4 py-2.5 text-[16px] leading-snug text-white"
+        lang="en"
+        className="max-w-[85%] whitespace-pre-wrap rounded-[20px] rounded-br-md bg-accent-solid px-4 py-2.5 font-lesson text-[16px] leading-snug text-on-accent"
       >
         {m.content}
       </motion.div>
@@ -361,68 +361,50 @@ function UserMessage({ m, pro }: { m: ChatMessage; pro: boolean }) {
   );
 }
 
-function CorrectionCard({ c }: { c: Correction }) {
+/** A teacher's pen correction under the learner's message; rule and examples fold out. */
+function CorrectionCard({ c }: { c: Fix }) {
   const t = useTranslations("chat");
   const [open, setOpen] = useState(false);
   const detailed = !!(c.rule || c.examples?.length);
   return (
-    <div className="rounded-[16px] border border-success/20 bg-success-soft px-3.5 py-2.5 text-[14px]">
-      <div className="flex items-start gap-2">
-        <Wand2 className="mt-0.5 size-4 shrink-0 text-success" />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="text-danger line-through decoration-danger/50">{c.original}</span>
-            <span className="text-label-3">→</span>
-            <span className="font-semibold text-success">{c.corrected}</span>
-            {c.category && <Badge className="ml-auto px-2 py-0 text-[11px]">{c.category}</Badge>}
-          </div>
-          <p className="mt-1 text-label-2">{c.explanation}</p>
-          {detailed && (
-            <>
-              <button
-                onClick={() => setOpen(!open)}
-                aria-expanded={open}
-                className="mt-1.5 inline-flex items-center gap-1 text-[13px] font-semibold text-accent"
-              >
-                {t("rule")}
-                <motion.span animate={{ rotate: open ? 180 : 0 }} transition={spring} className="inline-flex">
-                  <ChevronDown className="size-3.5" />
-                </motion.span>
-              </button>
-              <AnimatePresence initial={false}>
-                {open && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    {c.rule && <p className="mt-1.5 text-label">{c.rule}</p>}
-                    {!!c.examples?.length && (
-                      <ul className="mt-1.5 space-y-1">
-                        {c.examples.map((e) => (
-                          <li key={e} className="flex items-center gap-2 text-label-2">
-                            <button onClick={() => speak(e)} aria-label={t("listen")} className="text-accent">
-                              <Volume2 className="size-3.5" />
-                            </button>
-                            <span className="italic">{e}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </motion.div>
+    <div className="rounded-[16px] border border-separator bg-elevated px-4 py-3 text-[14px] shadow-card">
+      {c.category && <Badge className="mb-1.5 px-2 py-0 text-[11px]">{c.category}</Badge>}
+      <Correction wrong={c.original} right={c.corrected} note={c.explanation} layout={c.original.length > 28 ? "stacked" : "inline"} />
+      {detailed && (
+        <>
+          <button
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-accent"
+          >
+            {t("rule")}
+            <motion.span animate={{ rotate: open ? 180 : 0 }} transition={spring} className="inline-flex">
+              <ChevronDown className="size-3.5" />
+            </motion.span>
+          </button>
+          <AnimatePresence initial={false}>
+            {open && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                {c.rule && <p className="mt-1.5 text-label">{c.rule}</p>}
+                {!!c.examples?.length && (
+                  <ul className="mt-2 space-y-1.5">
+                    {c.examples.map((e) => (
+                      <li key={e}>
+                        <Phrase text={e} size="sm" highlight={[c.corrected]} />
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </AnimatePresence>
-            </>
-          )}
-        </div>
-      </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </div>
   );
 }
 
 function TutorMessage({ m }: { m: ChatMessage }) {
-  const t = useTranslations("chat");
   const words = m.content.split(/(\s+)/);
   const [shown, setShown] = useState(m.fresh ? 0 : words.length);
   useEffect(() => {
@@ -438,19 +420,11 @@ function TutorMessage({ m }: { m: ChatMessage }) {
         initial={{ opacity: 0, y: 10, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={spring}
-        className="group relative max-w-[85%] whitespace-pre-wrap rounded-[20px] rounded-bl-md bg-fill px-4 py-2.5 pr-11 text-[16px] leading-snug"
+        lang="en"
+        className="group relative max-w-[85%] whitespace-pre-wrap rounded-[20px] rounded-bl-md bg-fill px-4 py-2.5 pr-12 font-lesson text-[17px] leading-snug"
       >
         {words.slice(0, shown).join("")}
-        <motion.button
-          whileHover={{ scale: 1.12 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => speak(m.content)}
-          aria-label={t("listen")}
-          title={t("listen")}
-          className="absolute bottom-1.5 right-1.5 grid size-8 place-items-center rounded-full text-label-2 transition-colors hover:bg-fill-2 hover:text-accent"
-        >
-          <Volume2 className="size-4" />
-        </motion.button>
+        <SpeakButton text={m.content} className="absolute bottom-1.5 right-1.5" />
       </motion.div>
       {done && !!m.tips?.length && (
         <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="flex max-w-[85%] flex-wrap gap-1.5">
