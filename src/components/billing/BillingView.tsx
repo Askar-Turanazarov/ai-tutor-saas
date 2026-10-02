@@ -11,6 +11,7 @@ import { cancelSubscription, openStripePortal, removeCard, resumeSubscription, s
 import { formatMoney, tierLabel } from "@/lib/billing/catalog";
 import type { BillingData } from "@/lib/billing/overview";
 import { cn } from "@/lib/cn";
+import { EmptyState } from "@/components/decor/EmptyState";
 
 const PROVIDER: Record<string, string> = { card: "Uzcard / HUMO", click: "Click", stripe: "Stripe", trial: "Trial", admin: "Ustoz" };
 const CHIP: Record<string, string> = { uzcard: "UZ", humo: "HUMO", visa: "VISA", mastercard: "MC" };
@@ -137,7 +138,7 @@ export function BillingView({ data }: { data: BillingData }) {
           <CreditCard className="size-5 text-label-2" /> {t("cards")}
         </h2>
         {data.cards.length === 0 ? (
-          <p className="mt-3 text-[14px] text-label-2">{t("noCards")}</p>
+          <EmptyState className="mt-3" tone="teal" icon={<CreditCard />} text={t("noCards")} />
         ) : (
           <ul className="mt-3 divide-y divide-separator">
             {data.cards.map((c) => (
@@ -168,7 +169,7 @@ export function BillingView({ data }: { data: BillingData }) {
           <Receipt className="size-5 text-label-2" /> {t("history")}
         </h2>
         {data.invoices.length === 0 ? (
-          <p className="mt-3 text-[14px] text-label-2">{t("noInvoices")}</p>
+          <EmptyState className="mt-3" tone="gold" icon={<Receipt />} text={t("noInvoices")} />
         ) : (
           <ul className="mt-2 divide-y divide-separator">
             {data.invoices.map((i, n) => (

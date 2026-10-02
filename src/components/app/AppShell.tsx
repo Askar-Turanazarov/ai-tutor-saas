@@ -209,7 +209,7 @@ function TabBar({ isActive }: { isActive: (h: string) => boolean }) {
   const t = useTranslations("nav");
   return (
     <nav
-      className="glass fixed inset-x-3 bottom-3 z-40 flex h-[64px] items-center justify-around rounded-[22px] border px-1 shadow-float lg:hidden"
+      className="glass-thick glass-refract fixed inset-x-3 bottom-3 z-40 flex h-[64px] items-center justify-around rounded-[22px] border px-1 lg:hidden"
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
       {NAV.map((item) => {

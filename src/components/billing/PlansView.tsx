@@ -8,6 +8,7 @@ import { useRouter } from "@/i18n/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, Segmented, Sheet } from "@/components/ui/primitives";
 import { Ornament } from "@/components/ui/brand";
+import { TileBand } from "@/components/decor/motifs";
 import { scheduleDowngrade, startTrialAction } from "@/app/actions/billing";
 import { PERIODS, TIER_RANK, formatMoney, tierLabel, type PaidTier, type Period, type Tier } from "@/lib/billing/catalog";
 import type { PlansData } from "@/lib/billing/overview";
@@ -166,6 +167,9 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
                 focus === tier && !featured && "ring-2 ring-teal/60",
               )}
             >
+              <div className={cn("absolute inset-x-6 top-2 opacity-50", tier === "PRO" ? "text-ochre" : tier === "PLUS" ? "text-turquoise" : "text-label-3/50")}>
+                <TileBand />
+              </div>
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-[22px] font-bold">{tierLabel(tier)}</h2>
                 {isCurrent ? <Badge tone="teal">{t("yourPlan")}</Badge> : featured && <Badge tone="accent">{t("popular")}</Badge>}

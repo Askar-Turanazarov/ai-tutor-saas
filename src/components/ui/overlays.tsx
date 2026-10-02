@@ -44,7 +44,7 @@ export function Menu({
       >
         {trigger}
       </Dropdown.Trigger>
-      <Dropdown.Popover placement={placement} className="min-w-48 rounded-[16px] border border-(--glass-border) bg-(--glass-strong) shadow-float backdrop-blur-xl backdrop-saturate-150">
+      <Dropdown.Popover placement={placement} className="glass-thick min-w-48 rounded-[16px] border">
         <Dropdown.Menu
           aria-label={label}
           onAction={(key) => onAction(String(key))}
