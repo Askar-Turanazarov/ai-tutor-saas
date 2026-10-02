@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { DAILY_GOALS, levelFromXp } from "@/lib/gamification/rules";
 import { tashkentDate } from "@/lib/time";
+import { dismissLeagueNote } from "@/lib/gamification/league";
 
 export async function setDailyGoal(goal: number) {
   const user = await getCurrentUser();
@@ -24,4 +25,9 @@ export async function markCelebrated() {
     db.userAchievement.updateMany({ where: { userId: user.id, seen: false }, data: { seen: true } }),
     db.user.update({ where: { id: user.id }, data: { levelSeen: Math.max(user.levelSeen, levelFromXp(user.xp).level) } }),
   ]);
+}
+
+export async function dismissLeagueResult() {
+  const user = await getCurrentUser();
+  if (user) await dismissLeagueNote(user.id);
 }

@@ -29,6 +29,11 @@ model User {
   freezeMonth      String? // YYYY-MM of the last refill
   /// Profile level the learner has already seen celebrated
   levelSeen        Int              @default(1)
+  /// Weekly league: 0 bronze … 4 turquoise; leagueWeek = Monday of the week it was last settled
+  league           Int              @default(0)
+  leagueWeek       String?
+  /// JSON {from,to,rank} of the last settled week, shown once on the league page
+  leagueLast       String?
   trialUsedAt      DateTime?
   stripeCustomerId String?
   createdAt        DateTime         @default(now())
@@ -402,4 +407,13 @@ model DailyQuest {
   doneAt   DateTime?
 
   @@unique([userId, date, key])
+}
+
+/// Demo players fill the weekly league so it never looks empty; their XP is computed, not stored.
+model DemoPlayer {
+  id     String @id @default(cuid())
+  name   String
+  league Int
+  /// Average XP per day
+  pace   Int
 }

@@ -2,10 +2,15 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { atLeast, canAccessTopic, dailyLimitSeconds, usageToday } from "@/lib/plans";
+import { atLeast, usageToday } from "@/lib/plans";
 import { tashkentHour } from "@/lib/time";
-import { topicDesc, topicTitle } from "@/lib/learning";
-import { levelIndex } from "@/lib/levels";
+import { lessonAccess, lessonMap, overallRating, skills } from "@/lib/learning/progress";
+import { suggestLesson } from "@/lib/learning/adaptive";
+import { dueCount } from "@/lib/learning/deck";
+import { progressState } from "@/lib/gamification";
+import { leagueState } from "@/lib/gamification/league";
+import { limitsOf, usedToday } from "@/lib/billing/limits";
+import type { L3 } from "@/lib/content/types";
 import { Dashboard } from "@/components/app/Dashboard";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -19,34 +24,55 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
 
-  const [used, limit, mistakes, topics] = await Promise.all([
+  const [progress, league, rows, s, due, mistakes, limits, seconds, lessons, reviews] = await Promise.all([
+    progressState(user),
+    leagueState(user),
+    lessonMap(user.id),
+    skills(user),
+    dueCount(user.id),
+    db.mistake.count({ where: { userId: user.id, resolvedAt: null } }),
+    limitsOf(user),
     usageToday(user.id),
-    dailyLimitSeconds(user),
-    db.mistake.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 }),
-    db.topic.findMany({ orderBy: { order: "asc" } }),
+    usedToday(user.id, "lessonsPerDay"),
+    usedToday(user.id, "reviewsPerDay"),
   ]);
+  const pick = (l: L3) => l[locale as keyof L3] ?? l.en;
+  const open = rows.filter((r) => lessonAccess(user, r) === "open").map((r) => ({ ...r, done: r.progress?.status === "done" }));
+  const started = open.find((r) => r.progress?.status === "started");
+  const next = started ?? suggestLesson(open, overallRating(s));
   const hour = tashkentHour();
-  const greeting = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
-  const li = levelIndex(user.level);
-  const recommended = topics
-    .filter((t) => canAccessTopic(user, t) && Math.abs(levelIndex(t.level) - li) <= 1)
-    .sort((a, b) => Math.abs(levelIndex(a.level) - li) - Math.abs(levelIndex(b.level) - li))
-    .slice(0, 3);
+  const me = league.rows.find((r) => r.me);
 
   return (
     <Dashboard
-      greeting={greeting}
-      user={{ name: user.name, level: user.level, xp: user.xp, streak: user.streak, pro: atLeast(user, "PLUS") }}
-      usedSeconds={used}
-      limitSeconds={limit}
-      mistakes={mistakes.map((m) => ({ id: m.id, original: m.original, corrected: m.corrected, explanation: m.explanation }))}
-      topics={recommended.map((t) => ({
-        slug: t.slug,
-        icon: t.icon,
-        level: t.level,
-        title: topicTitle(t, locale),
-        desc: topicDesc(t, locale),
-      }))}
+      greeting={hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening"}
+      name={user.name.split(" ")[0]}
+      level={user.level}
+      progress={progress}
+      lesson={
+        next && {
+          slug: next.slug,
+          icon: next.icon,
+          level: next.level,
+          title: pick({ ru: next.titleRu, en: next.titleEn, uz: next.titleUz }),
+          canDo: pick(JSON.parse(next.canDo) as L3),
+          started: next.progress?.status === "started",
+        }
+      }
+      due={due}
+      mistakes={mistakes}
+      league={{ key: league.key, rank: league.rank, size: league.size, xp: me?.xp ?? 0, endsIn: league.endsIn }}
+      limits={
+        atLeast(user, "PRO")
+          ? null
+          : {
+              plan: user.plan,
+              minutes: limits.dailyMinutes === null ? null : { used: Math.floor(seconds / 60), max: limits.dailyMinutes },
+              lessons: limits.lessonsPerDay === null ? null : { used: lessons, max: limits.lessonsPerDay },
+              reviews: limits.reviewsPerDay === null ? null : { used: reviews, max: limits.reviewsPerDay },
+            }
+      }
+      speaking={atLeast(user, "PLUS")}
     />
   );
 }

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { TOPICS } from "../src/lib/content/topics";
 import { lessonRows } from "../src/lib/content/lessons";
 import { ACHIEVEMENTS, levelFromXp } from "../src/lib/gamification/rules";
+import { DEMO_PLAYERS } from "./demo-players";
 
 const db = new PrismaClient();
 
@@ -30,6 +31,7 @@ async function main() {
 
   for (const [order, a] of ACHIEVEMENTS.entries()) await db.achievement.upsert({ where: { id: a.id }, update: { ...a, order }, create: { ...a, order } });
 
+  for (const p of DEMO_PLAYERS) await db.demoPlayer.upsert({ where: { id: p.id }, update: p, create: p });
   const userPw = await bcrypt.hash(process.env.SEED_USER_PASSWORD || "demo12345", 10);
   const adminPw = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || "admin12345", 10);
   const users = [

@@ -51,7 +51,8 @@
     "settings": "Sozlamalar",
     "vocab": "Lugʻat",
     "mistakes": "Xatolar",
-    "progress": "Natijalar"
+    "progress": "Natijalar",
+    "league": "Liga"
   },
   "landing": {
     "badge": "Toshkentda yaratilgan",
@@ -166,24 +167,39 @@
     "morning": "Xayrli tong, {name}",
     "afternoon": "Xayrli kun, {name}",
     "evening": "Xayrli kech, {name}",
-    "subtitle": "Har kuni ozgina ingliz tili — va u sizniki boʻladi.",
-    "streak": "Seriya",
-    "days": "{n} kun",
-    "xp": "Tajriba",
     "today": "Bugun",
     "minutesLeft": "{n} daqiqa qoldi",
-    "unlimited": "Cheklovsiz",
-    "talk": "Repetitor bilan gaplashish",
-    "talkText": "Erkin suhbat yoki tanlangan mavzu",
-    "practice": "Darslar",
-    "practiceText": "Hayotiy vazifalar va rolli missiyalar",
+    "talk": "Ustoz bilan suhbat",
+    "talkText": "Tuzatishlar bilan erkin suhbat",
     "pronounce": "Talaffuz",
-    "pronounceText": "Qiyin tovushlarni mashq qiling",
-    "mistakes": "Soʻnggi xatolar",
-    "noMistakes": "Hozircha xato yoʻq. Suhbatni boshlang — xatolar shu yerda paydo boʻladi va ular ustida ishlaymiz.",
-    "recentTopics": "Tavsiya etilgan mavzular",
+    "pronounceText": "Iborani ayting — talaffuzni baholaymiz",
+    "mistakes": "Xatolarim",
+    "noMistakes": "Hozircha toza",
     "upsellTitle": "Plus bilan koʻproq mashq",
-    "upsellText": "Barcha darajalar, shaxsiy reja, talaffuz. 7 kun Pro — bepul."
+    "upsellText": "Barcha darajalar, shaxsiy reja, talaffuz. 7 kun Pro — bepul.",
+    "goalLeft": "Kunlik maqsadgacha yana {n} XP",
+    "goalReached": "Kunlik maqsad bajarildi — barakalla!",
+    "continue": "Davom etish",
+    "next": "Keyingi dars",
+    "allDone": "Barcha ochiq darslar tugadi — xaritani ochish",
+    "review": "Takrorlash",
+    "dueCards": "{n} ta karta kutmoqda",
+    "noDue": "Bugunga hammasi takrorlandi",
+    "openMistakes": "{n} ta xato tahlil kutmoqda",
+    "quests": "Kunlik vazifalar",
+    "allProgress": "Barcha natijalar",
+    "league": "Hafta ligasi",
+    "place": "{of} tadan {n}-o‘rin",
+    "levelNote": "Ingliz tili darajasi: {level}. Tajriba darslar, takrorlash va suhbatlar uchun oshadi.",
+    "limits": "Bugungi limitlar",
+    "limit": {
+      "minutes": "Mashq daqiqalari",
+      "lessons": "Darslar",
+      "reviews": "Takrorlashlar"
+    },
+    "left": "{max} tadan {n} qoldi",
+    "upsellFree": "Plus’da — barcha darajalar, dars va takrorlashlar cheklovsiz.",
+    "upsellPlus": "Pro’da — vaqt cheklovsiz va siz uchun AI-darslar."
   },
   "chat": {
     "title": "Repetitor",
@@ -884,5 +900,29 @@
     "next": "Keyingi",
     "great": "Ajoyib",
     "freeNote": "Plus bilan — seriyani muzlatish va kuniga koʻproq dars"
+  },
+  "league": {
+    "names": {
+      "bronze": "Bronza liga",
+      "silver": "Kumush liga",
+      "gold": "Oltin liga",
+      "lapis": "Lojuvard liga",
+      "turquoise": "Firuza liga"
+    },
+    "endsIn": "Hafta tugashiga {d} kun {h} soat",
+    "ladder": "Ligalar zinapoyasi",
+    "promoted": "Siz {league}ga ko‘tarildingiz!",
+    "demoted": "Siz {league}ga tushdingiz. Bu hafta hammasini qaytarish mumkin.",
+    "stayed": "Siz o‘z ligangizda qoldingiz.",
+    "lastRank": "o‘tgan hafta: {n}-o‘rin",
+    "dismiss": "Yopish",
+    "rules": "Haftalik tajriba hal qiladi: eng yaxshi 3 talik yuqoriga, oxirgi 3 talik pastga tushadi. Natijalar — Toshkent vaqti bilan dushanba.",
+    "rulesTop": "Bu eng yuqori liga. Oxirgi uch o‘rindan chetda qoling — shu yerda qolasiz.",
+    "rulesBottom": "Tajriba to‘plang va top-3 ga kiring — dushanba kuni Kumush ligaga o‘tasiz.",
+    "upZone": "Ko‘tarilish zonasi",
+    "downZone": "Tushish zonasi",
+    "you": "Siz",
+    "demo": "demo",
+    "demoNote": "«Demo» belgili o‘yinchilar — liga to‘lguncha mashq raqiblari."
   }
 }

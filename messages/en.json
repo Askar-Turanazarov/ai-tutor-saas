@@ -51,7 +51,8 @@
     "settings": "Settings",
     "vocab": "Vocabulary",
     "mistakes": "Mistakes",
-    "progress": "Progress"
+    "progress": "Progress",
+    "league": "League"
   },
   "landing": {
     "badge": "Made in Tashkent",
@@ -166,24 +167,39 @@
     "morning": "Good morning, {name}",
     "afternoon": "Good afternoon, {name}",
     "evening": "Good evening, {name}",
-    "subtitle": "A little English every day, and it becomes yours.",
-    "streak": "Streak",
-    "days": "{n, plural, one {# day} other {# days}}",
-    "xp": "XP",
     "today": "Today",
     "minutesLeft": "{n} min left",
-    "unlimited": "Unlimited",
     "talk": "Talk to your tutor",
-    "talkText": "Free conversation or a topic of your choice",
-    "practice": "Lessons",
-    "practiceText": "Real-life tasks and role-play missions",
+    "talkText": "Free conversation with corrections",
     "pronounce": "Pronunciation",
-    "pronounceText": "Train the tricky sounds",
-    "mistakes": "Recent mistakes",
-    "noMistakes": "No mistakes yet. Start a conversation and they'll show up here so we can work on them.",
-    "recentTopics": "Recommended topics",
+    "pronounceText": "Say a phrase — we'll rate your pronunciation",
+    "mistakes": "My mistakes",
+    "noMistakes": "All clear so far",
     "upsellTitle": "More practice with Plus",
-    "upsellText": "All levels, a personal plan, pronunciation. 7 days of Pro for free."
+    "upsellText": "All levels, a personal plan, pronunciation. 7 days of Pro for free.",
+    "goalLeft": "{n} XP to today's goal",
+    "goalReached": "Daily goal reached — keep it up!",
+    "continue": "Continue",
+    "next": "Next lesson",
+    "allDone": "All available lessons done — open the map",
+    "review": "Review",
+    "dueCards": "{n, plural, one {# card due} other {# cards due}}",
+    "noDue": "All caught up for today",
+    "openMistakes": "{n, plural, one {# to work on} other {# to work on}}",
+    "quests": "Daily quests",
+    "allProgress": "All progress",
+    "league": "League of the week",
+    "place": "#{n} of {of}",
+    "levelNote": "English level: {level}. XP grows with lessons, reviews and chats.",
+    "limits": "Today's limits",
+    "limit": {
+      "minutes": "Practice minutes",
+      "lessons": "Lessons",
+      "reviews": "Reviews"
+    },
+    "left": "{n} of {max} left",
+    "upsellFree": "Plus: all levels, unlimited lessons and reviews.",
+    "upsellPlus": "Pro: unlimited time and AI lessons made for you."
   },
   "chat": {
     "title": "Tutor",
@@ -884,5 +900,29 @@
     "next": "Next",
     "great": "Great",
     "freeNote": "Plus adds streak freezes and more lessons a day"
+  },
+  "league": {
+    "names": {
+      "bronze": "Bronze league",
+      "silver": "Silver league",
+      "gold": "Gold league",
+      "lapis": "Lapis league",
+      "turquoise": "Turquoise league"
+    },
+    "endsIn": "{d}d {h}h left this week",
+    "ladder": "League ladder",
+    "promoted": "You moved up to the {league}!",
+    "demoted": "You dropped to the {league}. You can win it back this week.",
+    "stayed": "You stayed in your league.",
+    "lastRank": "last week: #{n}",
+    "dismiss": "Dismiss",
+    "rules": "Weekly XP decides it: the top 3 move up, the bottom 3 move down. Results on Monday, Tashkent time.",
+    "rulesTop": "This is the top league. Stay out of the bottom 3 to keep your place.",
+    "rulesBottom": "Earn XP and reach the top 3 to move up to Silver on Monday.",
+    "upZone": "Promotion zone",
+    "downZone": "Demotion zone",
+    "you": "You",
+    "demo": "demo",
+    "demoNote": "Players marked “demo” are practice rivals while the league fills up."
   }
 }

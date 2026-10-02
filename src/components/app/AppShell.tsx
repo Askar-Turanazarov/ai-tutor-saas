@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { AudioLines, ChevronsUpDown, Crown, House, Layers, LayoutGrid, MessageCircle, PenLine, Route, Settings, Shield, Sparkles, Trophy, type LucideIcon } from "lucide-react";
+import { AudioLines, ChevronsUpDown, Crown, House, Layers, LayoutGrid, Medal, MessageCircle, PenLine, Route, Settings, Shield, Sparkles, Trophy, type LucideIcon } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Logo, LogoMark } from "@/components/ui/brand";
 import { Badge } from "@/components/ui/primitives";
@@ -27,6 +27,7 @@ const NAV: NavItem[] = [
   { href: "/app/vocab", icon: Layers, key: "vocab", anim: "tilt" },
   { href: "/app/mistakes", icon: PenLine, key: "mistakes", anim: "wiggle", tab: false },
   { href: "/app/progress", icon: Trophy, key: "progress", anim: "bounce", tab: false },
+  { href: "/app/league", icon: Medal, key: "league", anim: "pop", tab: false },
   { href: "/app/pronunciation", icon: AudioLines, key: "pronunciation", anim: "bounce", pro: true },
 ];
 
