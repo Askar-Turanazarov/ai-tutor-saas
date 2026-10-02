@@ -1,6 +1,7 @@
 import type { PaymentProvider, ProviderId } from "./types";
+import { cardMock } from "./card-mock";
 
-export const PAYMENT_PROVIDERS: PaymentProvider[] = [];
+export const PAYMENT_PROVIDERS: PaymentProvider[] = [cardMock];
 
 export function getProvider(id: string): PaymentProvider | undefined {
   return PAYMENT_PROVIDERS.find((p) => p.id === id);
