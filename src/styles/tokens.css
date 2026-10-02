@@ -1,0 +1,181 @@
+/*
+ * Majolica design tokens: lapis lazuli + turquoise + ochre on warm paper.
+ *
+ * Colour semantics are tied to learning and stay the same everywhere:
+ *   accent (lapis)    — actions and progress
+ *   teal (turquoise)  — correct / learned
+ *   gold (ochre)      — new / highlighted with a marker
+ *   danger (muted red)— mistakes
+ *
+ * Text tokens meet WCAG AA (4.5:1) on both --bg and --bg-elevated; "-solid" fills carry
+ * white (light) or ink (dark) text at AA as well. Checked by tests-local/contrast.mjs.
+ *
+ * These variables are unlayered, so they override HeroUI's theme layer, and HeroUI's own
+ * names (--background, --surface, --accent-foreground…) are mapped onto the same palette.
+ */
+:root,
+.light {
+  /* Paper and ink */
+  --bg: #f6f3ec;
+  --bg-elevated: #fffdf8;
+  --bg-sunken: #efeadf;
+  --fill: rgba(31, 36, 48, 0.06);
+  --fill-2: rgba(31, 36, 48, 0.1);
+  --label: #1f2430;
+  --label-2: #535866;
+  --label-3: #666b7a;
+  --separator: rgba(31, 36, 48, 0.12);
+  --border: rgba(31, 36, 48, 0.14);
+
+  /* Lapis — actions, progress */
+  --accent: #2f4fa8;
+  --accent-solid: #2f4fa8;
+  --accent-soft: rgba(47, 79, 168, 0.1);
+  --on-accent: #ffffff;
+
+  /* Turquoise — correct, learned */
+  --teal: #17736e;
+  --teal-solid: #187a74;
+  --teal-soft: rgba(31, 138, 132, 0.12);
+  --turquoise: #1f8a84;
+
+  /* Ochre — new, marker highlight */
+  --gold: #94561a;
+  --gold-solid: #a8611f;
+  --gold-soft: rgba(196, 119, 46, 0.14);
+  --ochre: #c4772e;
+  --marker: rgba(224, 161, 94, 0.32);
+
+  /* Status, muted to the palette */
+  --success: #26734b;
+  --success-solid: #26734b;
+  --success-soft: rgba(38, 115, 75, 0.1);
+  --danger: #b03a2e;
+  --danger-solid: #b03a2e;
+  --danger-soft: rgba(176, 58, 46, 0.09);
+  --warning: #8c5a10;
+  --warning-soft: rgba(196, 119, 46, 0.13);
+  --on-solid: #ffffff;
+
+  /* Lexical chunk kinds — soft background + readable ink */
+  --chunk-collocation: #2f4fa8;
+  --chunk-collocation-soft: rgba(47, 79, 168, 0.1);
+  --chunk-phrasal: #17736e;
+  --chunk-phrasal-soft: rgba(31, 138, 132, 0.12);
+  --chunk-idiom: #94561a;
+  --chunk-idiom-soft: rgba(196, 119, 46, 0.14);
+  --chunk-fixed: #7e4a78;
+  --chunk-fixed-soft: rgba(126, 74, 120, 0.11);
+  --chunk-word: #535866;
+  --chunk-word-soft: rgba(31, 36, 48, 0.07);
+
+  /* Materials */
+  --glass: rgba(255, 253, 248, 0.62);
+  --glass-strong: rgba(255, 253, 248, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-edge: rgba(31, 36, 48, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --shadow-card: 0 1px 2px rgba(60, 45, 20, 0.05), 0 8px 24px rgba(60, 45, 20, 0.06);
+  --shadow-float: 0 14px 44px rgba(40, 40, 80, 0.14), 0 2px 6px rgba(40, 30, 10, 0.06);
+  --ornament: rgba(47, 79, 168, 0.09);
+  --ornament-2: rgba(31, 138, 132, 0.08);
+  --ornament-3: rgba(196, 119, 46, 0.1);
+
+  /* HeroUI mapping */
+  --background: var(--bg);
+  --foreground: var(--label);
+  --surface: var(--bg-elevated);
+  --surface-foreground: var(--label);
+  --surface-secondary: var(--bg-sunken);
+  --surface-tertiary: #e8e2d4;
+  --overlay: var(--bg-elevated);
+  --overlay-foreground: var(--label);
+  --muted: var(--label-2);
+  --default: #ece7dc;
+  --default-foreground: var(--label);
+  --accent-foreground: var(--on-accent);
+  --success-foreground: var(--on-solid);
+  --warning-foreground: var(--on-solid);
+  --danger-foreground: var(--on-solid);
+  --field-background: var(--bg-elevated);
+  --field-foreground: var(--label);
+  --field-placeholder: var(--label-3);
+  --segment: var(--bg-elevated);
+  --segment-foreground: var(--label);
+  --focus: var(--accent);
+  --link: var(--accent);
+  --backdrop: rgba(18, 23, 34, 0.42);
+  --radius: 0.75rem;
+  --field-radius: 0.75rem;
+
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #121722;
+  --bg-elevated: #1a2130;
+  --bg-sunken: #0e121b;
+  --fill: rgba(230, 228, 222, 0.07);
+  --fill-2: rgba(230, 228, 222, 0.12);
+  --label: #e6e4de;
+  --label-2: #a9adb8;
+  --label-3: #8a90a0;
+  --separator: rgba(230, 228, 222, 0.1);
+  --border: rgba(230, 228, 222, 0.12);
+
+  --accent: #8ea6f0;
+  --accent-solid: #4361c2;
+  --accent-soft: rgba(142, 166, 240, 0.14);
+  --on-accent: #ffffff;
+
+  --teal: #5cc3b8;
+  --teal-solid: #5cc3b8;
+  --teal-soft: rgba(92, 195, 184, 0.13);
+  --turquoise: #5cc3b8;
+
+  --gold: #e0a15e;
+  --gold-solid: #e0a15e;
+  --gold-soft: rgba(224, 161, 94, 0.14);
+  --ochre: #e0a15e;
+  --marker: rgba(224, 161, 94, 0.26);
+
+  --success: #6cc694;
+  --success-solid: #6cc694;
+  --success-soft: rgba(108, 198, 148, 0.13);
+  --danger: #ee8a7e;
+  --danger-solid: #ee8a7e;
+  --danger-soft: rgba(238, 138, 126, 0.13);
+  --warning: #e3b062;
+  --warning-soft: rgba(227, 176, 98, 0.13);
+  --on-solid: #121722;
+
+  --chunk-collocation: #8ea6f0;
+  --chunk-collocation-soft: rgba(142, 166, 240, 0.14);
+  --chunk-phrasal: #5cc3b8;
+  --chunk-phrasal-soft: rgba(92, 195, 184, 0.13);
+  --chunk-idiom: #e0a15e;
+  --chunk-idiom-soft: rgba(224, 161, 94, 0.14);
+  --chunk-fixed: #d49bcb;
+  --chunk-fixed-soft: rgba(212, 155, 203, 0.13);
+  --chunk-word: #a9adb8;
+  --chunk-word-soft: rgba(230, 228, 222, 0.08);
+
+  --glass: rgba(26, 33, 48, 0.58);
+  --glass-strong: rgba(26, 33, 48, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-edge: rgba(0, 0, 0, 0.3);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.18);
+  --shadow-float: 0 14px 44px rgba(0, 0, 0, 0.5);
+  --ornament: rgba(142, 166, 240, 0.07);
+  --ornament-2: rgba(92, 195, 184, 0.06);
+  --ornament-3: rgba(224, 161, 94, 0.07);
+
+  /* HeroUI fills --accent (light lapis here) with --accent-foreground, so it needs ink. */
+  --accent-foreground: #121722;
+  --surface-tertiary: #242c3d;
+  --default: #232b3b;
+  --backdrop: rgba(5, 8, 14, 0.6);
+
+  color-scheme: dark;
+}

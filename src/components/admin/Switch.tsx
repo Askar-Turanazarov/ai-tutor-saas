@@ -16,7 +16,7 @@ export function Switch({ checked, onChange, label, disabled }: { checked: boolea
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-[31px] w-[51px] shrink-0 rounded-full p-[2px] transition-colors duration-200 disabled:opacity-50",
-        checked ? "bg-success" : "bg-fill-2",
+        checked ? "bg-success-solid" : "bg-fill-2",
       )}
     >
       <motion.span

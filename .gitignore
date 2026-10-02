@@ -62,3 +62,6 @@ agents.md
 # editors
 .vscode/
 .idea/
+
+# personal to-do notes
+/todo.md

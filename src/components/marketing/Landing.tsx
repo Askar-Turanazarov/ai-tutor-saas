@@ -98,7 +98,7 @@ function Hero() {
             className="mt-5 text-[clamp(2.4rem,6vw,4.1rem)] font-bold leading-[1.04] tracking-[-0.035em]"
           >
             {t("title")}{" "}
-            <span className="bg-gradient-to-r from-accent to-teal bg-clip-text text-transparent">{t("titleAccent")}</span>
+            <span className="bg-gradient-to-r from-accent to-teal-solid bg-clip-text text-transparent">{t("titleAccent")}</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -163,7 +163,7 @@ function HeroDemo() {
           <div>
             <div className="text-[15px] font-semibold">Ustoz</div>
             <div className="flex items-center gap-1.5 text-[12px] text-success">
-              <span className="size-1.5 rounded-full bg-success" /> online · Tashkent
+              <span className="size-1.5 rounded-full bg-success-solid" /> online · Tashkent
             </div>
           </div>
         </div>

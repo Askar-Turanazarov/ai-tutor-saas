@@ -152,7 +152,7 @@ export function QuizRunner({ quizId, title, questions }: { quizId: string; title
         >
           <X className="size-6" />
         </Link>
-        <ProgressBar value={(index + (verdict ? 1 : 0)) / questions.length} className="h-3 flex-1" color="bg-success" />
+        <ProgressBar value={(index + (verdict ? 1 : 0)) / questions.length} className="h-3 flex-1" color="bg-success-solid" />
       </div>
       <p className="mt-6 text-[13px] font-semibold uppercase tracking-wide text-label-3">{title}</p>
 
@@ -197,7 +197,7 @@ export function QuizRunner({ quizId, title, questions }: { quizId: string; title
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 400, damping: 12 }}
-                  className={cn("grid size-9 shrink-0 place-items-center rounded-full text-white", verdict.ok ? "bg-success" : "bg-danger")}
+                  className={cn("grid size-9 shrink-0 place-items-center rounded-full text-on-solid", verdict.ok ? "bg-success-solid" : "bg-danger-solid")}
                 >
                   {verdict.ok ? <Check className="size-5" strokeWidth={3} /> : <X className="size-5" strokeWidth={3} />}
                 </motion.span>
@@ -216,7 +216,7 @@ export function QuizRunner({ quizId, title, questions }: { quizId: string; title
               <Button
                 size="lg"
                 variant={verdict.ok ? "success" : "primary"}
-                className={cn("mt-4 w-full", !verdict.ok && "!bg-danger")}
+                className={cn("mt-4 w-full", !verdict.ok && "!bg-danger-solid !text-on-solid")}
                 onClick={() => next()}
                 autoFocus
               >
@@ -444,11 +444,11 @@ function SpeakQ({
             aria-label={listening ? tp("stop") : t("record")}
             className={cn(
               "relative grid size-24 place-items-center rounded-full text-white shadow-float",
-              listening ? "bg-danger" : "bg-accent-solid",
+              listening ? "bg-danger-solid" : "bg-accent-solid",
             )}
           >
             {listening && (
-              <span className="absolute inset-0 rounded-full bg-danger" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
+              <span className="absolute inset-0 rounded-full bg-danger-solid" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
             )}
             {listening ? <Square className="relative size-8" fill="currentColor" /> : <Mic className="size-10" />}
           </motion.button>

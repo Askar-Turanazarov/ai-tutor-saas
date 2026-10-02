@@ -1,77 +1,14 @@
 @import "tailwindcss";
+@import "@heroui/styles";
+@import "../styles/tokens.css";
 
+/* Theme follows next-themes' class only (HeroUI's variant would also follow the OS). */
 @custom-variant dark (&:where(.dark, .dark *));
-
-/*
- * Design tokens. Semantic, Apple-style: background / elevated / fill / label 1-3 / separator.
- * Accent is a calm indigo; teal nods to the turquoise tiles of Tashkent and Samarkand.
- * All text colours meet WCAG AA (4.5:1) on both background and elevated surfaces.
- */
-:root {
-  --bg: #f5f5f7;
-  --bg-elevated: #ffffff;
-  --fill: rgba(118, 118, 128, 0.1);
-  --fill-2: rgba(118, 118, 128, 0.17);
-  --label: #1d1d1f;
-  --label-2: #5e5e66;
-  --label-3: #8a8a92;
-  --separator: rgba(60, 60, 67, 0.13);
-
-  --accent: #4357d6;
-  --accent-solid: #4a5ddb;
-  --accent-soft: rgba(74, 93, 219, 0.1);
-  --teal: #127a75;
-  --teal-soft: rgba(18, 122, 117, 0.1);
-  --success: #1e8549;
-  --success-soft: rgba(30, 133, 73, 0.1);
-  --danger: #c43a33;
-  --danger-soft: rgba(196, 58, 51, 0.09);
-  --warning: #9c5c00;
-  --warning-soft: rgba(214, 140, 20, 0.12);
-  --gold: #b0701a;
-  --gold-soft: rgba(224, 160, 48, 0.14);
-
-  --glass: rgba(250, 250, 252, 0.72);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.04);
-  --shadow-float: 0 10px 40px rgba(30, 30, 60, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05);
-  color-scheme: light;
-}
-
-.dark {
-  --bg: #0d0d10;
-  --bg-elevated: #1a1a1f;
-  --fill: rgba(120, 120, 128, 0.18);
-  --fill-2: rgba(120, 120, 128, 0.27);
-  --label: #ececf1;
-  --label-2: #a3a3ad;
-  --label-3: #6c6c76;
-  --separator: rgba(255, 255, 255, 0.09);
-
-  --accent: #95a2f8;
-  --accent-solid: #5363dc;
-  --accent-soft: rgba(149, 162, 248, 0.14);
-  --teal: #62c4ba;
-  --teal-soft: rgba(98, 196, 186, 0.13);
-  --success: #5cc48a;
-  --success-soft: rgba(92, 196, 138, 0.13);
-  --danger: #f0857e;
-  --danger-soft: rgba(240, 133, 126, 0.13);
-  --warning: #e6ae55;
-  --warning-soft: rgba(230, 174, 85, 0.13);
-  --gold: #ebb04f;
-  --gold-soft: rgba(235, 176, 79, 0.14);
-
-  --glass: rgba(22, 22, 27, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-float: 0 10px 40px rgba(0, 0, 0, 0.5);
-  color-scheme: dark;
-}
 
 @theme inline {
   --color-bg: var(--bg);
   --color-elevated: var(--bg-elevated);
+  --color-sunken: var(--bg-sunken);
   --color-fill: var(--fill);
   --color-fill-2: var(--fill-2);
   --color-label: var(--label);
@@ -81,18 +18,40 @@
   --color-accent: var(--accent);
   --color-accent-solid: var(--accent-solid);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-teal: var(--teal);
+  --color-teal-solid: var(--teal-solid);
   --color-teal-soft: var(--teal-soft);
+  --color-turquoise: var(--turquoise);
+  --color-gold: var(--gold);
+  --color-gold-solid: var(--gold-solid);
+  --color-gold-soft: var(--gold-soft);
+  --color-ochre: var(--ochre);
+  --color-marker: var(--marker);
   --color-success: var(--success);
+  --color-success-solid: var(--success-solid);
   --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
+  --color-danger-solid: var(--danger-solid);
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
-  --color-gold: var(--gold);
-  --color-gold-soft: var(--gold-soft);
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), system-ui, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), system-ui, sans-serif;
+  --color-on-solid: var(--on-solid);
+  --color-chunk-collocation: var(--chunk-collocation);
+  --color-chunk-collocation-soft: var(--chunk-collocation-soft);
+  --color-chunk-phrasal: var(--chunk-phrasal);
+  --color-chunk-phrasal-soft: var(--chunk-phrasal-soft);
+  --color-chunk-idiom: var(--chunk-idiom);
+  --color-chunk-idiom-soft: var(--chunk-idiom-soft);
+  --color-chunk-fixed: var(--chunk-fixed);
+  --color-chunk-fixed-soft: var(--chunk-fixed-soft);
+  --color-chunk-word: var(--chunk-word);
+  --color-chunk-word-soft: var(--chunk-word-soft);
+  /* Onest — interface; Literata — the English being learned. */
+  --font-sans: var(--font-onest), system-ui, sans-serif;
+  --font-display: var(--font-onest), system-ui, sans-serif;
+  --font-ui: var(--font-onest), system-ui, sans-serif;
+  --font-lesson: var(--font-literata), Georgia, "Times New Roman", serif;
   --radius-control: 12px;
   --radius-card: 20px;
   --radius-sheet: 28px;
@@ -105,6 +64,22 @@
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-color: var(--glass-border);
+}
+
+/* English learning material: examples, chunks, tutor replies, exercise prompts. */
+@utility font-lesson {
+  font-family: var(--font-lesson);
+  font-optical-sizing: auto;
+  letter-spacing: 0;
+  font-feature-settings: "kern", "liga";
+}
+
+/* Ochre highlighter stroke for new chunks. */
+@utility marker {
+  background-image: linear-gradient(transparent 55%, var(--marker) 55%, var(--marker) 92%, transparent 92%);
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 @utility surface {
@@ -131,8 +106,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "cv11", "ss01";
-  transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1,

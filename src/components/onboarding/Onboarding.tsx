@@ -153,7 +153,7 @@ export function Onboarding({
               initial={{ scale: 0, rotate: -30 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
-              className="mx-auto grid size-24 place-items-center rounded-[28px] bg-gradient-to-br from-accent-solid to-teal text-[34px] font-bold text-white shadow-float"
+              className="mx-auto grid size-24 place-items-center rounded-[28px] bg-gradient-to-br from-accent-solid to-teal-solid text-[34px] font-bold text-white shadow-float"
             >
               {result.measured}
             </motion.div>

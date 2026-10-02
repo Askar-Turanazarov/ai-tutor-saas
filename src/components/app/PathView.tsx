@@ -39,7 +39,7 @@ export function PathView({ pro, units }: { pro: boolean; units: Unit[] }) {
       {header}
       <div className="surface flex items-center gap-4 rounded-card p-4">
         <span className="text-[14px] font-medium text-label-2">{t("progress", { done, total: units.length })}</span>
-        <ProgressBar value={done / Math.max(1, units.length)} className="flex-1" color="bg-teal" />
+        <ProgressBar value={done / Math.max(1, units.length)} className="flex-1" color="bg-teal-solid" />
       </div>
       <Path units={units} interactive />
     </div>
@@ -114,7 +114,7 @@ function Path({ units, interactive }: { units: Unit[]; interactive: boolean }) {
                       disabled={!!loadingId}
                       className={cn(
                         "mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[12px] text-[15px] font-semibold text-white",
-                        u.status === "done" ? "bg-teal" : "bg-accent-solid",
+                        u.status === "done" ? "bg-teal-solid" : "bg-accent-solid",
                       )}
                     >
                       {loadingId === u.id ? (
@@ -158,7 +158,7 @@ function Node({ unit, onClick }: { unit: Unit; onClick: () => void }) {
       className={cn(
         "relative grid size-[72px] place-items-center rounded-full",
         // The lower "lip" gives the node a pressable, tactile feel.
-        done && "bg-teal text-white shadow-[0_6px_0_0_color-mix(in_srgb,var(--teal)_60%,black)]",
+        done && "bg-teal-solid text-on-solid shadow-[0_6px_0_0_color-mix(in_srgb,var(--teal)_60%,black)]",
         current && "bg-accent-solid text-white shadow-[0_6px_0_0_color-mix(in_srgb,var(--accent-solid)_60%,black)]",
         locked && "bg-fill-2 text-label-3 shadow-[0_6px_0_0_var(--fill)]",
       )}

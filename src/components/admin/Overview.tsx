@@ -94,13 +94,13 @@ export function Overview({
                   </div>
                   <div className="mt-1 flex h-2 overflow-hidden rounded-full bg-fill">
                     <motion.div
-                      className="h-full bg-success"
+                      className="h-full bg-success-solid"
                       initial={{ width: 0 }}
                       animate={{ width: `${(m.ok / max) * 100}%` }}
                       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                     />
                     <motion.div
-                      className="h-full bg-danger"
+                      className="h-full bg-danger-solid"
                       initial={{ width: 0 }}
                       animate={{ width: `${(m.fail / max) * 100}%` }}
                       transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}

@@ -546,11 +546,11 @@ function Composer({
             disabled={limited}
             className={cn(
               "relative grid size-10 shrink-0 place-items-center rounded-full transition-colors",
-              listening ? "bg-danger text-white" : "text-label-2 hover:bg-fill-2",
+              listening ? "bg-danger-solid text-on-solid" : "text-label-2 hover:bg-fill-2",
             )}
           >
             {listening && (
-              <span className="absolute inset-0 rounded-full bg-danger" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
+              <span className="absolute inset-0 rounded-full bg-danger-solid" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
             )}
             {listening ? <Square className="relative size-4" fill="currentColor" /> : <Mic className="size-5" />}
           </motion.button>

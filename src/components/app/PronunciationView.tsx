@@ -158,11 +158,11 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
                 aria-label={listening ? t("stop") : t("record")}
                 className={cn(
                   "relative grid size-24 place-items-center rounded-full text-white shadow-float transition-colors",
-                  listening ? "bg-danger" : "bg-accent-solid",
+                  listening ? "bg-danger-solid" : "bg-accent-solid",
                 )}
               >
                 {listening && (
-                  <span className="absolute inset-0 rounded-full bg-danger" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
+                  <span className="absolute inset-0 rounded-full bg-danger-solid" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
                 )}
                 {listening ? <Square className="relative size-8" fill="currentColor" /> : <Mic className="size-10" />}
               </motion.button>

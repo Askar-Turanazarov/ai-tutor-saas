@@ -136,7 +136,7 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
           animate={{ opacity: 1, y: 0 }}
           className="mt-6 grid grid-cols-[auto_1fr] items-center gap-4 rounded-card bg-gold-soft p-4 sm:flex sm:p-5"
         >
-          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-gold text-white">
+          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-gold-solid text-on-solid">
             <Gift className="size-5" />
           </span>
           <div className="min-w-0 flex-1">

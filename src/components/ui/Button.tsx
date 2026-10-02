@@ -19,7 +19,7 @@ const variants: Record<Variant, string> = {
   tinted: "bg-accent-soft text-accent hover:bg-fill-2",
   ghost: "text-accent hover:bg-fill",
   danger: "bg-danger-soft text-danger hover:bg-fill-2",
-  success: "bg-success text-white hover:brightness-[1.06]",
+  success: "bg-success-solid text-on-solid hover:brightness-[1.06]",
 };
 
 const sizes: Record<Size, string> = {

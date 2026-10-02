@@ -116,7 +116,7 @@ function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: strin
             <motion.div
               whileHover="hover"
               whileTap={{ scale: 0.98 }}
-              className="relative overflow-hidden rounded-[16px] bg-gradient-to-br from-accent-solid to-teal p-4 text-white"
+              className="relative overflow-hidden rounded-[16px] bg-gradient-to-br from-accent-solid to-teal-solid p-4 text-white"
             >
               <motion.span variants={iconAnims.tilt} className="inline-flex">
                 <Sparkles className="size-5" />
@@ -168,7 +168,7 @@ function UserChip({ user }: { user: ShellUser }) {
 export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   return (
     <span
-      className="grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent-solid/90 to-teal font-semibold text-white"
+      className="grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent-solid/90 to-teal-solid font-semibold text-white"
       style={{ width: size, height: size, fontSize: size * 0.42 }}
       aria-hidden
     >
@@ -246,7 +246,7 @@ function TabBar({ isActive }: { isActive: (h: string) => boolean }) {
 function ImpersonationBar({ name }: { name: string }) {
   const t = useTranslations("common");
   return (
-    <div className="sticky top-0 z-50 flex items-center justify-center gap-3 bg-gold px-4 py-2 text-[13px] font-medium text-white dark:text-black">
+    <div className="sticky top-0 z-50 flex items-center justify-center gap-3 bg-gold-solid px-4 py-2 text-[13px] font-medium text-on-solid">
       {t("impersonating", { name })}
       <form action={stopImpersonating}>
         <button type="submit" className="rounded-full bg-black/15 px-3 py-1 font-semibold hover:bg-black/25">
