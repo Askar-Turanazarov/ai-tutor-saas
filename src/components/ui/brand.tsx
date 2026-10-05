@@ -1,6 +1,5 @@
 "use client";
 
-import { useId } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 
@@ -15,9 +14,27 @@ function starPath(cx: number, cy: number, R: number, r: number) {
   return `M${pts.join("L")}Z`;
 }
 
+const GID = "ustoz-g";
+
+/**
+ * The logo gradient, defined once per page (in the root layout). Each LogoMark used to define its own
+ * gradient with a useId-based id, but those ids differed between server and client (hydration mismatch),
+ * and a shared id inside a LogoMark breaks when that copy sits in a display:none subtree.
+ */
+export function BrandDefs() {
+  return (
+    <svg width="0" height="0" aria-hidden className="absolute">
+      <defs>
+        <linearGradient id={GID} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--accent-solid)" />
+          <stop offset="1" stopColor="var(--teal)" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
-  // Unique per instance: a shared id breaks when the first copy sits in a display:none subtree.
-  const gid = `ustoz-g-${useId().replace(/:/g, "")}`;
   return (
     <motion.svg
       width={size}
@@ -28,15 +45,9 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
       transition={{ type: "spring", stiffness: 200, damping: 14 }}
       aria-hidden
     >
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--accent-solid)" />
-          <stop offset="1" stopColor="var(--teal)" />
-        </linearGradient>
-      </defs>
-      <path d={starPath(16, 16, 15, 11)} fill={`url(#${gid})`} />
+      <path d={starPath(16, 16, 15, 11)} fill={`url(#${GID})`} />
       <circle cx="16" cy="16" r="5.2" fill="var(--bg-elevated)" />
-      <circle cx="16" cy="16" r="2.4" fill={`url(#${gid})`} />
+      <circle cx="16" cy="16" r="2.4" fill={`url(#${GID})`} />
     </motion.svg>
   );
 }

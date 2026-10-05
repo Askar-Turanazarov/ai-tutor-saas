@@ -22,6 +22,9 @@ const norm = (s: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+/** Order-question tiles are keyed "index:word" so repeated words stay distinct; this drops the index. */
+const tileWord = (tile: string) => tile.slice(tile.indexOf(":") + 1);
+
 function shuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
   let s = seed;
@@ -57,7 +60,7 @@ export function QuizRunner({ quizId, title, questions }: { quizId: string; title
     if (!canCheck || verdict) return;
     let v: Verdict = null;
     if (q.type === "choice") v = { ok: response === q.answer, answer: q.options[q.answer], explanation: q.explanation };
-    if (q.type === "order") v = { ok: norm((response as string[]).join(" ")) === norm(q.answer), answer: q.answer };
+    if (q.type === "order") v = { ok: norm((response as string[]).map(tileWord).join(" ")) === norm(q.answer), answer: q.answer };
     if (q.type === "translate")
       v = { ok: [q.answer, ...(q.accept ?? [])].some((a) => norm(a) === norm(response as string)), answer: q.answer };
     if (q.type === "speak") {
@@ -320,7 +323,6 @@ function OrderQ({
   );
   const picked = value;
   const pool = words.filter((w) => !picked.includes(w));
-  const label = (w: string) => w.slice(w.indexOf(":") + 1);
 
   return (
     <LayoutGroup>
@@ -335,7 +337,7 @@ function OrderQ({
             onClick={() => !locked && onChange(picked.filter((x) => x !== w))}
             className="rounded-[12px] border border-separator bg-elevated px-3.5 py-2 text-[17px] font-medium shadow-card"
           >
-            {label(w)}
+            {tileWord(w)}
           </motion.button>
         ))}
       </div>
@@ -349,7 +351,7 @@ function OrderQ({
             onClick={() => !locked && onChange([...picked, w])}
             className="rounded-[12px] border border-separator bg-elevated px-3.5 py-2 text-[17px] font-medium shadow-card"
           >
-            {label(w)}
+            {tileWord(w)}
           </motion.button>
         ))}
       </div>

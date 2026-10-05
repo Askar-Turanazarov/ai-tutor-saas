@@ -63,7 +63,8 @@ function Path({ units, interactive }: { units: Unit[]; interactive: boolean }) {
   return (
     <div className="relative mx-auto flex max-w-md flex-col items-center py-6">
       {units.map((u, i) => {
-        const offset = Math.sin(i * 0.9) * 70;
+        // Whole pixels: a long float renders differently on the server and in framer-motion → hydration mismatch.
+        const offset = Math.round(Math.sin(i * 0.9) * 70);
         const newLevel = i === 0 || units[i - 1].level !== u.level;
         const open = openId === u.id && interactive;
         return (

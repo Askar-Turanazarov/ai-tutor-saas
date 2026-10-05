@@ -6,6 +6,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { Providers } from "@/components/Providers";
+import { BrandDefs } from "@/components/ui/brand";
 
 const inter = Inter({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-inter", display: "swap" });
 
@@ -43,6 +44,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} suppressHydrationWarning className={inter.variable}>
       <body className="min-h-dvh">
+        <BrandDefs />
         <NextIntlClientProvider>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
