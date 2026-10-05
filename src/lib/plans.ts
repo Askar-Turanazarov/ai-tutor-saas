@@ -4,15 +4,20 @@ import { tashkentDate, previousDate } from "./time";
 import { FREE_LEVELS, type Level } from "./levels";
 
 export type Plan = "FREE" | "PRO";
-type UserLike = { id: string; plan: string; level: string };
+type PlanLike = { plan: string; proUntil?: Date | null };
+type UserLike = PlanLike & { id: string; level: string };
 
-export const isPro = (u: { plan: string }) => u.plan === "PRO";
+/**
+ * Pro access. `proUntil` is the end of the paid period (null = lifetime Pro from an admin).
+ * Checked on every request, so access ends on time even before the billing job downgrades the user.
+ */
+export const isPro = (u: PlanLike) => u.plan === "PRO" && (!u.proUntil || u.proUntil.getTime() > Date.now());
 
-export function canAccessLevel(u: { plan: string }, level: string) {
+export function canAccessLevel(u: PlanLike, level: string) {
   return isPro(u) || FREE_LEVELS.includes(level as Level);
 }
 
-export function canAccessTopic(u: { plan: string }, t: { proOnly: boolean; level: string }) {
+export function canAccessTopic(u: PlanLike, t: { proOnly: boolean; level: string }) {
   return isPro(u) || (!t.proOnly && canAccessLevel(u, t.level));
 }
 

@@ -6,6 +6,19 @@ export const SETTING_DEFAULTS = {
   "ai.forceMock": "false",
   "ai.disabledModels": "",
   "ai.includePro": "true",
+  // Prices in sum (UZS) for 1, 3 and 12 months.
+  "billing.price1": "79000",
+  "billing.price3": "213000",
+  "billing.price12": "711000",
+  "billing.noticeDays": "3",
+  "billing.stripeEnabled": "true",
+  "billing.clickEnabled": "true",
+  // Fiscal receipt data (Uzbekistan OFD). The MXIK (IKPU) code is chosen by an accountant at tasnif.soliq.uz.
+  "billing.mxik": "10305008003000000",
+  "billing.packageCode": "1545643",
+  "billing.vatPercent": "12",
+  "billing.sellerName": "Ustoz AI MChJ (test)",
+  "billing.sellerTin": "300000000",
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;

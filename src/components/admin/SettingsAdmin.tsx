@@ -7,7 +7,7 @@ import { Check, GripVertical, Minus, Plus, Timer } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { saveSetting } from "@/app/actions/admin";
 import type { SettingKey } from "@/lib/settings";
-import { Switch } from "./Switch";
+import { Switch } from "@/components/ui/Switch";
 
 export function SettingsAdmin({ settings }: { settings: Record<SettingKey, string> }) {
   const t = useTranslations("admin");

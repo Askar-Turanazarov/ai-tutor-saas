@@ -40,11 +40,6 @@ export async function updateProfile(input: { name: string; level: string }) {
   revalidatePath("/", "layout");
 }
 
-export async function requestUpgrade() {
-  const user = await requireUser();
-  await db.user.update({ where: { id: user.id }, data: { upgradeRequested: true } });
-}
-
 export async function startConversation(topicSlug: string | null) {
   const user = await requireUser();
   const locale = await getLocale();

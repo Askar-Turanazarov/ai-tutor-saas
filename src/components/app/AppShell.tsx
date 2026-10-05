@@ -24,6 +24,7 @@ import { iconAnims, spring } from "@/components/ui/motion";
 import { logout, stopImpersonating } from "@/app/actions/auth";
 import { cn } from "@/lib/cn";
 import { useUsage } from "./usage";
+import { BillingBanner, NotificationBell, type BillingAlert, type ShellNotification } from "@/components/billing/Notifications";
 
 type NavItem = { href: string; icon: LucideIcon; key: string; anim: keyof typeof iconAnims; pro?: boolean };
 
@@ -40,10 +41,14 @@ export type ShellUser = { name: string; plan: string; level: string; role: strin
 export function AppShell({
   user,
   impersonating,
+  notifications,
+  alert,
   children,
 }: {
   user: ShellUser;
   impersonating: boolean;
+  notifications: ShellNotification[];
+  alert: BillingAlert | null;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -55,17 +60,30 @@ export function AppShell({
   return (
     <div className="min-h-dvh">
       {impersonating && <ImpersonationBar name={user.name} />}
-      <Sidebar user={user} isActive={isActive} pro={pro} />
-      <MobileTopBar user={user} />
+      <Sidebar user={user} isActive={isActive} pro={pro} notifications={notifications} />
+      <MobileTopBar user={user} notifications={notifications} />
       <main className={cn("lg:pb-10 lg:pl-[264px]", focus ? "pb-6" : "pb-28")}>
-        <div className="mx-auto w-full max-w-5xl px-4 pt-5 sm:px-6 lg:pt-10">{children}</div>
+        <div className="mx-auto w-full max-w-5xl px-4 pt-5 sm:px-6 lg:pt-10">
+          {alert && !focus && <BillingBanner alert={alert} />}
+          {children}
+        </div>
       </main>
       {!focus && <TabBar isActive={isActive} />}
     </div>
   );
 }
 
-function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: string) => boolean; pro: boolean }) {
+function Sidebar({
+  user,
+  isActive,
+  pro,
+  notifications,
+}: {
+  user: ShellUser;
+  isActive: (h: string) => boolean;
+  pro: boolean;
+  notifications: ShellNotification[];
+}) {
   const t = useTranslations();
   return (
     <aside className="glass fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r px-4 py-6 lg:flex">
@@ -128,6 +146,7 @@ function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: strin
         {/* Quiet, always-visible display prefs: no trip to Settings needed. */}
         <div className="flex items-center justify-between gap-1 border-t border-separator pt-3">
           <ThemeSwitcher size="sm" showLabels={false} />
+          <NotificationBell items={notifications} />
           <LocaleSwitcher size="sm" persist />
         </div>
         <UserChip user={user} />
@@ -176,7 +195,7 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   );
 }
 
-function MobileTopBar({ user }: { user: ShellUser }) {
+function MobileTopBar({ user, notifications }: { user: ShellUser; notifications: ShellNotification[] }) {
   const { remaining } = useUsage();
   const t = useTranslations();
   return (
@@ -188,6 +207,7 @@ function MobileTopBar({ user }: { user: ShellUser }) {
       <div className="-mr-1 flex items-center">
         <LocaleCycleButton />
         <ThemeCycleButton />
+        <NotificationBell items={notifications} />
       </div>
       {remaining !== null && (
         <Badge tone={remaining < 120 ? "gold" : "neutral"}>{t("dashboard.minutesLeft", { n: Math.ceil(remaining / 60) })}</Badge>

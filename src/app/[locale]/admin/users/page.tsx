@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { tashkentDate } from "@/lib/time";
+import { isPro } from "@/lib/plans";
 import { AdminTitle } from "@/components/admin/AdminShell";
 import { UsersTable } from "@/components/admin/UsersTable";
 
@@ -28,7 +29,8 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
           name: u.name,
           email: u.email,
           role: u.role,
-          plan: u.plan,
+          plan: isPro(u) ? "PRO" : "FREE",
+          proUntil: u.plan === "PRO" ? (u.proUntil?.toISOString() ?? null) : null,
           level: u.level,
           xp: u.xp,
           seconds: used.get(u.id) ?? 0,

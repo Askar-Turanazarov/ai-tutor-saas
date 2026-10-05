@@ -11,6 +11,9 @@ import { PROVIDERS, providerModels, resetBreakers } from "@/lib/ai/router";
 import { tutorReply } from "@/lib/ai/tutor";
 import { asLang, rebuildPlan } from "@/lib/learning";
 import { LEVELS, type Level } from "@/lib/levels";
+import { adminSetPlan } from "@/lib/billing/service";
+import { runBillingCycle } from "@/lib/billing/scheduler";
+import { fiscalize } from "@/lib/billing/fiscal";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -22,12 +25,8 @@ const refresh = () => revalidatePath("/", "layout");
 
 export async function setUserPlan(userId: string, plan: "FREE" | "PRO") {
   await requireAdmin();
-  const u = await db.user.findUnique({ where: { id: userId } });
-  if (!u) return;
-  // Free users can't stay on Pro-only levels.
-  const level = plan === "FREE" && !["A1", "A2"].includes(u.level) ? "A2" : u.level;
-  await db.user.update({ where: { id: userId }, data: { plan, level, upgradeRequested: plan === "PRO" ? false : u.upgradeRequested } });
-  if (level !== u.level) await rebuildPlan(userId);
+  // Pro from an admin is lifetime (no end date); Free also stops a running subscription.
+  await adminSetPlan(userId, plan);
   refresh();
 }
 
@@ -71,6 +70,9 @@ export async function saveSetting(key: SettingKey, value: string) {
   await requireAdmin();
   if (!(key in SETTING_DEFAULTS)) return;
   if (key === "free.dailyMinutes") value = String(Math.max(1, Math.min(240, Math.round(Number(value) || 15))));
+  if (/^billing\.price\d+$/.test(key)) value = String(Math.max(1000, Math.round(Number(value) || 0)));
+  if (key === "billing.noticeDays") value = String(Math.max(1, Math.min(30, Math.round(Number(value) || 3))));
+  if (key === "billing.vatPercent") value = String(Math.max(0, Math.min(100, Number(value) || 0)));
   await setSetting(key, value);
   if (key.startsWith("ai.")) resetBreakers();
   refresh();
@@ -105,4 +107,34 @@ export async function pingAI(text: string) {
   });
   refresh();
   return { ...res, ms: Date.now() - started };
+}
+
+/* ───────────── Billing ───────────── */
+
+export async function runBillingNow() {
+  await requireAdmin();
+  const report = await runBillingCycle();
+  refresh();
+  return report;
+}
+
+/** Test helper: move the end of a paid period so reminders, renewals and expiry can be tried right away. */
+export async function shiftSubscriptionEnd(subId: string, minutesFromNow: number) {
+  await requireAdmin();
+  const sub = await db.subscription.findUnique({ where: { id: subId } });
+  if (!sub || !["active", "past_due"].includes(sub.status)) return;
+  const end = new Date(Date.now() + minutesFromNow * 60_000);
+  await db.subscription.update({
+    where: { id: subId },
+    data: { currentPeriodEnd: end, notifiedSoonAt: null, renewAttempts: 0, lastRenewAttemptAt: null },
+  });
+  await db.user.updateMany({ where: { id: sub.userId, plan: "PRO", proUntil: { not: null } }, data: { proUntil: end } });
+  refresh();
+}
+
+export async function retryReceipt(receiptId: string) {
+  await requireAdmin();
+  await db.receipt.update({ where: { id: receiptId }, data: { attempts: 0 } });
+  await fiscalize(receiptId);
+  refresh();
 }

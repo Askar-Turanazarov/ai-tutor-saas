@@ -141,7 +141,7 @@ export function SettingsView({ name, email, level, pro }: { name: string; email:
               </div>
             </div>
           </div>
-          <ButtonLink href="/app/upgrade" variant={pro ? "secondary" : "primary"} icon={pro ? undefined : Sparkles}>
+          <ButtonLink href={pro ? "/app/billing" : "/app/upgrade"} variant={pro ? "secondary" : "primary"} icon={pro ? undefined : Sparkles}>
             {pro ? t("manage") : tc("upgrade")}
           </ButtonLink>
         </div>

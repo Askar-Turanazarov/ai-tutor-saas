@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Crown } from "lucide-react";
 import { TopicIcon, LEVEL_TINT } from "@/components/ui/TopicIcon";
 import { toggleTopicPro } from "@/app/actions/admin";
-import { Switch } from "./Switch";
+import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/cn";
 
 type T = { id: string; slug: string; title: string; icon: string; level: string; proOnly: boolean };

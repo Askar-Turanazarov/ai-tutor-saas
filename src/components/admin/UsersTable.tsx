@@ -16,6 +16,7 @@ type Row = {
   email: string;
   role: string;
   plan: string;
+  proUntil: string | null;
   level: string;
   xp: number;
   seconds: number;
@@ -83,6 +84,11 @@ function UserCard({ u, isMe }: { u: Row; isMe: boolean }) {
             <span className="truncate font-semibold">{u.name}</span>
             {u.role === "ADMIN" && <Badge tone="accent">{tc("admin")}</Badge>}
             <Badge tone={pro ? "gold" : "neutral"}>{pro ? tc("pro") : tc("free")}</Badge>
+            {pro && (
+              <span className="text-[12px] text-label-2">
+                {t("proUntil")} {u.proUntil ? f.dateTime(new Date(u.proUntil), { dateStyle: "medium" }) : t("lifetime")}
+              </span>
+            )}
             {u.requested && !pro && <Badge tone="teal">{t("upgradeRequests")}</Badge>}
           </div>
           <div className="truncate text-[13px] text-label-2">{u.email}</div>

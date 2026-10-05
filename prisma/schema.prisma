@@ -22,6 +22,9 @@ model User {
   streak         Int            @default(0)
   lastActiveDate String?
   upgradeRequested Boolean      @default(false)
+  /// Pro access end. null with plan=PRO means lifetime Pro granted manually by an admin.
+  proUntil       DateTime?
+  stripeCustomerId String?
   createdAt      DateTime       @default(now())
   conversations  Conversation[]
   usages         DailyUsage[]
@@ -29,6 +32,10 @@ model User {
   units          PlanUnit[]
   quizzes        Quiz[]
   attempts       QuizAttempt[]
+  subscriptions  Subscription[]
+  invoices       Invoice[]
+  cards          PaymentCard[]
+  notifications  Notification[]
 }
 
 model Conversation {
@@ -146,4 +153,130 @@ model AILog {
 model Setting {
   key   String @id
   value String
+}
+
+// ───────────── Billing ─────────────
+
+model Subscription {
+  id                 String        @id @default(cuid())
+  userId             String
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider           String // stripe | click
+  months             Int // 1 | 3 | 12
+  status             String        @default("pending") // pending | active | past_due | canceled | expired
+  autoRenew          Boolean       @default(false)
+  cardId             String?
+  card               PaymentCard?  @relation(fields: [cardId], references: [id], onDelete: SetNull)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  canceledAt         DateTime?
+  notifiedSoonAt     DateTime?
+  notifiedEndAt      DateTime?
+  renewAttempts      Int           @default(0)
+  lastRenewAttemptAt DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  invoices           Invoice[]
+
+  @@index([status, currentPeriodEnd])
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  number         String        @unique
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId String
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  kind           String // initial | renewal
+  provider       String // stripe | click
+  months         Int
+  amount         Int // tiyin (1 sum = 100 tiyin)
+  currency       String        @default("UZS")
+  status         String        @default("open") // open | paid | failed | void
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  saveCard       Boolean       @default(false)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  transactions   Transaction[]
+  receipts       Receipt[]
+}
+
+model Transaction {
+  id           String    @id @default(cuid())
+  invoiceId    String
+  invoice      Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  provider     String
+  providerTxId String? // click_trans_id / Stripe payment_intent / checkout session
+  clickPrepareId Int?  @unique // merchant_prepare_id we give Click (it must be a number)
+  state        String    @default("created") // created | prepared | completed | failed | canceled
+  amount       Int
+  error        String?
+  raw          String? // JSON of the last provider payload
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  receipts     Receipt[]
+
+  @@unique([provider, providerTxId])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String    @unique // provider:event id, makes webhooks idempotent
+  type        String
+  payload     String
+  ok          Boolean   @default(true)
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model PaymentCard {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider      String // stripe | click
+  token         String // Click card_token or Stripe payment_method id
+  maskedPan     String
+  brand         String?
+  expire        String?
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+}
+
+model Receipt {
+  id             String       @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  transactionId  String?
+  transaction    Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  kind           String       @default("sale") // sale | refund
+  items          String // JSON: name, mxik, packageCode, price, qty, vatPercent, vat
+  total          Int // tiyin
+  vatAmount      Int // tiyin
+  fiscalProvider String // mock-ofd | click-ofd | none
+  fiscalStatus   String       @default("pending") // pending | fiscalized | failed
+  fiscalSign     String?
+  terminalId     String?
+  receiptNo      String?
+  qrUrl          String?
+  attempts       Int          @default(0)
+  error          String?
+  fiscalizedAt   DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String // sub_expiring | sub_expired | payment_ok | payment_failed | renewed
+  params      String    @default("{}")
+  readAt      DateTime?
+  emailSentAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, readAt])
 }
