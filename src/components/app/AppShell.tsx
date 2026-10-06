@@ -74,10 +74,11 @@ function Sidebar({ user, isActive, pro, notifications }: { user: ShellUser; isAc
   const t = useTranslations();
   return (
     <aside className="glass fixed inset-y-3 left-3 z-30 hidden w-[252px] flex-col rounded-[26px] border px-3.5 py-5 shadow-card lg:flex">
-      <Link href="/" className="px-3" aria-label="Ustoz AI">
+      <Link href="/" className="shrink-0 px-3" aria-label="Ustoz AI">
         <Logo />
       </Link>
-      <nav className="mt-8 flex flex-col gap-1" aria-label={t("common.menu")}>
+      {/* Only the menu scrolls on short screens; account, language and theme stay pinned below. */}
+      <nav className="-mx-1.5 mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-1.5 pb-2 [scrollbar-width:thin]" aria-label={t("common.menu")}>
         {[...NAV, { href: "/app/settings", icon: Settings, key: "settings", anim: "spin" } as NavItem].map((item) => {
           const active = isActive(item.href);
           return (
@@ -114,9 +115,9 @@ function Sidebar({ user, isActive, pro, notifications }: { user: ShellUser; isAc
         )}
       </nav>
 
-      <div className="mt-auto space-y-3">
+      <div className="shrink-0 space-y-3 pt-2">
         {!pro && (
-          <Link href="/app/plans" className="block">
+          <Link href="/app/plans" className="block [@media(max-height:820px)]:hidden">
             <motion.div
               whileHover="hover"
               whileTap={{ scale: 0.98 }}
