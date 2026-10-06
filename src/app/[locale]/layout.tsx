@@ -6,6 +6,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { Providers } from "@/components/Providers";
+import { BrandDefs } from "@/components/ui/brand";
 
 // Onest sets the interface; Literata sets the English being learned (examples, chunks, tutor replies).
 const onest = Onest({ subsets: ["latin", "latin-ext", "cyrillic"], variable: "--font-onest", display: "swap" });
@@ -45,6 +46,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} suppressHydrationWarning className={`${onest.variable} ${literata.variable}`}>
       <body className="min-h-dvh">
+        <BrandDefs />
         <NextIntlClientProvider>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

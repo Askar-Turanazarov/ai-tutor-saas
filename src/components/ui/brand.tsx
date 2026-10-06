@@ -1,13 +1,30 @@
 "use client";
 
-import { useId } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 import { GirihField, starPath } from "@/components/decor/motifs";
 
+const GID = "ustoz-g";
+
+/**
+ * The logo gradient, defined once per page (in the root layout). A per-instance useId-based id could
+ * differ between server and client (hydration mismatch), and a gradient inside one LogoMark breaks
+ * the others when that copy sits in a display:none subtree.
+ */
+export function BrandDefs() {
+  return (
+    <svg width="0" height="0" aria-hidden className="absolute">
+      <defs>
+        <linearGradient id={GID} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--accent-solid)" />
+          <stop offset="1" stopColor="var(--teal)" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
-  // Unique per instance: a shared id breaks when the first copy sits in a display:none subtree.
-  const gid = `ustoz-g-${useId().replace(/:/g, "")}`;
   return (
     <motion.svg
       width={size}
@@ -18,15 +35,9 @@ export function LogoMark({ size = 32, className }: { size?: number; className?: 
       transition={{ type: "spring", stiffness: 200, damping: 14 }}
       aria-hidden
     >
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--accent-solid)" />
-          <stop offset="1" stopColor="var(--teal)" />
-        </linearGradient>
-      </defs>
-      <path d={starPath(16, 16, 15, 11)} fill={`url(#${gid})`} />
+      <path d={starPath(16, 16, 15, 11)} fill={`url(#${GID})`} />
       <circle cx="16" cy="16" r="5.2" fill="var(--bg-elevated)" />
-      <circle cx="16" cy="16" r="2.4" fill={`url(#${gid})`} />
+      <circle cx="16" cy="16" r="2.4" fill={`url(#${GID})`} />
     </motion.svg>
   );
 }

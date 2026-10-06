@@ -966,9 +966,9 @@
     "empty": "Пока нет уведомлений",
     "sub_expiring": {
       "title": "{tier} скоро закончится",
-      "body": "Подписка {tier} действует до {until, date, long}. Продлите её, чтобы не потерять доступ.",
+      "body": "Подписка {tier} действует до {until, date, long} — продлите её, чтобы не потерять доступ.",
       "bodyAuto": "{until, date, long} спишем {amount, number} сум с карты {card} и продлим {tier} ещё на {months, plural, one {# месяц} few {# месяца} many {# месяцев} other {# месяца}}.",
-      "bodyTrial": "Пробный {tier} закончится {until, date, long}. Оформите подписку, чтобы продолжить без ограничений."
+      "bodyTrial": "Пробный {tier} закончится {until, date, long} — оформите подписку, чтобы продолжить без ограничений."
     },
     "sub_expired": {
       "title": "{tier} закончился",
@@ -976,11 +976,11 @@
     },
     "payment_ok": {
       "title": "Оплата прошла",
-      "body": "Счёт {number}: {amount, number} сум. {tier} активен до {until, date, long}."
+      "body": "Счёт {number}: {amount, number} сум. {tier} активен до {until, date, long}"
     },
     "renewed": {
       "title": "{tier} продлён",
-      "body": "Автопродление: списали {amount, number} сум. {tier} активен до {until, date, long}."
+      "body": "Автопродление: списали {amount, number} сум. {tier} активен до {until, date, long}"
     },
     "payment_failed": {
       "title": "Не удалось списать оплату",
