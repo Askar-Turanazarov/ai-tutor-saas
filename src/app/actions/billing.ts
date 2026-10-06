@@ -16,9 +16,9 @@ import {
   setCancelAtPeriodEnd,
   startTrial,
 } from "@/lib/billing/subscription";
-import { cardMock, declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
+import { declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
 import { clickConfig, clickSign } from "@/lib/billing/providers/click";
-import { portalUrl } from "@/lib/billing/providers/stripe";
+import { detachCard } from "@/lib/billing/providers/stripe";
 
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
 
@@ -61,17 +61,18 @@ export async function startCheckout(input: { tier: string; period: number; provi
   }
 }
 
-/** One-click payment with a saved Uzcard/HUMO token: no gateway page, no SMS. */
+/** One-click payment with a saved card token: no gateway page, no SMS. */
 export async function payWithSavedCard(input: { tier: string; period: number; methodId: string }) {
   const user = await requireUser();
   if (isGuest(user)) return { error: "guest" as const };
   if (!isPaidTier(input.tier) || !isPeriod(input.period)) return { error: "bad_request" as const };
   const method = await db.paymentMethod.findFirst({ where: { id: input.methodId, userId: user.id } });
-  if (!method || !cardMock.chargeToken) return { error: "provider" as const };
-  const invoice = await createInvoice(user, { tier: input.tier, period: input.period, provider: "card", currency: "UZS", saveCard: true });
-  const res = await cardMock.chargeToken(method, invoice);
+  const provider = method && getProvider(method.provider);
+  if (!method || !provider?.chargeToken) return { error: "provider" as const };
+  const invoice = await createInvoice(user, { tier: input.tier, period: input.period, provider: provider.id, currency: "UZS", saveCard: true });
+  const res = await provider.chargeToken(method, invoice);
   if (res.ok) await applyPaidInvoice(invoice.id, { txId: res.txId, paymentMethodId: method.id });
-  else await failInvoice(invoice.id, res.reason);
+  else await failInvoice(invoice.id, res.reason, res.txId);
   refresh();
   return { invoiceId: invoice.id };
 }
@@ -181,7 +182,10 @@ export async function scheduleDowngrade(input: { tier: string; period: number })
 
 export async function removeCard(id: string) {
   const user = await requireUser();
-  await db.paymentMethod.deleteMany({ where: { id, userId: user.id } });
+  const card = await db.paymentMethod.findFirst({ where: { id, userId: user.id } });
+  if (!card) return;
+  if (card.provider === "stripe") await detachCard(card.token);
+  await db.paymentMethod.delete({ where: { id: card.id } });
   refresh();
 }
 
@@ -235,13 +239,4 @@ export async function clickEmulatePay(input: { invoiceId: string; outcome: "succ
   });
   refresh();
   return { invoiceId: invoice.id };
-}
-
-/* ───── Stripe ───── */
-
-/** Stripe Customer Portal: card change, invoices, cancellation. */
-export async function openStripePortal() {
-  const user = await requireUser();
-  if (!process.env.STRIPE_SECRET_KEY || !user.stripeCustomerId) return { error: "provider" as const };
-  return { url: await portalUrl(user.id, `${await origin()}/${await getLocale()}/app/billing`) };
 }

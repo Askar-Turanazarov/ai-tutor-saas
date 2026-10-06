@@ -120,11 +120,10 @@ export type InvoiceView = {
 };
 
 export async function billingData(userId: string) {
-  const [sub, cards, invoices, user] = await Promise.all([
+  const [sub, cards, invoices] = await Promise.all([
     db.subscription.findUnique({ where: { userId }, include: { paymentMethod: true } }),
     db.paymentMethod.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
     db.invoice.findMany({ where: { userId, status: { not: "pending" } }, orderBy: { createdAt: "desc" }, take: 30 }),
-    db.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } }),
   ]);
   // The next automatic charge: the price of the plan that will be active after renewal.
   let next: { amount: number; currency: string; date: string } | null = null;
@@ -138,7 +137,6 @@ export async function billingData(userId: string) {
     sub: sub ? subView(sub) : null,
     next,
     cards: cards.map(cardView),
-    stripePortal: !!process.env.STRIPE_SECRET_KEY && !!user?.stripeCustomerId,
     invoices: invoices.map(
       (i): InvoiceView => ({
         id: i.id,

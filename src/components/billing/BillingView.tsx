@@ -3,11 +3,11 @@
 import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, CreditCard, Crown, ExternalLink, Receipt, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, CreditCard, Crown, Receipt, Sparkles, Trash2 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, Card, Sheet } from "@/components/ui/primitives";
-import { cancelSubscription, openStripePortal, removeCard, resumeSubscription, scheduleDowngrade } from "@/app/actions/billing";
+import { cancelSubscription, removeCard, resumeSubscription, scheduleDowngrade } from "@/app/actions/billing";
 import { formatMoney, tierLabel } from "@/lib/billing/catalog";
 import type { BillingData } from "@/lib/billing/overview";
 import { cn } from "@/lib/cn";
@@ -31,12 +31,6 @@ export function BillingView({ data }: { data: BillingData }) {
     start(async () => {
       await fn();
       router.refresh();
-    });
-
-  const portal = () =>
-    start(async () => {
-      const res = await openStripePortal();
-      if ("url" in res && res.url) window.location.assign(res.url);
     });
 
   const status = !sub
@@ -122,11 +116,6 @@ export function BillingView({ data }: { data: BillingData }) {
             ) : (
               <Button size="sm" variant="danger" onClick={() => setConfirmCancel(true)}>
                 {t("cancel")}
-              </Button>
-            )}
-            {data.stripePortal && sub.provider === "stripe" && (
-              <Button size="sm" variant="secondary" iconRight={ExternalLink} loading={pending} onClick={portal}>
-                {t("portal")}
               </Button>
             )}
           </div>

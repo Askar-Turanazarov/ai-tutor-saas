@@ -270,7 +270,6 @@ export async function startTrial(userId: string) {
 export async function setCancelAtPeriodEnd(userId: string, cancel: boolean) {
   const sub = await db.subscription.findUnique({ where: { userId } });
   if (!sub || !isLive(sub) || sub.status === "trialing") return null;
-  if (sub.providerRef) await (await providerById(sub.provider))?.setCancelAtPeriodEnd?.(sub.providerRef, cancel);
   return db.subscription.update({ where: { id: sub.id }, data: { cancelAtPeriodEnd: cancel } });
 }
 
@@ -326,16 +325,6 @@ export async function reconcile(sub: Subscription, now = new Date()): Promise<Su
 
   if (sub.status === "trialing" || sub.cancelAtPeriodEnd) return expire();
   if (sub.status === "past_due" && sub.graceUntil && sub.graceUntil <= now) return expire();
-
-  // Stripe renews on its side and reports through the webhook; wait for it until the grace ends.
-  if (sub.provider === "stripe") {
-    if (sub.status !== "past_due")
-      return db.subscription.update({
-        where: { id: sub.id },
-        data: { status: "past_due", graceUntil: new Date(sub.currentPeriodEnd.getTime() + graceDays * DAY) },
-      });
-    return sub;
-  }
 
   // One automatic charge attempt per day while in grace.
   const lastTry = await db.invoice.findFirst({

@@ -14,6 +14,9 @@ import { cn } from "@/lib/cn";
 
 type Method = { key: string; provider: string; icon: LucideIcon; title: string; hint: string; cardId?: string };
 
+/** Checkouts that can tokenize the card for auto-renewal. */
+const SAVES_CARD = new Set(["card", "stripe"]);
+
 const BRAND: Record<string, string> = { uzcard: "Uzcard", humo: "HUMO", visa: "Visa", mastercard: "Mastercard" };
 
 /** Payment method choice and the amount due right now (incl. upgrade proration). */
@@ -29,10 +32,10 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
   const enabled = new Set(data.providers);
   const methods: Method[] = [
     ...data.cards
-      .filter((c) => c.provider === "card")
+      .filter((c) => enabled.has(c.provider))
       .map((c) => ({
         key: `saved:${c.id}`,
-        provider: "card",
+        provider: c.provider,
         icon: Zap,
         title: `${BRAND[c.brand] ?? c.brand} •• ${c.last4}`,
         hint: t("savedHint"),
@@ -66,7 +69,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
         if ("invoiceId" in res) return router.push(`/app/billing/${res.invoiceId}`);
         return setError(t("checkoutError"));
       }
-      const res = await startCheckout({ tier, period, provider: method.provider, saveCard: method.provider === "card" && save });
+      const res = await startCheckout({ tier, period, provider: method.provider, saveCard: SAVES_CARD.has(method.key) && save });
       if ("redirectUrl" in res && res.redirectUrl) {
         // Stripe Checkout lives on another origin; our own gateway pages keep the locale prefix.
         window.location.assign(res.redirectUrl);
@@ -132,7 +135,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
         })}
       </div>
 
-      {method.key === "card" && (
+      {SAVES_CARD.has(method.key) && (
         <label className="mt-3 flex cursor-pointer items-start gap-3 px-1">
           <input type="checkbox" checked={save} onChange={(e) => setSave(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[var(--accent-solid)]" />
           <span className="text-[13.5px] leading-snug">
@@ -142,7 +145,6 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
         </label>
       )}
       {method.provider === "click" && <p className="mt-3 px-1 text-[13px] leading-snug text-label-2">{t("clickRenewNote")}</p>}
-      {method.provider === "stripe" && <p className="mt-3 px-1 text-[13px] leading-snug text-label-2">{t("stripeNote")}</p>}
 
       <Button size="lg" className="mt-5 w-full" icon={Lock} loading={pending} onClick={pay}>
         {t("payAmount", { amount: money(q.amount) })}

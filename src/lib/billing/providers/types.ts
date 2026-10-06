@@ -14,6 +14,4 @@ export interface PaymentProvider {
   createCheckout(invoice: Invoice, ctx: { locale: string; origin: string }): Promise<{ redirectUrl: string }>;
   /** Off-session charge with a saved card token (auto-renewal). */
   chargeToken?(method: PaymentMethod, invoice: Invoice): Promise<ChargeResult>;
-  /** Called when a subscription is cancelled or resumed, for providers that bill on their own (Stripe). */
-  setCancelAtPeriodEnd?(providerRef: string, cancel: boolean): Promise<void>;
 }
