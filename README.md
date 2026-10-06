@@ -35,6 +35,7 @@ Emails and passwords are set in `.env` (`SEED_*` variables):
 | Free  | `free@ustoz.local`  | —                                  |
 | Plus  | `plus@ustoz.local`  | Plus, monthly, saved Uzcard card   |
 | Pro   | `pro@ustoz.local`   | Pro, monthly, saved HUMO card      |
+| Plus  | `sub@ustoz.local`   | Plus, ends in 2 days; renewal card is declined |
 
 ### Plans
 
@@ -45,7 +46,7 @@ Emails and passwords are set in `.env` (`SEED_*` variables):
 | Personal plan | — | ✓ | ✓ |
 | Mistake review | short | detailed | detailed + alternatives |
 | Pronunciation coach | — | 10 phrases a day | unlimited |
-| Price per month | 0 | 49 000 UZS / $3.99 | 89 000 UZS / $6.99 |
+| Price per month | 0 | 49 000 UZS | 89 000 UZS |
 
 - Periods: 1, 3 and 12 months (−10% and −25%).
 - **Trial:** 7 days of Pro, once per account, no card needed.
@@ -56,7 +57,7 @@ Emails and passwords are set in `.env` (`SEED_*` variables):
 
 ### Payments
 
-The **Plans** page (`/app/plans`) opens the checkout. Subscription, invoices and saved cards are on `/app/billing`. There are three payment methods; every one goes through the same layer (`src/lib/billing/providers`).
+The **Plans** page (`/app/plans`) opens the checkout. Subscription, invoices, receipts and saved cards are on `/app/billing`. All prices are in UZS. There are three payment methods; every one goes through the same layer (`src/lib/billing/providers`), and admins can switch each of them off in **Settings**.
 
 **Uzcard / HUMO — full emulation.** No real card, SMS or money is involved. Any 16-digit number works: 9860… is HUMO, anything else is Uzcard. Any 6-digit SMS code works (a test code is shown on screen). Test numbers:
 
@@ -72,18 +73,40 @@ The **Plans** page (`/app/plans`) opens the checkout. Subscription, invoices and
 
 The emulator follows exactly these steps (`card-mock.ts`). For production, the mock is replaced by the aggregator's API calls.
 
-**Click — SHOP API mock.** The checkout redirects to a page that looks like my.click.uz. The emulator calls our own `/api/billing/click/prepare` and `/complete` endpoints with a real MD5 signature, error codes and idempotency, just like Click does. To go live, set `CLICK_MODE=live`, `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID` and `CLICK_SECRET_KEY`, and enter the endpoint URLs in the Click merchant cabinet. Click doesn't charge saved cards, so a Click subscription is renewed manually.
+**Click — SHOP API emulator.** With `CLICK_MODE="emulator"` (the default) the checkout opens a page that plays my.click.uz: card → SMS code → payment.
 
-**Stripe — real test mode** (Visa / Mastercard, USD). The option appears once a key is set:
+| Card | Result |
+|------|--------|
+| `8600 0000 0000 0001`, `9860 0000 0000 0001` | success |
+| `8600 0000 0000 0002` | insufficient funds (also on renewals) |
+
+Any future expiry date works, and the SMS code is `666666`. The server then calls our own `/api/payments/click/prepare` and `/complete` endpoints over HTTP with the same signed requests Click sends (MD5 `sign_string`, error codes, idempotency). With **Save card** on, the card is tokenized (`card_token`) and renewals are charged by token. Quick checks: a wrong signature returns `-1`, a wrong amount `-2`, a repeated Complete `-4`.
+
+To go live, set `CLICK_MODE="live"`, `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `CLICK_MERCHANT_USER_ID` and `CLICK_SECRET_KEY`, and enter the Prepare/Complete URLs in the Click merchant cabinet.
+
+**Stripe — real test mode** (Visa / Mastercard, charged in UZS). The option appears once a key is set:
 
 1. Create an account at stripe.com and switch to **Test mode**.
 2. Copy the `sk_test_…` key from **Developers → API keys** to `STRIPE_SECRET_KEY`.
-3. Optionally, for webhooks: `stripe listen --forward-to localhost:3000/api/billing/stripe/webhook`, then copy the `whsec_…` secret to `STRIPE_WEBHOOK_SECRET`. Without the CLI the payment is still confirmed when the user returns from Checkout.
-4. Test card: `4242 4242 4242 4242`, any future date, any CVC. Declined card: `4000 0000 0000 0002`.
+3. Run `npm run stripe:listen` (needs the [Stripe CLI](https://stripe.com/docs/stripe-cli)). It forwards webhooks to `/api/payments/stripe/webhook` and prints the `whsec_…` secret for `STRIPE_WEBHOOK_SECRET`. Without it, the payment is still confirmed when the user returns from Checkout.
+4. Test cards (any future date, any CVC): `4242 4242 4242 4242` succeeds; `4000 0000 0000 0341` can be saved, but later charges fail (for testing a failed renewal); `4000 0000 0000 0002` is declined.
 
-Products and prices are created automatically; nothing needs to be set up in the Stripe Dashboard. Cancellation and card changes go through the Stripe Customer Portal.
+Checkout saves the card (`setup_future_usage`), and renewals are charged off-session by our own billing job, the same way as for the other methods. Nothing needs to be set up in the Stripe Dashboard.
 
-**Automatic renewals** run lazily when a user opens the app, and in bulk via `POST /api/billing/renew` with the `Authorization: Bearer $CRON_SECRET` header (for an external cron), or with the button in the admin panel.
+**Renewals, reminders, notifications.** The billing job runs every 5 minutes inside the server (`src/instrumentation.ts`; `BILLING_TIMER="off"` disables it). It can also be called via `GET /api/cron/billing` with `Authorization: Bearer $CRON_SECRET` (for an external cron), or with the button in the admin panel. The job:
+
+- charges the saved card from 24 hours before the period ends: up to 3 attempts 8 hours apart, then once a day during the grace period;
+- sends a reminder `billing.noticeDays` days before the end (3 by default), saying whether the card will be charged;
+- moves an unpaid subscription to `past_due` and later back to Free, with a notification;
+- cancels checkouts abandoned for a day and retries fiscal receipts.
+
+Notifications appear under the bell in the app and on the **Today** banner, and are sent by email. With `SMTP_URL` they go through SMTP; without it they are saved as `.eml` files in `.mail/`. In **Admin → Subscriptions**, the "in 2 days / in 2 min / a minute ago" buttons let you try the whole cycle right away.
+
+**Fiscal receipts.** In Uzbekistan every payment needs a receipt registered with the OFD (soliq.uz). Each paid invoice gets a printable receipt with a QR code at `/app/billing/receipt/…`. It shows the MXIK code, package code, 12% VAT, seller name and TIN (set in **Settings**).
+
+- `FISCAL_PROVIDER="mock-ofd"` (default) issues receipts marked TEST; nothing is sent to the tax office.
+- `click-ofd` sends Click payments to the OFD (`ofd_data/submit_items`) and needs a live merchant.
+- `none` turns receipts off.
 
 ### AI
 
@@ -97,10 +120,10 @@ Add keys to `.env`: `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`. Any
 
 - **Overview** — stats and recent payments.
 - **Users** — plan, level, limit reset, "log in as", delete.
-- **Subscriptions** — subscriptions and invoices; test tools: "fast-forward to the period end / grace end", "run renewals", refunds, grant a plan for N days.
+- **Subscriptions** — revenue for 30 days, subscriptions, invoices, transactions, webhooks and receipts (with retry); test tools: "run the billing cycle", move the period end, "fast-forward to the period end / grace end", refunds, grant a plan for N days or forever.
 - **AI models** — fallback chain, paused models, a test request, call log.
 - **Topics** — which topics are Pro-only.
-- **Settings** — limits and prices of every plan, discounts, trial and grace length, offline mode, provider order.
+- **Settings** — limits and prices of every plan, discounts, trial and grace length, payment methods, reminder timing, receipt data, offline mode, provider order.
 
 ### Stack
 
@@ -135,6 +158,7 @@ Email va parollar `.env` faylida (`SEED_*` oʻzgaruvchilari) koʻrsatilgan:
 | Free  | `free@ustoz.local`  | —                                       |
 | Plus  | `plus@ustoz.local`  | Plus, oylik, saqlangan Uzcard kartasi   |
 | Pro   | `pro@ustoz.local`   | Pro, oylik, saqlangan HUMO kartasi      |
+| Plus  | `sub@ustoz.local`   | Plus, 2 kundan keyin tugaydi; uzaytirishda karta rad etiladi |
 
 ### Tariflar
 
@@ -145,7 +169,7 @@ Email va parollar `.env` faylida (`SEED_*` oʻzgaruvchilari) koʻrsatilgan:
 | Shaxsiy reja | — | ✓ | ✓ |
 | Xatolar tahlili | qisqa | batafsil | batafsil + muqobillar |
 | Talaffuz trenajyori | — | kuniga 10 ibora | cheksiz |
-| Oylik narx | 0 | 49 000 soʻm / $3.99 | 89 000 soʻm / $6.99 |
+| Oylik narx | 0 | 49 000 soʻm | 89 000 soʻm |
 
 - Davrlar: 1, 3 va 12 oy (−10% va −25%).
 - **Sinov davri:** 7 kun Pro, har bir hisob uchun bir marta, kartasiz.
@@ -156,7 +180,7 @@ Email va parollar `.env` faylida (`SEED_*` oʻzgaruvchilari) koʻrsatilgan:
 
 ### Toʻlovlar
 
-**Tariflar** sahifasi (`/app/plans`) toʻlovni ochadi. Obuna, hisob-fakturalar va saqlangan kartalar — `/app/billing` da. Toʻlovning uchta usuli bor, barchasi bitta qatlam orqali ishlaydi (`src/lib/billing/providers`).
+**Tariflar** sahifasi (`/app/plans`) toʻlovni ochadi. Obuna, hisob-fakturalar, cheklar va saqlangan kartalar — `/app/billing` da. Barcha narxlar soʻmda. Toʻlovning uchta usuli bor, barchasi bitta qatlam orqali ishlaydi (`src/lib/billing/providers`), har birini admin **Sozlamalar** boʻlimida oʻchirishi mumkin.
 
 **Uzcard / HUMO — toʻliq emulyatsiya.** Haqiqiy karta, SMS va pul ishlatilmaydi. Istalgan 16 xonali raqam qabul qilinadi: 9860… — HUMO, qolganlari — Uzcard. Istalgan 6 xonali SMS-kod mos keladi (test kodi ekranda koʻrsatiladi). Test raqamlari:
 
@@ -172,18 +196,40 @@ Email va parollar `.env` faylida (`SEED_*` oʻzgaruvchilari) koʻrsatilgan:
 
 Emulyator aynan shu bosqichlarni takrorlaydi (`card-mock.ts`). Production uchun mock agregator API chaqiruvlariga almashtiriladi.
 
-**Click — SHOP API moki.** Toʻlov my.click.uz ga oʻxshash sahifaga yoʻnaltiradi. Emulyator xuddi Click kabi bizning `/api/billing/click/prepare` va `/complete` endpointlarimizni haqiqiy MD5 imzo, xato kodlari va idempotentlik bilan chaqiradi. Haqiqiy rejimga oʻtish uchun `CLICK_MODE=live`, `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID` va `CLICK_SECRET_KEY` ni kiriting hamda endpoint manzillarini Click merchant kabinetida koʻrsating. Click saqlangan kartadan yechmaydi, shuning uchun Click obunasi qoʻlda uzaytiriladi.
+**Click — SHOP API emulyatori.** `CLICK_MODE="emulator"` (standart) boʻlsa, toʻlov my.click.uz oʻrnini bosuvchi sahifani ochadi: karta → SMS-kod → toʻlov.
 
-**Stripe — haqiqiy test rejimi** (Visa / Mastercard, USD). Kalit kiritilgach, usul paydo boʻladi:
+| Karta | Natija |
+|-------|--------|
+| `8600 0000 0000 0001`, `9860 0000 0000 0001` | muvaffaqiyatli |
+| `8600 0000 0000 0002` | mablagʻ yetarli emas (uzaytirishda ham) |
+
+Istalgan kelajakdagi muddat mos keladi, SMS-kod — `666666`. Soʻng server Click yuboradigan imzolangan soʻrovlarni (MD5 `sign_string`, xato kodlari, idempotentlik) HTTP orqali bizning `/api/payments/click/prepare` va `/complete` endpointlarimizga yuboradi. **Kartani saqlash** yoqilgan boʻlsa, karta tokenlashtiriladi (`card_token`) va uzaytirishlar token boʻyicha yechiladi. Tez tekshiruv: notoʻgʻri imzo — `-1`, notoʻgʻri summa — `-2`, takroriy Complete — `-4`.
+
+Haqiqiy rejimga oʻtish uchun `CLICK_MODE="live"`, `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `CLICK_MERCHANT_USER_ID` va `CLICK_SECRET_KEY` ni kiriting hamda Prepare/Complete manzillarini Click merchant kabinetida koʻrsating.
+
+**Stripe — haqiqiy test rejimi** (Visa / Mastercard, soʻmda yechiladi). Kalit kiritilgach, usul paydo boʻladi:
 
 1. stripe.com da hisob yarating va **Test mode** ga oʻting.
 2. **Developers → API keys** dagi `sk_test_…` kalitini `STRIPE_SECRET_KEY` ga yozing.
-3. Ixtiyoriy, webhooklar uchun: `stripe listen --forward-to localhost:3000/api/billing/stripe/webhook`, soʻng `whsec_…` sirini `STRIPE_WEBHOOK_SECRET` ga yozing. CLI siz ham toʻlov foydalanuvchi Checkout dan qaytganda tasdiqlanadi.
-4. Test kartasi: `4242 4242 4242 4242`, istalgan kelajakdagi sana, istalgan CVC. Rad etiladigan karta: `4000 0000 0000 0002`.
+3. `npm run stripe:listen` ni ishga tushiring ([Stripe CLI](https://stripe.com/docs/stripe-cli) kerak). U webhooklarni `/api/payments/stripe/webhook` ga yoʻnaltiradi va `STRIPE_WEBHOOK_SECRET` uchun `whsec_…` sirini chiqaradi. Usiz ham toʻlov foydalanuvchi Checkout dan qaytganda tasdiqlanadi.
+4. Test kartalari (istalgan kelajakdagi sana, istalgan CVC): `4242 4242 4242 4242` — muvaffaqiyatli; `4000 0000 0000 0341` — saqlanadi, lekin keyingi yechimlar rad etiladi (muvaffaqiyatsiz uzaytirishni tekshirish uchun); `4000 0000 0000 0002` — rad etiladi.
 
-Mahsulot va narxlar avtomatik yaratiladi, Stripe Dashboard da hech narsa sozlash shart emas. Bekor qilish va kartani almashtirish Stripe Customer Portal orqali.
+Checkout kartani saqlaydi (`setup_future_usage`), uzaytirishlarni esa boshqa usullardagi kabi oʻzimizning billing jarayonimiz off-session yechadi. Stripe Dashboard da hech narsa sozlash shart emas.
 
-**Avtomatik uzaytirish** foydalanuvchi ilovani ochganda ishlaydi, ommaviy ravishda esa `Authorization: Bearer $CRON_SECRET` sarlavhasi bilan `POST /api/billing/renew` orqali (tashqi cron uchun) yoki admin paneldagi tugma bilan.
+**Uzaytirish, eslatmalar, bildirishnomalar.** Billing jarayoni server ichida har 5 daqiqada ishlaydi (`src/instrumentation.ts`; `BILLING_TIMER="off"` uni oʻchiradi). Uni `Authorization: Bearer $CRON_SECRET` bilan `GET /api/cron/billing` orqali (tashqi cron uchun) yoki admin paneldagi tugma bilan ham chaqirish mumkin. Jarayon:
+
+- davr tugashidan 24 soat oldin saqlangan kartadan yechadi: 8 soat oraliq bilan 3 tagacha urinish, soʻng imtiyozli davrda kuniga bir marta;
+- tugashdan `billing.noticeDays` kun oldin (standart 3) eslatma yuboradi, unda kartadan yechilishi yoki yechilmasligi aytiladi;
+- toʻlanmagan obunani `past_due` ga, keyin Free ga oʻtkazadi va xabar beradi;
+- bir kun tashlab ketilgan toʻlovlarni bekor qiladi va fiskal cheklarni qayta yuboradi.
+
+Bildirishnomalar ilovadagi qoʻngʻiroqcha ostida va **Bugun** banerida koʻrinadi hamda emailga yuboriladi. `SMTP_URL` boʻlsa SMTP orqali, boʻlmasa `.mail/` papkasiga `.eml` fayl sifatida saqlanadi. **Admin → Obunalar** dagi “2 kundan keyin / 2 daqiqadan keyin / bir daqiqa oldin” tugmalari butun siklni darhol sinab koʻrish imkonini beradi.
+
+**Fiskal cheklar.** Oʻzbekistonda har bir toʻlov uchun OFD (soliq.uz) da roʻyxatdan oʻtgan chek kerak. Har bir toʻlangan hisob uchun `/app/billing/receipt/…` da QR-kodli, chop etsa boʻladigan chek yaratiladi. Unda MXIK, qadoq kodi, 12% QQS, sotuvchi nomi va STIR (**Sozlamalar** da) koʻrsatiladi.
+
+- `FISCAL_PROVIDER="mock-ofd"` (standart) TEST belgili cheklar beradi, soliq idorasiga hech narsa yuborilmaydi.
+- `click-ofd` Click toʻlovlarini OFD ga yuboradi (`ofd_data/submit_items`), haqiqiy merchant kerak.
+- `none` cheklarni oʻchiradi.
 
 ### AI
 
@@ -197,10 +243,10 @@ Mahsulot va narxlar avtomatik yaratiladi, Stripe Dashboard da hech narsa sozlash
 
 - **Umumiy** — statistika va soʻnggi toʻlovlar.
 - **Foydalanuvchilar** — tarif, daraja, limitni tiklash, “sifatida kirish”, oʻchirish.
-- **Obunalar** — obunalar va hisob-fakturalar; test vositalari: “davr / imtiyoz oxiriga oʻtkazish”, “uzaytirishlarni ishga tushirish”, qaytarish, N kunga tarif berish.
+- **Obunalar** — 30 kunlik tushum, obunalar, hisob-fakturalar, tranzaksiyalar, webhooklar va cheklar (qayta urinish bilan); test vositalari: “billing siklini ishga tushirish”, muddat oxirini koʻchirish, “davr / imtiyoz oxiriga oʻtkazish”, qaytarish, N kunga yoki muddatsiz tarif berish.
 - **AI modellar** — zaxira zanjiri, pauzadagi modellar, test soʻrovi, chaqiruvlar jurnali.
 - **Mavzular** — qaysi mavzular faqat Pro uchun.
-- **Sozlamalar** — har bir tarifning limitlari va narxlari, chegirmalar, sinov va imtiyozli davr, oflayn rejim, provayderlar tartibi.
+- **Sozlamalar** — har bir tarifning limitlari va narxlari, chegirmalar, sinov va imtiyozli davr, toʻlov usullari, eslatma muddati, chek rekvizitlari, oflayn rejim, provayderlar tartibi.
 
 ### Texnologiyalar
 
@@ -235,6 +281,7 @@ npm run dev               # http://localhost:3000
 | Free  | `free@ustoz.local`  | —                                        |
 | Plus  | `plus@ustoz.local`  | Plus, помесячно, сохранённая карта Uzcard |
 | Pro   | `pro@ustoz.local`   | Pro, помесячно, сохранённая карта HUMO   |
+| Plus  | `sub@ustoz.local`   | Plus, заканчивается через 2 дня; карта при продлении отклоняется |
 
 ### Тарифы
 
@@ -245,7 +292,7 @@ npm run dev               # http://localhost:3000
 | Персональный план | — | ✓ | ✓ |
 | Разбор ошибок | краткий | подробный | подробный + альтернативы |
 | Тренажёр произношения | — | 10 фраз в день | без лимита |
-| Цена в месяц | 0 | 49 000 сум / $3.99 | 89 000 сум / $6.99 |
+| Цена в месяц | 0 | 49 000 сум | 89 000 сум |
 
 - Периоды: 1, 3 и 12 месяцев (−10% и −25%).
 - **Пробный период:** 7 дней Pro, один раз на аккаунт, без карты.
@@ -256,7 +303,7 @@ npm run dev               # http://localhost:3000
 
 ### Оплата
 
-Страница **«Тарифы»** (`/app/plans`) открывает оформление. Подписка, счета и сохранённые карты — на `/app/billing`. Способов оплаты три, все работают через один слой (`src/lib/billing/providers`).
+Страница **«Тарифы»** (`/app/plans`) открывает оформление. Подписка, счета, чеки и сохранённые карты — на `/app/billing`. Все цены в сумах. Способов оплаты три, все работают через один слой (`src/lib/billing/providers`), любой из них админ может выключить в **«Параметрах»**.
 
 **Uzcard / HUMO — полная эмуляция.** Настоящая карта, SMS и деньги не используются. Принимается любой 16-значный номер: 9860… — HUMO, остальные — Uzcard. Подходит любой 6-значный SMS-код (тестовый код показан на экране). Тестовые номера:
 
@@ -272,18 +319,40 @@ npm run dev               # http://localhost:3000
 
 Эмулятор повторяет ровно эти шаги (`card-mock.ts`). Для продакшена мок заменяется вызовами API агрегатора.
 
-**Click — мок SHOP API.** Оформление ведёт на страницу в стиле my.click.uz. Эмулятор, как и настоящий Click, вызывает наши эндпоинты `/api/billing/click/prepare` и `/complete` с настоящей MD5-подписью, кодами ошибок и идемпотентностью. Чтобы перейти на настоящий Click, задайте `CLICK_MODE=live`, `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `CLICK_SECRET_KEY` и укажите адреса эндпоинтов в кабинете мерчанта Click. Click не списывает с сохранённой карты, поэтому подписка через Click продлевается вручную.
+**Click — эмулятор SHOP API.** При `CLICK_MODE="emulator"` (по умолчанию) оформление открывает страницу вместо my.click.uz: карта → SMS-код → оплата.
 
-**Stripe — настоящий test mode** (Visa / Mastercard, USD). Способ появляется, когда задан ключ:
+| Карта | Результат |
+|-------|-----------|
+| `8600 0000 0000 0001`, `9860 0000 0000 0001` | успешно |
+| `8600 0000 0000 0002` | недостаточно средств (и при продлении) |
+
+Подходит любой будущий срок действия, SMS-код — `666666`. Затем сервер шлёт по HTTP на наши эндпоинты `/api/payments/click/prepare` и `/complete` такие же подписанные запросы, как Click (MD5 `sign_string`, коды ошибок, идемпотентность). Если включено **«Сохранить карту»**, карта токенизируется (`card_token`), и продления списываются по токену. Быстрая проверка: неверная подпись — `-1`, неверная сумма — `-2`, повторный Complete — `-4`.
+
+Чтобы перейти на настоящий Click, задайте `CLICK_MODE="live"`, `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `CLICK_MERCHANT_USER_ID`, `CLICK_SECRET_KEY` и укажите адреса Prepare/Complete в кабинете мерчанта Click.
+
+**Stripe — настоящий test mode** (Visa / Mastercard, списание в сумах). Способ появляется, когда задан ключ:
 
 1. Создайте аккаунт на stripe.com и включите **Test mode**.
 2. Скопируйте ключ `sk_test_…` из **Developers → API keys** в `STRIPE_SECRET_KEY`.
-3. По желанию, для вебхуков: `stripe listen --forward-to localhost:3000/api/billing/stripe/webhook`, затем секрет `whsec_…` — в `STRIPE_WEBHOOK_SECRET`. Без CLI оплата всё равно подтверждается, когда пользователь возвращается из Checkout.
-4. Тестовая карта: `4242 4242 4242 4242`, любая будущая дата, любой CVC. Отклоняемая карта: `4000 0000 0000 0002`.
+3. Запустите `npm run stripe:listen` (нужен [Stripe CLI](https://stripe.com/docs/stripe-cli)). Он пересылает вебхуки на `/api/payments/stripe/webhook` и печатает секрет `whsec_…` для `STRIPE_WEBHOOK_SECRET`. Без него оплата всё равно подтверждается, когда пользователь возвращается из Checkout.
+4. Тестовые карты (любая будущая дата, любой CVC): `4242 4242 4242 4242` — успешно; `4000 0000 0000 0341` — сохраняется, но последующие списания отклоняются (для проверки неудачного продления); `4000 0000 0000 0002` — отклоняется.
 
-Продукты и цены создаются автоматически, в Stripe Dashboard ничего настраивать не нужно. Отмена и смена карты — через Stripe Customer Portal.
+Checkout сохраняет карту (`setup_future_usage`), а продления списывает off-session наш собственный биллинг, так же как для остальных способов. В Stripe Dashboard ничего настраивать не нужно.
 
-**Автопродления** выполняются лениво, когда пользователь открывает приложение, а пакетно — через `POST /api/billing/renew` с заголовком `Authorization: Bearer $CRON_SECRET` (для внешнего cron) или кнопкой в админке.
+**Продления, напоминания, уведомления.** Биллинг запускается внутри сервера раз в 5 минут (`src/instrumentation.ts`; `BILLING_TIMER="off"` выключает его). Его также можно вызвать через `GET /api/cron/billing` с заголовком `Authorization: Bearer $CRON_SECRET` (для внешнего cron) или кнопкой в админке. Биллинг:
+
+- списывает с сохранённой карты начиная за 24 часа до конца периода: до 3 попыток раз в 8 часов, потом раз в день в льготный период;
+- за `billing.noticeDays` дней до конца (по умолчанию 3) присылает напоминание, где сказано, спишется ли оплата с карты;
+- переводит неоплаченную подписку в `past_due`, а затем на Free, с уведомлением;
+- отменяет оформления, брошенные на сутки, и повторяет фискализацию чеков.
+
+Уведомления видны под колокольчиком в приложении и на баннере **«Сегодня»**, а также приходят на почту. С `SMTP_URL` письма уходят через SMTP, без него сохраняются как `.eml` в `.mail/`. В **Админке → Подписки** кнопки «через 2 дня / через 2 мин / минуту назад» позволяют сразу пройти весь цикл.
+
+**Фискальные чеки.** В Узбекистане на каждый платёж нужен чек, зарегистрированный в ОФД (soliq.uz). На каждый оплаченный счёт создаётся чек с QR-кодом для печати: `/app/billing/receipt/…`. В нём указаны ИКПУ (MXIK), код упаковки, НДС 12 %, продавец и ИНН (задаются в **«Параметрах»**).
+
+- `FISCAL_PROVIDER="mock-ofd"` (по умолчанию) выдаёт чеки с пометкой ТЕСТОВЫЙ, в налоговую ничего не уходит.
+- `click-ofd` отправляет платежи Click в ОФД (`ofd_data/submit_items`), нужен боевой мерчант.
+- `none` выключает чеки.
 
 ### AI
 
@@ -297,10 +366,10 @@ npm run dev               # http://localhost:3000
 
 - **Обзор** — статистика и последние платежи.
 - **Пользователи** — тариф, уровень, сброс лимита, «войти как», удаление.
-- **Подписки** — подписки и счета; инструменты для проверки: «перемотать к концу периода / льготы», «запустить продления», возврат, выдать тариф на N дней.
+- **Подписки** — выручка за 30 дней, подписки, счета, транзакции, вебхуки и чеки (с повтором); инструменты для проверки: «запустить биллинг-цикл», перенос конца срока, «перемотать к концу периода / льготы», возврат, выдать тариф на N дней или навсегда.
 - **AI-модели** — цепочка фолбэка, модели на паузе, тестовый запрос, журнал вызовов.
 - **Темы** — какие темы доступны только в Pro.
-- **Параметры** — лимиты и цены каждого тарифа, скидки, пробный и льготный период, офлайн-режим, порядок провайдеров.
+- **Параметры** — лимиты и цены каждого тарифа, скидки, пробный и льготный период, способы оплаты, срок напоминания, реквизиты чека, офлайн-режим, порядок провайдеров.
 
 ### Стек
 
