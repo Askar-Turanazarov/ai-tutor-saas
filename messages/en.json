@@ -614,7 +614,8 @@
     "cancelText": "Auto-renewal turns off. Everything stays until {date}, then the account moves to Free. Your progress and words are kept.",
     "keep": "Keep subscription",
     "cancelConfirm": "Cancel",
-    "receiptLink": "Receipt"
+    "receiptLink": "Receipt",
+    "subtitle": "Plan, cards and payment history."
   },
   "learn": {
     "listen": "Listen",

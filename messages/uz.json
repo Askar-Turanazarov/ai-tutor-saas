@@ -614,7 +614,8 @@
     "cancelText": "Avtomatik uzaytirish oʻchadi. Barcha imkoniyatlar {date} gacha qoladi, keyin akkaunt Free ga oʻtadi. Natijalar va soʻzlar saqlanadi.",
     "keep": "Obunani qoldirish",
     "cancelConfirm": "Bekor qilish",
-    "receiptLink": "Chek"
+    "receiptLink": "Chek",
+    "subtitle": "Tarif, kartalar va toʻlovlar tarixi."
   },
   "learn": {
     "listen": "Tinglash",

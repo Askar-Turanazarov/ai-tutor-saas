@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState, useTransition } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowDownRight, Check, ChevronDown, Crown, Gift, Minus, Sparkles } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, Segmented, Sheet } from "@/components/ui/primitives";
-import { Ornament } from "@/components/ui/brand";
-import { TileBand } from "@/components/decor/motifs";
+import { GirihField, MajolicaTile, SuzaniMedallion, TileBand } from "@/components/decor/motifs";
+import { ease, spring } from "@/components/ui/motion";
 import { scheduleDowngrade, startTrialAction } from "@/app/actions/billing";
 import { PERIODS, TIER_RANK, formatMoney, tierLabel, type PaidTier, type Period, type Tier } from "@/lib/billing/catalog";
 import type { PlansData } from "@/lib/billing/overview";
@@ -29,6 +29,7 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
   const [compare, setCompare] = useState(false);
   const [pending, start] = useTransition();
   const [trialError, setTrialError] = useState(false);
+  const reduce = useReducedMotion();
 
   const sub = data.sub?.live ? data.sub : null;
   const paid = sub && sub.status !== "trialing" && sub.provider !== "admin" ? sub : null;
@@ -106,11 +107,24 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className="relative text-center">
-        <Ornament className="pointer-events-none absolute left-1/2 top-1/2 size-56 -translate-x-1/2 -translate-y-1/2 text-accent/[0.06]" />
-        <h1 className="relative text-[clamp(1.8rem,4vw,2.4rem)] font-bold">{t("title")}</h1>
-        <p className="relative mx-auto mt-2 max-w-xl text-[16px] text-label-2">{t("subtitle")}</p>
-        <div className="relative mt-6 flex justify-center">
+      <PlansHero>
+        <motion.h1
+          initial={reduce ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease }}
+          className="text-[clamp(1.9rem,4.4vw,2.6rem)] font-bold"
+        >
+          {t("title")}
+        </motion.h1>
+        <motion.p
+          initial={reduce ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease, delay: 0.06 }}
+          className="mx-auto mt-2 max-w-xl text-[16px] text-label-2"
+        >
+          {t("subtitle")}
+        </motion.p>
+        <div className="mt-6 flex justify-center">
           <Segmented
             size="sm"
             label={t("period")}
@@ -127,7 +141,7 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
             }))}
           />
         </div>
-      </header>
+      </PlansHero>
 
       {sub && <StatusLine data={data} />}
 
@@ -137,9 +151,9 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
           animate={{ opacity: 1, y: 0 }}
           className="mt-6 grid grid-cols-[auto_1fr] items-center gap-4 rounded-card bg-gold-soft p-4 sm:flex sm:p-5"
         >
-          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-gold-solid text-on-solid">
-            <Gift className="size-5" />
-          </span>
+          <SuzaniMedallion size={52} tone="gold">
+            <Gift className="size-4 text-gold" />
+          </SuzaniMedallion>
           <div className="min-w-0 flex-1">
             <div className="text-[16px] font-semibold">{t("trialTitle", { n: data.trial.days })}</div>
             <div className="text-[14px] text-label-2">{trialError ? t("trialError") : t("trialText")}</div>
@@ -161,16 +175,27 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ y: -4, boxShadow: "var(--shadow-float)", transition: spring }}
               className={cn(
-                "surface relative flex flex-col rounded-card p-6",
+                "surface relative flex flex-col overflow-hidden rounded-card p-6",
                 featured && "ring-2 ring-accent-solid/60",
                 focus === tier && !featured && "ring-2 ring-teal/60",
               )}
             >
+              {featured && (
+                <motion.div
+                  aria-hidden
+                  animate={reduce ? undefined : { rotate: 360 }}
+                  transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+                  className="pointer-events-none absolute -right-20 -top-20"
+                >
+                  <SuzaniMedallion size={200} className="opacity-[0.09]" />
+                </motion.div>
+              )}
               <div className={cn("absolute inset-x-6 top-2 opacity-50", tier === "PRO" ? "text-ochre" : tier === "PLUS" ? "text-turquoise" : "text-label-3/50")}>
                 <TileBand />
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="relative flex items-center justify-between gap-2">
                 <h2 className="text-[22px] font-bold">{tierLabel(tier)}</h2>
                 {isCurrent ? <Badge tone="teal">{t("yourPlan")}</Badge> : featured && <Badge tone="accent">{t("popular")}</Badge>}
               </div>
@@ -270,6 +295,31 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
         </Button>
       </Sheet>
     </div>
+  );
+}
+
+/** Plans header: girih lattice and tiles drifting at different speeds on scroll. */
+function PlansHero({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  const reduce = !!useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const back = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 90]);
+  const front = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -50]);
+  const turn = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 40]);
+  const turnBack = useTransform(turn, (v) => -v);
+  return (
+    <header ref={ref} className="relative text-center">
+      <motion.div style={{ y: back }} aria-hidden className="pointer-events-none absolute inset-x-0 -top-20 h-[360px]">
+        <GirihField className="h-full w-full text-accent opacity-[0.1] dark:opacity-[0.12]" cell={48} />
+      </motion.div>
+      <motion.div style={{ y: front, rotate: turn }} aria-hidden className="pointer-events-none absolute left-[3%] top-2 hidden lg:block">
+        <MajolicaTile size={88} className="-rotate-12 opacity-45 dark:opacity-30" />
+      </motion.div>
+      <motion.div style={{ y: front, rotate: turnBack }} aria-hidden className="pointer-events-none absolute right-[4%] top-10 hidden lg:block">
+        <SuzaniMedallion size={76} tone="teal" className="opacity-45 dark:opacity-30" />
+      </motion.div>
+      <div className="relative">{children}</div>
+    </header>
   );
 }
 

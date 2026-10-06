@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { ButtonLink } from "@/components/ui/Button";
 import { requiredTier, type Feature } from "@/lib/billing/entitlements";
 import { tierLabel } from "@/lib/billing/catalog";
+import { SuzaniMedallion, TileBand } from "@/components/decor/motifs";
 
 /** Contextual paywall: a blurred preview of the feature and a way straight to the plan that unlocks it. */
 export function Paywall({ feature, title, text, preview }: { feature: Feature; title: string; text: string; preview: ReactNode }) {
@@ -22,15 +23,14 @@ export function Paywall({ feature, title, text, preview }: { feature: Feature; t
           initial={{ opacity: 0, y: 20, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.1 }}
-          className="surface max-w-sm rounded-sheet p-7 text-center"
+          className="glass-thick relative max-w-sm overflow-hidden rounded-sheet border p-7 pt-9 text-center"
         >
-          <motion.div
-            animate={{ rotate: [0, -8, 8, 0] }}
-            transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.5 }}
-            className="mx-auto grid size-14 place-items-center rounded-[18px] bg-gold-soft text-gold"
-          >
-            <Lock className="size-7" />
-          </motion.div>
+          <TileBand className="absolute inset-x-0 top-0 text-gold opacity-40" />
+          <SuzaniMedallion size={76} tone="gold">
+            <motion.span animate={{ rotate: [0, -8, 8, 0] }} transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.5 }} className="text-gold">
+              <Lock className="size-6" />
+            </motion.span>
+          </SuzaniMedallion>
           <div className="mt-4 text-[12px] font-semibold uppercase tracking-wider text-gold">{t("from", { tier: tierLabel(tier) })}</div>
           <h2 className="mt-1 text-[21px] font-bold">{title}</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-label-2">{text}</p>

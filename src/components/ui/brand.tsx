@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
-import { GirihField, starPath } from "@/components/decor/motifs";
+import { starPath } from "@/components/decor/motifs";
 
 const GID = "ustoz-g";
 
@@ -53,9 +53,4 @@ export function Logo({ className, compact }: { className?: string; compact?: boo
       )}
     </span>
   );
-}
-
-/** Soft girih ornament used behind hero sections. Decorative only. */
-export function Ornament({ className }: { className?: string }) {
-  return <GirihField className={className} />;
 }
