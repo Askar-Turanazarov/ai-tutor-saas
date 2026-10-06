@@ -23,6 +23,7 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
   const tb = useTranslations("billing");
   const locale = useLocale();
   const router = useRouter();
+  const [picked, setPicked] = useState<Tier>(focus === "FREE" || focus === "PLUS" || focus === "PRO" ? focus : data.tier);
   const [period, setPeriod] = useState<Period>((data.sub?.live && (PERIODS as readonly number[]).includes(data.sub.period) ? data.sub.period : 1) as Period);
   const [checkout, setCheckout] = useState<PaidTier | null>(null);
   const [downgrade, setDowngrade] = useState<PaidTier | null>(null);
@@ -124,23 +125,6 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
         >
           {t("subtitle")}
         </motion.p>
-        <div className="mt-6 flex justify-center">
-          <Segmented
-            size="sm"
-            label={t("period")}
-            value={String(period)}
-            onChange={(v) => setPeriod(Number(v) as Period)}
-            options={PERIODS.map((p) => ({
-              value: String(p),
-              label: (
-                <span className="whitespace-nowrap">
-                  {t("periodShort", { n: p })}
-                  {data.discounts[p] > 0 && <span className="ml-1.5 rounded-full bg-teal-soft px-1.5 text-[11px] font-bold text-teal">−{data.discounts[p]}%</span>}
-                </span>
-              ),
-            }))}
-          />
-        </div>
       </PlansHero>
 
       {sub && <StatusLine data={data} />}
@@ -164,6 +148,25 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
         </motion.div>
       )}
 
+      <div className="mt-8 flex flex-col items-center gap-2">
+        <span className="text-[13px] font-medium text-label-2">{t("period")}</span>
+        <Segmented
+          className="w-full max-w-md"
+          label={t("period")}
+          value={String(period)}
+          onChange={(v) => setPeriod(Number(v) as Period)}
+          options={PERIODS.map((p) => ({
+            value: String(p),
+            label: (
+              <span className="whitespace-nowrap">
+                {t("periodShort", { n: p })}
+                {data.discounts[p] > 0 && <span className="ml-1.5 rounded-full bg-teal-soft px-1.5 text-[12px] font-bold text-teal">−{data.discounts[p]}%</span>}
+              </span>
+            ),
+          }))}
+        />
+      </div>
+
       <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-3">
         {(["FREE", "PLUS", "PRO"] as Tier[]).map((tier, i) => {
           const featured = tier === "PRO";
@@ -176,12 +179,18 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -4, boxShadow: "var(--shadow-float)", transition: spring }}
-              className={cn(
-                "surface relative flex flex-col overflow-hidden rounded-card p-6",
-                featured && "ring-2 ring-accent-solid/60",
-                focus === tier && !featured && "ring-2 ring-teal/60",
-              )}
+              onClick={() => setPicked(tier)}
+              onFocusCapture={() => setPicked(tier)}
+              className="surface relative flex cursor-pointer flex-col overflow-hidden rounded-card p-6"
             >
+              {picked === tier && (
+                <motion.div
+                  layoutId="plan-pick"
+                  aria-hidden
+                  transition={spring}
+                  className="pointer-events-none absolute inset-0 z-10 rounded-card ring-2 ring-inset ring-accent-solid/70"
+                />
+              )}
               {featured && (
                 <motion.div
                   aria-hidden
