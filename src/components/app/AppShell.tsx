@@ -15,6 +15,7 @@ import { tierLabel } from "@/lib/billing/catalog";
 import { cn } from "@/lib/cn";
 import { Celebrations } from "@/components/progress/Celebrations";
 import { useUsage } from "./usage";
+import { NotificationBell, type ShellNotification } from "./Notifications";
 
 /** `tab: false` — sidebar only; the phone tab bar keeps five items (topics open from the chat, mistakes from the deck). */
 type NavItem = { href: string; icon: LucideIcon; key: string; anim: keyof typeof iconAnims; pro?: boolean; tab?: false };
@@ -39,11 +40,13 @@ export function AppShell({
   user,
   impersonating,
   celebrations,
+  notifications,
   children,
 }: {
   user: ShellUser;
   impersonating: boolean;
   celebrations: { achievements: string[]; level: number | null };
+  notifications: ShellNotification[];
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -56,8 +59,8 @@ export function AppShell({
   return (
     <div className="min-h-dvh">
       {impersonating && <ImpersonationBar name={user.name} />}
-      <Sidebar user={user} isActive={isActive} pro={pro} />
-      <MobileTopBar user={user} />
+      <Sidebar user={user} isActive={isActive} pro={pro} notifications={notifications} />
+      <MobileTopBar user={user} notifications={notifications} />
       <main className={cn("lg:pb-10 lg:pl-[276px]", focus ? "pb-6" : "pb-28")}>
         <div className="mx-auto w-full max-w-5xl px-4 pt-5 sm:px-6 lg:pt-10">{children}</div>
       </main>
@@ -67,7 +70,7 @@ export function AppShell({
   );
 }
 
-function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: string) => boolean; pro: boolean }) {
+function Sidebar({ user, isActive, pro, notifications }: { user: ShellUser; isActive: (h: string) => boolean; pro: boolean; notifications: ShellNotification[] }) {
   const t = useTranslations();
   return (
     <aside className="glass fixed inset-y-3 left-3 z-30 hidden w-[252px] flex-col rounded-[26px] border px-3.5 py-5 shadow-card lg:flex">
@@ -149,6 +152,7 @@ function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: strin
               </span>
             }
           />
+          <NotificationBell items={notifications} />
         </div>
         <PrefsMenu persist className="w-full justify-center" />
       </div>
@@ -156,7 +160,7 @@ function Sidebar({ user, isActive, pro }: { user: ShellUser; isActive: (h: strin
   );
 }
 
-function MobileTopBar({ user }: { user: ShellUser }) {
+function MobileTopBar({ user, notifications }: { user: ShellUser; notifications: ShellNotification[] }) {
   const { remaining } = useUsage();
   const t = useTranslations();
   return (
@@ -170,6 +174,7 @@ function MobileTopBar({ user }: { user: ShellUser }) {
             <Badge tone={remaining < 120 ? "gold" : "neutral"}>{t("dashboard.minutesLeft", { n: Math.ceil(remaining / 60) })}</Badge>
           )}
           <PrefsMenu persist className="px-2" />
+          <NotificationBell items={notifications} />
           <AccountMenu user={user} where="app" />
         </>
       }

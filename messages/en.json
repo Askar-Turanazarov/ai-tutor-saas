@@ -199,7 +199,11 @@
     },
     "left": "{n} of {max} left",
     "upsellFree": "Plus: all levels, unlimited lessons and reviews.",
-    "upsellPlus": "Pro: unlimited time and AI lessons made for you."
+    "upsellPlus": "Pro: unlimited time and AI lessons made for you.",
+    "bannerPastDue": "We couldn't renew {tier}. Access stays until {date, date, long} — check your card or pay manually.",
+    "bannerExpiring": "{tier} ends on {date, date, long} and auto-renewal is off.",
+    "bannerAction": "Subscription",
+    "bannerClose": "Dismiss"
   },
   "chat": {
     "title": "Tutor",
@@ -364,9 +368,9 @@
     "payments": "Latest payments",
     "billing": "Subscriptions",
     "billingHint": "Subscriptions and payments. Test tools: time travel, renewals, refunds.",
-    "runRenewals": "Run renewals",
-    "runRenewalsHint": "Same as the cron call to /api/billing/renew: renews subscriptions whose period is over.",
-    "renewResult": "Checked: {checked}, renewed: {renewed}, payment due: {pastDue}, expired: {expired}",
+    "runRenewals": "Run billing cycle",
+    "runRenewalsHint": "Same as the 5-minute timer and cron GET /api/cron/billing: auto-renewals from a day before the end, reminders, expiry, abandoned invoices.",
+    "renewResult": "Checked: {checked}, renewed: {renewed}, failed charges: {failed}, expired: {expired}, reminders: {reminded}",
     "subscriptions": "Subscriptions",
     "invoices": "Invoices",
     "amount": "Amount",
@@ -922,5 +926,36 @@
     "you": "You",
     "demo": "demo",
     "demoNote": "Players marked “demo” are practice rivals while the league fills up."
+  },
+  "notify": {
+    "bell": "Notifications",
+    "empty": "No notifications yet",
+    "sub_expiring": {
+      "title": "{tier} ends soon",
+      "body": "Your {tier} subscription is active until {until, date, long}. Renew it to keep access.",
+      "bodyAuto": "On {until, date, long} we'll charge {amount, number} UZS to card {card} and extend {tier} for {months, plural, one {# month} other {# months}}.",
+      "bodyTrial": "Your {tier} trial ends on {until, date, long}. Subscribe to keep going without limits."
+    },
+    "sub_expired": {
+      "title": "{tier} has ended",
+      "body": "Your subscription has expired and you're back on Free. All progress is saved — renew any time."
+    },
+    "payment_ok": {
+      "title": "Payment received",
+      "body": "Invoice {number}: {amount, number} UZS. {tier} is active until {until, date, long}."
+    },
+    "renewed": {
+      "title": "{tier} renewed",
+      "body": "Auto-renewal: {amount, number} UZS charged. {tier} is active until {until, date, long}."
+    },
+    "payment_failed": {
+      "title": "Couldn't charge your card",
+      "body": "The automatic charge of {amount, number} UZS to card {card} failed. Please check your card — {tier} stays active until {until, date, long} and we'll try again."
+    },
+    "email": {
+      "hello": "Hello, {name}!",
+      "cta": "Subscription & payments",
+      "footer": "You received this email because you have an Ustoz AI account."
+    }
   }
 }

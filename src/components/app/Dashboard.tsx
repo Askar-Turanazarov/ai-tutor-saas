@@ -13,6 +13,7 @@ import { LeagueStone } from "@/components/progress/LeagueView";
 import type { ProgressState } from "@/lib/gamification";
 import { cn } from "@/lib/cn";
 import { useUsage } from "./usage";
+import { BillingBanner, type BillingAlert } from "./Notifications";
 
 type Quota = { used: number; max: number } | null;
 type Props = {
@@ -27,10 +28,11 @@ type Props = {
   /** Today's quotas for Free and Plus; null for Pro. */
   limits: { plan: string; minutes: Quota; lessons: Quota; reviews: Quota } | null;
   speaking: boolean;
+  alert: BillingAlert | null;
 };
 
 /** "Today": the goal, what to do next, quests and the league at a glance. */
-export function Dashboard({ greeting, name, level, progress: p, lesson, due, mistakes, league, limits, speaking }: Props) {
+export function Dashboard({ greeting, name, level, progress: p, lesson, due, mistakes, league, limits, speaking, alert }: Props) {
   const t = useTranslations("dashboard");
   const tl = useTranslations("league");
 
@@ -40,6 +42,12 @@ export function Dashboard({ greeting, name, level, progress: p, lesson, due, mis
         <p className="text-[13px] font-semibold uppercase tracking-wide text-label-3">{t("today")}</p>
         <h1 className="mt-1 text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight">{t(greeting, { name })}</h1>
       </StaggerItem>
+
+      {alert && (
+        <StaggerItem>
+          <BillingBanner alert={alert} />
+        </StaggerItem>
+      )}
 
       <StaggerItem>
         <Card className="overflow-hidden">

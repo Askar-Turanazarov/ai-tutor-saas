@@ -11,7 +11,8 @@ import { PROVIDERS, providerModels, resetBreakers } from "@/lib/ai/router";
 import { tutorReply } from "@/lib/ai/tutor";
 import { asLang, rebuildPlan } from "@/lib/learning";
 import { LEVELS, type Level } from "@/lib/levels";
-import { grantPlan, reconcile, runRenewals, syncUserPlan } from "@/lib/billing/subscription";
+import { grantPlan, reconcile, syncUserPlan } from "@/lib/billing/subscription";
+import { runBillingCycle } from "@/lib/billing/scheduler";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -21,7 +22,7 @@ async function requireAdmin() {
 
 const refresh = () => revalidatePath("/", "layout");
 
-/** Grants a plan for 30 days without payment (or ends the subscription for FREE). */
+/** Grants a plan without payment for N days, or with no end date when days is 0 (FREE ends the subscription). */
 export async function setUserPlan(userId: string, plan: "FREE" | "PLUS" | "PRO", days = 30) {
   await requireAdmin();
   await grantPlan(userId, plan, days);
@@ -61,11 +62,10 @@ export async function timeTravel(userId: string, to: "periodEnd" | "graceEnd") {
       currentPeriodStart: new Date(sub.currentPeriodStart.getTime() - shift),
       currentPeriodEnd: new Date(sub.currentPeriodEnd.getTime() - shift),
       graceUntil: sub.graceUntil ? new Date(sub.graceUntil.getTime() - shift) : null,
+      // The last renewal attempt travels too, otherwise the retry pause would block the next try.
+      lastRenewAttemptAt: sub.lastRenewAttemptAt ? new Date(sub.lastRenewAttemptAt.getTime() - shift) : null,
     },
   });
-  // Recent renewal attempts travel too, otherwise the once-a-day retry rule would block the next try.
-  const attempts = await db.invoice.findMany({ where: { subscriptionId: sub.id, kind: "renewal", status: "failed", createdAt: { gt: new Date(now - 86_400_000) } } });
-  for (const a of attempts) await db.invoice.update({ where: { id: a.id }, data: { createdAt: new Date(a.createdAt.getTime() - shift) } });
   await reconcile(moved);
   await syncUserPlan(userId);
   refresh();
@@ -73,7 +73,7 @@ export async function timeTravel(userId: string, to: "periodEnd" | "graceEnd") {
 
 export async function runRenewalsNow() {
   await requireAdmin();
-  const res = await runRenewals();
+  const res = await runBillingCycle();
   refresh();
   return res;
 }

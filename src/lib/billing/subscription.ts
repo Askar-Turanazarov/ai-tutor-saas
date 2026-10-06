@@ -3,12 +3,14 @@ import type { Invoice, Prisma, Subscription, User } from "@prisma/client";
 import { db } from "../db";
 import { getAllSettings } from "../settings";
 import { FREE_LEVELS, type Level } from "../levels";
+import { notify } from "./notify";
 import {
   discountSettingKey,
   isPaidTier,
   isPeriod,
   priceSettingKey,
   TIER_RANK,
+  tierLabel,
   type Currency,
   type PaidTier,
   type Period,
@@ -176,6 +178,12 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
   // Other checkouts the user opened and abandoned are no longer payable.
   await db.invoice.updateMany({ where: { userId: invoice.userId, status: "pending", id: { not: invoice.id } }, data: { status: "canceled" } });
   await syncUserPlan(invoice.userId);
+  await notify(invoice.userId, renewal ? "renewed" : "payment_ok", {
+    tier: tierLabel(tier),
+    number: invoice.number,
+    amount: invoice.amount,
+    until: saved.currentPeriodEnd.toISOString(),
+  });
   return paid;
 }
 
@@ -259,6 +267,10 @@ export async function startTrial(userId: string) {
     graceUntil: null,
     pendingTier: null,
     pendingPeriod: null,
+    notifiedSoonAt: null,
+    notifiedEndAt: null,
+    renewAttempts: 0,
+    lastRenewAttemptAt: null,
   };
   await db.subscription.upsert({ where: { userId }, update: data, create: { userId, ...data } });
   await db.user.update({ where: { id: userId }, data: { trialUsedAt: now } });
@@ -284,7 +296,7 @@ export async function scheduleChange(userId: string, tier: PaidTier, period: Per
   });
 }
 
-/** Admin: grant a plan for N days without payment. */
+/** Admin: grant a plan for N days without payment, or with no end date when days is 0. */
 export async function grantPlan(userId: string, tier: PaidTier | "FREE", days: number) {
   if (tier === "FREE") {
     await db.subscription.updateMany({ where: { userId }, data: { status: "canceled", cancelAtPeriodEnd: false } });
@@ -293,16 +305,20 @@ export async function grantPlan(userId: string, tier: PaidTier | "FREE", days: n
   const now = new Date();
   const data = {
     tier,
-    period: Math.max(1, Math.round(days / 30)),
+    period: days > 0 ? Math.max(1, Math.round(days / 30)) : 12,
     status: "active",
     provider: "admin",
     providerRef: null,
     currentPeriodStart: now,
-    currentPeriodEnd: new Date(now.getTime() + days * DAY),
+    currentPeriodEnd: days > 0 ? new Date(now.getTime() + days * DAY) : FOREVER,
     cancelAtPeriodEnd: true,
     graceUntil: null,
     pendingTier: null,
     pendingPeriod: null,
+    notifiedSoonAt: null,
+    notifiedEndAt: null,
+    renewAttempts: 0,
+    lastRenewAttemptAt: null,
   };
   await db.subscription.upsert({ where: { userId }, update: data, create: { userId, ...data } });
   return syncUserPlan(userId);
@@ -310,52 +326,85 @@ export async function grantPlan(userId: string, tier: PaidTier | "FREE", days: n
 
 /* ───────────── Renewal ───────────── */
 
-/**
- * Brings one subscription up to date: renews with a saved card when the period is over,
- * moves to past_due with a grace period on failure, and expires it after that.
- * Cheap when nothing is due, so it runs on every request (see getCurrentUser).
- */
-export async function reconcile(sub: Subscription, now = new Date()): Promise<Subscription> {
-  if (sub.status === "expired" || sub.status === "canceled") return sub;
-  const due = sub.currentPeriodEnd <= now;
-  if (!due) return sub;
+const HOUR = 60 * 60 * 1000;
+/** Auto-renewal starts this long before the period ends, retries every 8 h, then once a day in grace. */
+export const RENEW_AHEAD = 24 * HOUR;
+const RETRY_BEFORE_END = 8 * HOUR;
+const RETRY_IN_GRACE = 24 * HOUR;
+const ATTEMPTS_BEFORE_END = 3;
 
-  const graceDays = Number((await getAllSettings())["billing.graceDays"]) || 3;
-  const expire = () => db.subscription.update({ where: { id: sub.id }, data: { status: "expired", graceUntil: null } });
+/** Admin grants without an end date run until 2099 and are never charged or reminded about. */
+export const FOREVER = new Date("2099-12-31T00:00:00Z");
+export const isForever = (sub: Pick<Subscription, "currentPeriodEnd">) => sub.currentPeriodEnd >= FOREVER;
 
-  if (sub.status === "trialing" || sub.cancelAtPeriodEnd) return expire();
-  if (sub.status === "past_due" && sub.graceUntil && sub.graceUntil <= now) return expire();
+/** Whether the subscription renews by itself with a saved card. */
+export const autoRenews = (sub: Pick<Subscription, "status" | "provider" | "cancelAtPeriodEnd" | "paymentMethodId">) =>
+  !!sub.paymentMethodId && !sub.cancelAtPeriodEnd && sub.provider !== "trial" && sub.provider !== "admin" && sub.status !== "trialing";
 
-  // One automatic charge attempt per day while in grace.
-  const lastTry = await db.invoice.findFirst({
-    where: { subscriptionId: sub.id, kind: "renewal", createdAt: { gt: new Date(now.getTime() - DAY) } },
-    orderBy: { createdAt: "desc" },
+async function expire(sub: Subscription) {
+  const done = await db.subscription.update({ where: { id: sub.id }, data: { status: "expired", graceUntil: null, notifiedEndAt: new Date() } });
+  await syncUserPlan(sub.userId);
+  if (!sub.notifiedEndAt) await notify(sub.userId, "sub_expired", { tier: tierLabel(sub.tier) });
+  return done;
+}
+
+/** One charge of the saved card. The attempt is claimed first, so a timer and a request never charge twice. */
+async function tryRenew(sub: Subscription, now: Date): Promise<Subscription | null> {
+  const claimed = await db.subscription.updateMany({
+    where: { id: sub.id, renewAttempts: sub.renewAttempts, lastRenewAttemptAt: sub.lastRenewAttemptAt },
+    data: { renewAttempts: { increment: 1 }, lastRenewAttemptAt: now },
   });
-  if (!lastTry) {
-    const method = sub.paymentMethodId ? await db.paymentMethod.findUnique({ where: { id: sub.paymentMethodId } }) : null;
-    const provider = method ? await providerById(method.provider) : undefined;
-    if (method && provider?.chargeToken) {
-      const tier = (sub.pendingTier ?? sub.tier) as PaidTier;
-      const period = (sub.pendingPeriod ?? sub.period) as Period;
-      const invoice = await newInvoice({
-        userId: sub.userId,
-        subscriptionId: sub.id,
-        tier,
-        period,
-        amount: await priceFor(tier, period),
-        provider: provider.id,
-        kind: "renewal",
-      });
-      const res = await provider.chargeToken(method, invoice);
-      if (res.ok) {
-        await applyPaidInvoice(invoice.id, { txId: res.txId });
-        return (await db.subscription.findUnique({ where: { id: sub.id } }))!;
-      }
-      await failInvoice(invoice.id, res.reason, res.txId);
+  if (!claimed.count) return null;
+  const method = sub.paymentMethodId ? await db.paymentMethod.findUnique({ where: { id: sub.paymentMethodId } }) : null;
+  const provider = method ? await providerById(method.provider) : undefined;
+  if (!method || !provider?.chargeToken) return null;
+
+  const tier = (sub.pendingTier ?? sub.tier) as PaidTier;
+  const period = (sub.pendingPeriod ?? sub.period) as Period;
+  const invoice = await newInvoice({ userId: sub.userId, subscriptionId: sub.id, tier, period, amount: await priceFor(tier, period), provider: provider.id, kind: "renewal" });
+  const res = await provider.chargeToken(method, invoice);
+  if (res.ok) {
+    await applyPaidInvoice(invoice.id, { txId: res.txId });
+    return db.subscription.findUnique({ where: { id: sub.id } });
+  }
+  await failInvoice(invoice.id, res.reason, res.txId);
+  const graceDays = Number((await getAllSettings())["billing.graceDays"]) || 3;
+  // A failed charge keeps access until the end of the grace period; the user sees a banner and a notification.
+  const failed = await db.subscription.update({
+    where: { id: sub.id },
+    data: { status: "past_due", graceUntil: sub.graceUntil ?? new Date(sub.currentPeriodEnd.getTime() + graceDays * DAY) },
+  });
+  if (sub.renewAttempts === 0)
+    await notify(sub.userId, "payment_failed", { tier: tierLabel(tier), amount: invoice.amount, until: (failed.graceUntil ?? sub.currentPeriodEnd).toISOString(), card: `•• ${method.last4}` });
+  return failed;
+}
+
+/**
+ * Brings one subscription up to date: charges the saved card when renewal is due, moves it to
+ * past_due with a grace period on failure (or when there is no card), and expires it after that.
+ * Cheap when nothing is due, so it runs on every request (see getCurrentUser); `early` (the
+ * billing timer) also renews in the last 24 hours before the end.
+ */
+export async function reconcile(sub: Subscription, now = new Date(), opts: { early?: boolean } = {}): Promise<Subscription> {
+  if (sub.status === "expired" || sub.status === "canceled") return sub;
+  const ended = sub.currentPeriodEnd <= now;
+
+  if (autoRenews(sub)) {
+    const inGrace = sub.renewAttempts >= ATTEMPTS_BEFORE_END || ended;
+    const window = (ended || (opts.early && sub.currentPeriodEnd.getTime() - now.getTime() <= RENEW_AHEAD)) && !(sub.graceUntil && sub.graceUntil <= now);
+    const wait = inGrace ? RETRY_IN_GRACE : RETRY_BEFORE_END;
+    const rested = !sub.lastRenewAttemptAt || now.getTime() - sub.lastRenewAttemptAt.getTime() >= wait;
+    if (window && rested) {
+      const after = await tryRenew(sub, now);
+      if (after) sub = after;
     }
   }
+  if (sub.currentPeriodEnd > now) return sub;
 
-  if (sub.status === "past_due") return sub;
+  if (sub.status === "trialing" || sub.cancelAtPeriodEnd || sub.provider === "admin") return expire(sub);
+  if (sub.status === "past_due") return sub.graceUntil && sub.graceUntil > now ? sub : expire(sub);
+  // Ended without a successful renewal: a few days of grace to pay by hand.
+  const graceDays = Number((await getAllSettings())["billing.graceDays"]) || 3;
   return db.subscription.update({
     where: { id: sub.id },
     data: { status: "past_due", graceUntil: new Date(sub.currentPeriodEnd.getTime() + graceDays * DAY) },
@@ -370,22 +419,6 @@ export async function reconcileUser<U extends User & { subscription: Subscriptio
   if (plan === user.plan && sub === user.subscription) return user;
   const synced = await syncUserPlan(user.id);
   return { ...user, ...(synced ?? {}), subscription: sub };
-}
-
-/** Batch renewal for a cron job or the admin button. */
-export async function runRenewals(now = new Date()) {
-  const due = await db.subscription.findMany({
-    where: { status: { in: ["active", "trialing", "past_due"] }, currentPeriodEnd: { lte: now } },
-  });
-  const result = { checked: due.length, renewed: 0, pastDue: 0, expired: 0 };
-  for (const sub of due) {
-    const after = await reconcile(sub, now);
-    if (after.status === "active" && after.currentPeriodEnd > now) result.renewed++;
-    else if (after.status === "past_due") result.pastDue++;
-    else if (after.status === "expired") result.expired++;
-    await syncUserPlan(sub.userId);
-  }
-  return result;
 }
 
 export type { Invoice };

@@ -191,6 +191,11 @@ export async function removeCard(id: string) {
   refresh();
 }
 
+export async function markNotificationsRead() {
+  const user = await requireUser();
+  await db.notification.updateMany({ where: { userId: user.id, readAt: null }, data: { readAt: new Date() } });
+}
+
 /* ───── Click emulator ───── */
 
 /**

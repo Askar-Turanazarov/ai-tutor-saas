@@ -199,7 +199,11 @@
     },
     "left": "{max} tadan {n} qoldi",
     "upsellFree": "Plus’da — barcha darajalar, dars va takrorlashlar cheklovsiz.",
-    "upsellPlus": "Pro’da — vaqt cheklovsiz va siz uchun AI-darslar."
+    "upsellPlus": "Pro’da — vaqt cheklovsiz va siz uchun AI-darslar.",
+    "bannerPastDue": "{tier} uzaytirilmadi. Kirish {date, date, long} gacha saqlanadi — kartani tekshiring yoki qoʻlda toʻlang.",
+    "bannerExpiring": "{tier} {date, date, long} kuni tugaydi, avtouzaytirish oʻchirilgan.",
+    "bannerAction": "Obuna",
+    "bannerClose": "Yopish"
   },
   "chat": {
     "title": "Repetitor",
@@ -364,9 +368,9 @@
     "payments": "Soʻnggi toʻlovlar",
     "billing": "Obunalar",
     "billingHint": "Obunalar va toʻlovlar. Tekshirish vositalari: vaqtni oldinga surish, uzaytirish, qaytarish.",
-    "runRenewals": "Uzaytirishni ishga tushirish",
-    "runRenewalsHint": "/api/billing/renew dagi cron bilan bir xil: muddati tugagan obunalarni uzaytiradi.",
-    "renewResult": "Tekshirildi: {checked}, uzaytirildi: {renewed}, toʻlov kutilmoqda: {pastDue}, tugadi: {expired}",
+    "runRenewals": "Billing siklini ishga tushirish",
+    "runRenewalsHint": "5 daqiqalik taymer va cron GET /api/cron/billing bilan bir xil: tugashdan bir kun oldin avtoyechish, eslatmalar, muddat tugashi, tashlab ketilgan hisoblar.",
+    "renewResult": "Tekshirildi: {checked}, uzaytirildi: {renewed}, toʻlov xatolari: {failed}, tugadi: {expired}, eslatmalar: {reminded}",
     "subscriptions": "Obunalar",
     "invoices": "Hisoblar",
     "amount": "Summa",
@@ -922,5 +926,36 @@
     "you": "Siz",
     "demo": "demo",
     "demoNote": "«Demo» belgili o‘yinchilar — liga to‘lguncha mashq raqiblari."
+  },
+  "notify": {
+    "bell": "Bildirishnomalar",
+    "empty": "Hozircha bildirishnomalar yoʻq",
+    "sub_expiring": {
+      "title": "{tier} tez orada tugaydi",
+      "body": "{tier} obunasi {until, date, long} gacha amal qiladi. Kirishni yoʻqotmaslik uchun uni uzaytiring.",
+      "bodyAuto": "{until, date, long} kuni {card} kartasidan {amount, number} soʻm yechib, {tier} ni yana {months} oyga uzaytiramiz.",
+      "bodyTrial": "Sinov {tier} {until, date, long} kuni tugaydi. Cheklovlarsiz davom etish uchun obuna boʻling."
+    },
+    "sub_expired": {
+      "title": "{tier} tugadi",
+      "body": "Obuna muddati tugadi, siz yana Free tarifidasiz. Barcha natijalar saqlangan — istalgan vaqtda uzaytirish mumkin."
+    },
+    "payment_ok": {
+      "title": "Toʻlov qabul qilindi",
+      "body": "Hisob {number}: {amount, number} soʻm. {tier} {until, date, long} gacha faol."
+    },
+    "renewed": {
+      "title": "{tier} uzaytirildi",
+      "body": "Avtouzaytirish: {amount, number} soʻm yechildi. {tier} {until, date, long} gacha faol."
+    },
+    "payment_failed": {
+      "title": "Toʻlovni yechib boʻlmadi",
+      "body": "{card} kartasidan {amount, number} soʻm avtomatik yechilmadi. Kartani tekshiring — {tier} {until, date, long} gacha amal qiladi, biz yana urinib koʻramiz."
+    },
+    "email": {
+      "hello": "Assalomu alaykum, {name}!",
+      "cta": "Obuna va toʻlovlar",
+      "footer": "Bu xat sizda Ustoz AI hisobi borligi uchun yuborildi."
+    }
   }
 }
