@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { db } from "../../db";
 import { getSetting, setSetting } from "../../settings";
 import { isPaidTier, tierLabel, type PaidTier } from "../catalog";
-import { applyPaidInvoice, failInvoice, isLive, priceFor, syncUserPlan } from "../subscription";
+import { applyPaidInvoice, failInvoice, isLive, newInvoice, priceFor, syncUserPlan } from "../subscription";
 import type { PaymentProvider } from "./types";
 
 /**
@@ -42,7 +42,7 @@ const recurring = (months: number) => ({ interval: "month" as const, interval_co
 
 export const stripeProvider: PaymentProvider = {
   id: "stripe",
-  currency: "USD",
+  currency: "UZS",
   enabled: () => !!process.env.STRIPE_SECRET_KEY,
 
   async createCheckout(invoice, { locale, origin }) {
@@ -64,9 +64,9 @@ export const stripeProvider: PaymentProvider = {
           {
             id: item.id,
             price_data: {
-              currency: "usd",
+              currency: "uzs",
               product: await productFor(invoice.tier),
-              unit_amount: await priceFor(invoice.tier, invoice.period as 1 | 3 | 12, "USD"),
+              unit_amount: (await priceFor(invoice.tier, invoice.period as 1 | 3 | 12)) * 100,
               recurring: recurring(sub.period),
             },
           },
@@ -96,7 +96,7 @@ export const stripeProvider: PaymentProvider = {
         line_items: [
           {
             quantity: 1,
-            price_data: { currency: "usd", unit_amount: invoice.amount, product: await productFor(invoice.tier) },
+            price_data: { currency: "uzs", unit_amount: invoice.amount * 100, product: await productFor(invoice.tier) },
           },
         ],
       });
@@ -110,8 +110,8 @@ export const stripeProvider: PaymentProvider = {
         {
           quantity: 1,
           price_data: {
-            currency: "usd",
-            unit_amount: invoice.amount,
+            currency: "uzs",
+            unit_amount: invoice.amount * 100,
             product: await productFor(invoice.tier),
             recurring: recurring(invoice.period),
           },
@@ -173,17 +173,14 @@ async function applyRenewal(si: Stripe.Invoice) {
   if (!sub) return;
   const txId = `stripe_${si.id}`;
   if (await db.invoice.findFirst({ where: { providerTxId: txId } })) return;
-  const invoice = await db.invoice.create({
-    data: {
-      userId: sub.userId,
-      subscriptionId: sub.id,
-      tier: sub.tier,
-      period: sub.period,
-      amount: si.amount_paid,
-      currency: "USD",
-      provider: "stripe",
-      kind: "renewal",
-    },
+  const invoice = await newInvoice({
+    userId: sub.userId,
+    subscriptionId: sub.id,
+    tier: sub.tier,
+    period: sub.period,
+    amount: Math.round(si.amount_paid / 100),
+    provider: "stripe",
+    kind: "renewal",
   });
   await applyPaidInvoice(invoice.id, { txId });
   const end = si.lines.data[0]?.period?.end;

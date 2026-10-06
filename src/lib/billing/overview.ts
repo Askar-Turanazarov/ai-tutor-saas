@@ -2,7 +2,7 @@ import "server-only";
 import type { PaymentMethod, Subscription } from "@prisma/client";
 import { db } from "../db";
 import { getAllSettings } from "../settings";
-import { LIMIT_KEYS, PAID_TIERS, PERIODS, TIERS, discountSettingKey, limitSettingKey, type Currency, type LimitKey, type PaidTier, type Period, type Tier } from "./catalog";
+import { LIMIT_KEYS, PAID_TIERS, PERIODS, TIERS, discountSettingKey, limitSettingKey, type LimitKey, type PaidTier, type Period, type Tier } from "./catalog";
 import { enabledProviders } from "./providers";
 import { isLive, priceFor, quote, tierFromSubscription } from "./subscription";
 
@@ -33,11 +33,11 @@ export type PlansData = {
   trial: { available: boolean; days: number };
   limits: Record<Tier, Record<LimitKey, number | null>>;
   discounts: Record<Period, number>;
-  /** Monthly-equivalent price and total, per tier and period, in both currencies. */
-  prices: Record<PaidTier, Record<Period, Record<Currency, { total: number; monthly: number }>>>;
+  /** Monthly-equivalent price and total in UZS, per tier and period. */
+  prices: Record<PaidTier, Record<Period, { total: number; monthly: number }>>;
   /** What a checkout would charge right now (upgrade proration, renewal…). */
-  quotes: Record<PaidTier, Record<Period, Record<Currency, QuoteView>>>;
-  providers: { id: string; currency: Currency }[];
+  quotes: Record<PaidTier, Record<Period, QuoteView>>;
+  providers: string[];
   cards: CardView[];
 };
 
@@ -86,14 +86,10 @@ export async function plansData(user: { id: string; trialUsedAt: Date | null }):
     prices[tier] = {} as PlansData["prices"][PaidTier];
     quotes[tier] = {} as PlansData["quotes"][PaidTier];
     for (const period of PERIODS) {
-      prices[tier][period] = {} as Record<Currency, { total: number; monthly: number }>;
-      quotes[tier][period] = {} as Record<Currency, QuoteView>;
-      for (const cur of ["UZS", "USD"] as const) {
-        const total = await priceFor(tier, period, cur);
-        prices[tier][period][cur] = { total, monthly: cur === "UZS" ? Math.round(total / period / 1000) * 1000 : Math.round(total / period) };
-        const q = await quote(user.id, tier, period, cur);
-        quotes[tier][period][cur] = { kind: q.kind, amount: q.amount, list: q.list, period: q.period, until: q.until?.toISOString() ?? null };
-      }
+      const total = await priceFor(tier, period);
+      prices[tier][period] = { total, monthly: Math.round(total / period / 1000) * 1000 };
+      const q = await quote(user.id, tier, period, "UZS");
+      quotes[tier][period] = { kind: q.kind, amount: q.amount, list: q.list, period: q.period, until: q.until?.toISOString() ?? null };
     }
   }
 
@@ -105,7 +101,7 @@ export async function plansData(user: { id: string; trialUsedAt: Date | null }):
     discounts,
     prices,
     quotes,
-    providers: enabledProviders().map((p) => ({ id: p.id, currency: p.currency })),
+    providers: (await enabledProviders()).map((p) => p.id),
     cards: cards.map(cardView),
   };
 }
@@ -131,13 +127,11 @@ export async function billingData(userId: string) {
     db.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } }),
   ]);
   // The next automatic charge: the price of the plan that will be active after renewal.
-  let next: { amount: number; currency: Currency; date: string } | null = null;
+  let next: { amount: number; currency: string; date: string } | null = null;
   if (sub && isLive(sub) && sub.status !== "trialing" && !sub.cancelAtPeriodEnd && sub.provider !== "admin") {
     const tier = (sub.pendingTier ?? sub.tier) as PaidTier;
     const period = (sub.pendingPeriod ?? sub.period) as Period;
-    const currency: Currency = sub.provider === "stripe" ? "USD" : sub.paymentMethod?.provider === "stripe" ? "USD" : "UZS";
-    if (sub.provider === "stripe" || sub.paymentMethodId)
-      next = { amount: await priceFor(tier, period, currency), currency, date: sub.currentPeriodEnd.toISOString() };
+    if (sub.paymentMethodId) next = { amount: await priceFor(tier, period), currency: "UZS", date: sub.currentPeriodEnd.toISOString() };
   }
   return {
     tier: tierFromSubscription(sub),

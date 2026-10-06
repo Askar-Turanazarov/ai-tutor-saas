@@ -74,37 +74,34 @@ export async function clickPrepare(p: ClickParams) {
   const res = await check(p, "0");
   if ("fail" in res) return res.fail;
   // Click may resend Prepare; answer with the same prepare id.
-  const tx = await db.clickTransaction.upsert({
-    where: { clickTransId: p.click_trans_id },
-    update: {},
-    create: { clickTransId: p.click_trans_id, invoiceId: res.invoice.id, amount: res.invoice.amount },
-  });
-  if (tx.status === "cancelled") return reply(p, "TRANSACTION_CANCELLED");
-  return reply(p, "SUCCESS", { merchant_prepare_id: tx.id });
+  const key = { provider: "click", providerTxId: p.click_trans_id };
+  let tx = await db.transaction.findUnique({ where: { provider_providerTxId: key } });
+  if (!tx) {
+    const last = await db.transaction.aggregate({ _max: { clickPrepareId: true } });
+    tx = await db.transaction.create({
+      data: { ...key, invoiceId: res.invoice.id, amount: res.invoice.amount, state: "prepared", clickPrepareId: (last._max.clickPrepareId ?? 0) + 1, raw: JSON.stringify(p) },
+    });
+  }
+  if (tx.state === "canceled" || tx.state === "failed") return reply(p, "TRANSACTION_CANCELLED");
+  return reply(p, "SUCCESS", { merchant_prepare_id: tx.clickPrepareId });
 }
 
 export async function clickComplete(p: ClickParams) {
-  const tx = await db.clickTransaction.findUnique({ where: { clickTransId: p.click_trans_id ?? "" } });
-  // A repeated Complete for an already confirmed payment is answered as success (idempotency).
-  if (tx?.status === "completed" && String(tx.id) === p.merchant_prepare_id) {
-    const cfg = clickConfig();
-    if (clickSign(p, cfg.secretKey) === p.sign_string) return reply(p, "SUCCESS", { merchant_confirm_id: tx.id });
-  }
+  const tx = p.click_trans_id ? await db.transaction.findUnique({ where: { provider_providerTxId: { provider: "click", providerTxId: p.click_trans_id } } }) : null;
+  // A repeated Complete for a confirmed payment gets "already paid" (-4) from check(), as Click expects.
   const res = await check(p, "1");
   if ("fail" in res) return res.fail;
-  if (!tx || String(tx.id) !== p.merchant_prepare_id || tx.invoiceId !== res.invoice.id) return reply(p, "TRANSACTION_NOT_FOUND");
-  if (tx.status === "cancelled") return reply(p, "TRANSACTION_CANCELLED");
+  if (!tx || String(tx.clickPrepareId) !== p.merchant_prepare_id || tx.invoiceId !== res.invoice.id) return reply(p, "TRANSACTION_NOT_FOUND");
+  if (tx.state === "canceled" || tx.state === "failed") return reply(p, "TRANSACTION_CANCELLED");
 
   // Click reports a failed payment (e.g. -5017 insufficient funds) through a negative `error`.
   if (Number(p.error ?? 0) < 0) {
-    await db.clickTransaction.update({ where: { id: tx.id }, data: { status: "cancelled" } });
-    await failInvoice(res.invoice.id, p.error_note || `Click error ${p.error}`);
+    await failInvoice(res.invoice.id, p.error_note || `Click error ${p.error}`, p.click_trans_id);
     return reply(p, "TRANSACTION_CANCELLED");
   }
 
-  await db.clickTransaction.update({ where: { id: tx.id }, data: { status: "completed" } });
-  await applyPaidInvoice(res.invoice.id, { txId: `click_${p.click_trans_id}` });
-  return reply(p, "SUCCESS", { merchant_confirm_id: tx.id });
+  await applyPaidInvoice(res.invoice.id, { txId: p.click_trans_id, raw: p });
+  return reply(p, "SUCCESS", { merchant_confirm_id: tx.clickPrepareId });
 }
 
 /** Reads a Click request body: form-urlencoded in production, JSON accepted for convenience. */

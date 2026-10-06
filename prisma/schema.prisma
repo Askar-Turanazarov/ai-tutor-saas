@@ -54,6 +54,7 @@ model User {
   xpEvents         XpEvent[]
   achievements     UserAchievement[]
   quests           DailyQuest[]
+  notifications    Notification[]
 }
 
 model Conversation {
@@ -212,6 +213,11 @@ model Subscription {
   pendingPeriod      Int?
   paymentMethodId    String?
   paymentMethod      PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  /// Reminder and renewal bookkeeping for the billing cycle; reset on every paid period
+  notifiedSoonAt     DateTime?
+  notifiedEndAt      DateTime?
+  renewAttempts      Int            @default(0)
+  lastRenewAttemptAt DateTime?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   invoices           Invoice[]
@@ -219,14 +225,15 @@ model Subscription {
 
 model Invoice {
   id             String        @id @default(cuid())
+  number         String        @unique // UST-2026-000123
   userId         String
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptionId String?
   subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   tier           String
   period         Int
-  amount         Int // whole UZS, or cents for USD
-  currency       String // UZS | USD
+  amount         Int // whole UZS
+  currency       String        @default("UZS")
   provider       String
   kind           String        @default("new") // new | renewal | upgrade
   status         String        @default("pending") // pending | paid | failed | canceled | refunded
@@ -234,8 +241,12 @@ model Invoice {
   providerTxId   String?
   failureReason  String?
   paidAt         DateTime?
+  periodStart    DateTime?
+  periodEnd      DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  transactions   Transaction[]
+  receipts       Receipt[]
 }
 
 /// A tokenized card. Only the token and display data are stored, never the card number.
@@ -253,15 +264,73 @@ model PaymentMethod {
   subscriptions Subscription[]
 }
 
-/// Click SHOP API transaction. The numeric id is our merchant_prepare_id / merchant_confirm_id.
-model ClickTransaction {
-  id           Int      @id @default(autoincrement())
-  clickTransId String   @unique
-  invoiceId    String
-  amount       Int
-  status       String   @default("prepared") // prepared | completed | cancelled
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+/// One payment attempt at a provider. clickPrepareId is the numeric merchant_prepare_id Click needs.
+model Transaction {
+  id             String    @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  provider       String
+  providerTxId   String? // click_trans_id / Stripe payment_intent or checkout session
+  clickPrepareId Int?      @unique
+  state          String    @default("created") // created | prepared | completed | failed | canceled
+  amount         Int // whole UZS
+  error          String?
+  raw            String? // JSON of the last provider payload
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  receipts       Receipt[]
+
+  @@unique([provider, providerTxId])
+}
+
+/// Every incoming webhook; eventId makes processing idempotent.
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String    @unique // provider:event id
+  type        String
+  payload     String
+  ok          Boolean   @default(true)
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+/// Fiscal receipt (OFD) for a paid invoice.
+model Receipt {
+  id             String       @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  transactionId  String?
+  transaction    Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  kind           String       @default("sale") // sale | refund
+  items          String // JSON: name, mxik, packageCode, price, qty, vatPercent, vat
+  total          Int // whole UZS
+  vatAmount      Int
+  fiscalProvider String // mock-ofd | click-ofd | none
+  fiscalStatus   String       @default("pending") // pending | fiscalized | failed | skipped
+  fiscalSign     String?
+  terminalId     String?
+  receiptNo      String?
+  qrUrl          String?
+  attempts       Int          @default(0)
+  error          String?
+  fiscalizedAt   DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+/// In-app notification, mirrored by email.
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String // payment_ok | payment_failed | renewed | sub_expiring | sub_expired | card_needed
+  params      String    @default("{}")
+  readAt      DateTime?
+  emailSentAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, readAt])
 }
 
 /// A lexical chunk: the unit of vocabulary (collocation, phrasal verb, idiom, fixed phrase).

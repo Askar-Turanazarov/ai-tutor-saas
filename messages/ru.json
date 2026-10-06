@@ -392,7 +392,6 @@
     "limit_pronunciationPerDay": "Фраз произношения в день",
     "limit_streakFreezesPerMonth": "Заморозок серии в месяц",
     "pricesUzs": "Цена, сум / мес",
-    "pricesUsd": "Цена, $ / мес (Stripe)",
     "discount": "Скидка за {n} мес, %",
     "trialDays": "Пробный период, дней",
     "graceDays": "Льготный период, дней"

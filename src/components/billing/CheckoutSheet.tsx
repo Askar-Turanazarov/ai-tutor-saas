@@ -8,11 +8,11 @@ import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/primitives";
 import { payWithSavedCard, startCheckout } from "@/app/actions/billing";
-import { formatMoney, tierLabel, type Currency, type PaidTier, type Period } from "@/lib/billing/catalog";
+import { formatMoney, tierLabel, type PaidTier, type Period } from "@/lib/billing/catalog";
 import type { PlansData } from "@/lib/billing/overview";
 import { cn } from "@/lib/cn";
 
-type Method = { key: string; provider: string; currency: Currency; icon: LucideIcon; title: string; hint: string; cardId?: string };
+type Method = { key: string; provider: string; icon: LucideIcon; title: string; hint: string; cardId?: string };
 
 const BRAND: Record<string, string> = { uzcard: "Uzcard", humo: "HUMO", visa: "Visa", mastercard: "Mastercard" };
 
@@ -26,22 +26,21 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
   const [error, setError] = useState<string | null>(null);
   const [save, setSave] = useState(true);
 
-  const enabled = new Set(data.providers.map((p) => p.id));
+  const enabled = new Set(data.providers);
   const methods: Method[] = [
     ...data.cards
       .filter((c) => c.provider === "card")
       .map((c) => ({
         key: `saved:${c.id}`,
         provider: "card",
-        currency: "UZS" as const,
         icon: Zap,
         title: `${BRAND[c.brand] ?? c.brand} •• ${c.last4}`,
         hint: t("savedHint"),
         cardId: c.id,
       })),
-    { key: "card", provider: "card", currency: "UZS", icon: CreditCard, title: "Uzcard / HUMO", hint: t("cardHint") },
-    { key: "click", provider: "click", currency: "UZS", icon: Smartphone, title: "Click", hint: t("clickHint") },
-    { key: "stripe", provider: "stripe", currency: "USD", icon: Globe, title: "Visa / Mastercard", hint: t("stripeHint") },
+    { key: "card", provider: "card", icon: CreditCard, title: "Uzcard / HUMO", hint: t("cardHint") },
+    { key: "click", provider: "click", icon: Smartphone, title: "Click", hint: t("clickHint") },
+    { key: "stripe", provider: "stripe", icon: Globe, title: "Visa / Mastercard", hint: t("stripeHint") },
   ].filter((m) => enabled.has(m.provider)) as Method[];
 
   const [choice, setChoice] = useState(methods[0]?.key);
@@ -55,8 +54,8 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
 
   if (!tier) return <Sheet open={false} onClose={onClose} label="">{null}</Sheet>;
   const method = methods.find((m) => m.key === choice) ?? methods[0];
-  const q = data.quotes[tier][period][method.currency];
-  const money = (n: number) => formatMoney(n, method.currency, locale);
+  const q = data.quotes[tier][period];
+  const money = (n: number) => formatMoney(n, "UZS", locale);
   const dateFmt = new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn" : locale, { day: "numeric", month: "long", year: "numeric" });
 
   const pay = () =>
@@ -98,7 +97,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
         )}
         <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-separator pt-3">
           <span className="font-semibold">{t("dueNow")}</span>
-          <motion.span key={`${method.currency}${q.amount}`} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="whitespace-nowrap text-[22px] font-bold tabular-nums">
+          <motion.span key={q.amount} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="whitespace-nowrap text-[22px] font-bold tabular-nums">
             {money(q.amount)}
           </motion.span>
         </div>

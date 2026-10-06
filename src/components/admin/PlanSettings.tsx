@@ -13,16 +13,11 @@ export function PlanSettings({ settings }: { settings: Record<string, string> })
   const tc = useTranslations("common");
   const [pending, start] = useTransition();
   const [saved, setSaved] = useState(false);
-  // USD prices are stored in cents and edited in dollars.
-  const toForm = (k: string) => {
-    const v = settings[k];
-    if (v === "unlimited") return "";
-    return k.endsWith(".USD") ? (Number(v) / 100).toFixed(2) : v;
-  };
+  const toForm = (k: string) => (settings[k] === "unlimited" ? "" : settings[k]);
   const [form, setForm] = useState<Record<string, string>>(() => {
     const keys = [
       ...TIERS.flatMap((tier) => LIMIT_KEYS.map((k) => limitSettingKey(tier, k))),
-      ...PAID_TIERS.flatMap((tier) => [priceSettingKey(tier, "UZS"), priceSettingKey(tier, "USD")]),
+      ...PAID_TIERS.map(priceSettingKey),
       ...PERIODS.map(discountSettingKey),
       "billing.trialDays",
       "billing.graceDays",
@@ -39,7 +34,6 @@ export function PlanSettings({ settings }: { settings: Record<string, string> })
     start(async () => {
       const entries = Object.entries(form).map(([k, v]) => {
         if (k.startsWith("limit.")) return [k, v === "" ? "unlimited" : v] as const;
-        if (k.endsWith(".USD")) return [k, String(Math.round(Number(v || 0) * 100))] as const;
         return [k, v || "0"] as const;
       });
       await saveSettings(entries.map(([key, value]) => ({ key, value })));
@@ -97,16 +91,7 @@ export function PlanSettings({ settings }: { settings: Record<string, string> })
               <td className="px-1 pb-1.5 pt-4 text-center text-label-3">0</td>
               {PAID_TIERS.map((tier) => (
                 <td key={tier} className="px-1 pb-1.5 pt-4">
-                  {input(priceSettingKey(tier, "UZS"), `${t("pricesUzs")} · ${tierLabel(tier)}`)}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td className="py-1.5 pr-3 font-medium text-label-2">{t("pricesUsd")}</td>
-              <td className="px-1 py-1.5 text-center text-label-3">0</td>
-              {PAID_TIERS.map((tier) => (
-                <td key={tier} className="px-1 py-1.5">
-                  {input(priceSettingKey(tier, "USD"), `${t("pricesUsd")} · ${tierLabel(tier)}`)}
+                  {input(priceSettingKey(tier), `${t("pricesUzs")} · ${tierLabel(tier)}`)}
                 </td>
               ))}
             </tr>

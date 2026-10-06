@@ -1,5 +1,5 @@
 import "server-only";
-import type { Invoice, Subscription, User } from "@prisma/client";
+import type { Invoice, Prisma, Subscription, User } from "@prisma/client";
 import { db } from "../db";
 import { getAllSettings } from "../settings";
 import { FREE_LEVELS, type Level } from "../levels";
@@ -28,13 +28,12 @@ export function addMonths(d: Date, months: number) {
 
 /* ───────────── Prices ───────────── */
 
-export async function priceFor(tier: PaidTier, period: Period, currency: Currency) {
+/** Whole UZS for a plan and period, rounded to 1 000 sum. */
+export async function priceFor(tier: PaidTier, period: Period) {
   const s = await getAllSettings();
-  const monthly = Number(s[priceSettingKey(tier, currency)]) || 0;
+  const monthly = Number(s[priceSettingKey(tier)]) || 0;
   const discount = Number(s[discountSettingKey(period)]) || 0;
-  const total = monthly * period * (1 - discount / 100);
-  // UZS prices are rounded to 1 000 sum, USD to whole cents.
-  return currency === "UZS" ? Math.round(total / 1000) * 1000 : Math.round(total);
+  return Math.round((monthly * period * (1 - discount / 100)) / 1000) * 1000;
 }
 
 export type Quote = {
@@ -62,17 +61,17 @@ export async function quote(userId: string, tier: PaidTier, period: Period, curr
   if (paidAndLive && TIER_RANK[tier] > TIER_RANK[sub.tier as Tier]) {
     const subPeriod = (isPeriod(sub.period) ? sub.period : 1) as Period;
     const [list, current] = await Promise.all([
-      priceFor(tier, subPeriod, currency),
-      priceFor(sub.tier as PaidTier, subPeriod, currency),
+      priceFor(tier, subPeriod),
+      priceFor(sub.tier as PaidTier, subPeriod),
     ]);
     const total = sub.currentPeriodEnd.getTime() - sub.currentPeriodStart.getTime();
     const left = Math.min(1, Math.max(0, (sub.currentPeriodEnd.getTime() - Date.now()) / Math.max(total, 1)));
     let amount = Math.round((list - current) * left);
-    amount = currency === "UZS" ? Math.max(1000, Math.round(amount / 1000) * 1000) : Math.max(50, amount);
+    amount = Math.max(1000, Math.round(amount / 1000) * 1000);
     return { tier, period: subPeriod, currency, kind: "upgrade", list, credit: Math.max(0, list - amount), amount, until: sub.currentPeriodEnd };
   }
 
-  const list = await priceFor(tier, period, currency);
+  const list = await priceFor(tier, period);
   const kind = paidAndLive && tier === sub.tier ? "renewal" : "new";
   return { tier, period, currency, kind, list, credit: 0, amount: list };
 }
@@ -111,7 +110,7 @@ export async function syncUserPlan(userId: string) {
  * Marks an invoice paid and applies it to the subscription. Idempotent: providers may
  * report the same payment twice (webhook + return URL).
  */
-export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string; paymentMethodId?: string; providerRef?: string } = {}) {
+export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string; paymentMethodId?: string; providerRef?: string; raw?: unknown } = {}) {
   const invoice = await db.invoice.findUnique({ where: { id: invoiceId } });
   if (!invoice || invoice.status === "paid" || invoice.status === "refunded") return invoice;
   if (!isPaidTier(invoice.tier)) return invoice;
@@ -146,6 +145,10 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
     graceUntil: null,
     pendingTier: null,
     pendingPeriod: null,
+    notifiedSoonAt: null,
+    notifiedEndAt: null,
+    renewAttempts: 0,
+    lastRenewAttemptAt: null,
     ...(upgrade || renewal
       ? {
           ...(opts.providerRef ? { providerRef: opts.providerRef } : {}),
@@ -159,15 +162,64 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
 
   const paid = await db.invoice.update({
     where: { id: invoice.id },
-    data: { status: "paid", paidAt: now, subscriptionId: saved.id, providerTxId: opts.txId ?? invoice.providerTxId, failureReason: null },
+    data: {
+      status: "paid",
+      paidAt: now,
+      subscriptionId: saved.id,
+      providerTxId: opts.txId ?? invoice.providerTxId,
+      failureReason: null,
+      periodStart: upgrade ? now : start,
+      periodEnd: saved.currentPeriodEnd,
+    },
   });
+  await completeTransaction(invoice, opts.txId ?? null, opts.raw);
+  // Other checkouts the user opened and abandoned are no longer payable.
+  await db.invoice.updateMany({ where: { userId: invoice.userId, status: "pending", id: { not: invoice.id } }, data: { status: "canceled" } });
   await syncUserPlan(invoice.userId);
   return paid;
 }
 
-export async function failInvoice(invoiceId: string, reason: string) {
+/** Records the provider transaction behind a paid invoice (one row per provider tx id). */
+async function completeTransaction(invoice: Invoice, txId: string | null, raw?: unknown) {
+  const data = { state: "completed", amount: invoice.amount, error: null, ...(raw ? { raw: JSON.stringify(raw).slice(0, 8000) } : {}) };
+  if (txId)
+    return db.transaction.upsert({
+      where: { provider_providerTxId: { provider: invoice.provider, providerTxId: txId } },
+      update: data,
+      create: { invoiceId: invoice.id, provider: invoice.provider, providerTxId: txId, ...data },
+    });
+  return db.transaction.create({ data: { invoiceId: invoice.id, provider: invoice.provider, ...data } });
+}
+
+/** UST-2026-000123: sequential per year, shown to the user and on the receipt. */
+async function nextInvoiceNumber() {
+  const year = new Date().getFullYear();
+  const last = await db.invoice.findFirst({ where: { number: { startsWith: `UST-${year}-` } }, orderBy: { number: "desc" }, select: { number: true } });
+  const n = last ? Number(last.number.slice(-6)) : 0;
+  return `UST-${year}-${String(n + 1).padStart(6, "0")}`;
+}
+
+/** Creates an invoice with the next number; retries when two requests take the same one. */
+export async function newInvoice(data: Omit<Prisma.InvoiceUncheckedCreateInput, "number">) {
+  for (let i = 0; ; i++) {
+    try {
+      return await db.invoice.create({ data: { ...data, number: await nextInvoiceNumber() } });
+    } catch (e) {
+      if (i >= 4) throw e;
+    }
+  }
+}
+
+export async function failInvoice(invoiceId: string, reason: string, txId?: string) {
   const invoice = await db.invoice.findUnique({ where: { id: invoiceId } });
   if (!invoice || invoice.status !== "pending") return invoice;
+  const tx = { state: "failed", amount: invoice.amount, error: reason.slice(0, 200) };
+  if (txId)
+    await db.transaction.upsert({
+      where: { provider_providerTxId: { provider: invoice.provider, providerTxId: txId } },
+      update: tx,
+      create: { invoiceId, provider: invoice.provider, providerTxId: txId, ...tx },
+    });
   return db.invoice.update({ where: { id: invoiceId }, data: { status: "failed", failureReason: reason.slice(0, 200) } });
 }
 
@@ -176,17 +228,15 @@ export async function createInvoice(
   opts: { tier: PaidTier; period: Period; provider: string; currency: Currency; saveCard?: boolean },
 ) {
   const q = await quote(user.id, opts.tier, opts.period, opts.currency);
-  return db.invoice.create({
-    data: {
-      userId: user.id,
-      tier: q.tier,
-      period: q.period,
-      amount: q.amount,
-      currency: q.currency,
-      provider: opts.provider,
-      kind: q.kind,
-      saveCard: !!opts.saveCard,
-    },
+  return newInvoice({
+    userId: user.id,
+    tier: q.tier,
+    period: q.period,
+    amount: q.amount,
+    currency: q.currency,
+    provider: opts.provider,
+    kind: q.kind,
+    saveCard: !!opts.saveCard,
   });
 }
 
@@ -298,24 +348,21 @@ export async function reconcile(sub: Subscription, now = new Date()): Promise<Su
     if (method && provider?.chargeToken) {
       const tier = (sub.pendingTier ?? sub.tier) as PaidTier;
       const period = (sub.pendingPeriod ?? sub.period) as Period;
-      const invoice = await db.invoice.create({
-        data: {
-          userId: sub.userId,
-          subscriptionId: sub.id,
-          tier,
-          period,
-          amount: await priceFor(tier, period, provider.currency),
-          currency: provider.currency,
-          provider: provider.id,
-          kind: "renewal",
-        },
+      const invoice = await newInvoice({
+        userId: sub.userId,
+        subscriptionId: sub.id,
+        tier,
+        period,
+        amount: await priceFor(tier, period),
+        provider: provider.id,
+        kind: "renewal",
       });
       const res = await provider.chargeToken(method, invoice);
       if (res.ok) {
         await applyPaidInvoice(invoice.id, { txId: res.txId });
         return (await db.subscription.findUnique({ where: { id: sub.id } }))!;
       }
-      await failInvoice(invoice.id, res.reason);
+      await failInvoice(invoice.id, res.reason, res.txId);
     }
   }
 

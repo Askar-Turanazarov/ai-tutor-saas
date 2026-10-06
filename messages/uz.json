@@ -392,7 +392,6 @@
     "limit_pronunciationPerDay": "Kuniga talaffuz iboralari",
     "limit_streakFreezesPerMonth": "Oyiga seriyani muzlatish",
     "pricesUzs": "Narx, soʻm / oy",
-    "pricesUsd": "Narx, $ / oy (Stripe)",
     "discount": "{n} oy uchun chegirma, %",
     "trialDays": "Sinov davri, kun",
     "graceDays": "Imtiyozli davr, kun"

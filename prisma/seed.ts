@@ -7,6 +7,13 @@ import { DEMO_PLAYERS } from "./demo-players";
 
 const db = new PrismaClient();
 
+/** Same numbering as the app: UST-<year>-<6 digits>, sequential per year. */
+async function nextNumber(at: Date) {
+  const year = at.getFullYear();
+  const last = await db.invoice.findFirst({ where: { number: { startsWith: `UST-${year}-` } }, orderBy: { number: "desc" } });
+  return `UST-${year}-${String((last ? Number(last.number.slice(-6)) : 0) + 1).padStart(6, "0")}`;
+}
+
 async function main() {
   for (const [i, t] of TOPICS.entries()) {
     const data = {
@@ -39,6 +46,8 @@ async function main() {
     { email: process.env.SEED_FREE_EMAIL || "free@ustoz.local", name: "Dilnoza", role: "USER", plan: "FREE", level: "A1", passwordHash: userPw },
     { email: process.env.SEED_PLUS_EMAIL || "plus@ustoz.local", name: "Malika", role: "USER", plan: "PLUS", level: "A2", passwordHash: userPw },
     { email: process.env.SEED_PRO_EMAIL || "pro@ustoz.local", name: "Timur", role: "USER", plan: "PRO", level: "B1", passwordHash: userPw },
+    // Plus that ends in two days: shows the reminder, auto-renewal and expiry right away.
+    { email: "sub@ustoz.local", name: "Aziz", role: "USER", plan: "PLUS", level: "A2", passwordHash: userPw },
   ];
   const day = 24 * 60 * 60 * 1000;
   for (const u of users) {
@@ -58,15 +67,25 @@ async function main() {
     if (u.plan === "FREE" || (await db.subscription.findUnique({ where: { userId: user.id } }))) continue;
 
     // Paid demo accounts get a real subscription so renewals and cancellation can be tried right away.
-    const start = new Date(Date.now() - 10 * day);
+    const soon = u.email === "sub@ustoz.local";
     const months = u.role === "ADMIN" ? 12 : 1;
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + months);
+    const end = soon ? new Date(Date.now() + 2 * day) : new Date(Date.now() - 10 * day);
+    if (!soon) end.setMonth(end.getMonth() + months);
+    const start = new Date(end);
+    start.setMonth(start.getMonth() - months);
     const card =
       u.role === "ADMIN"
         ? null
         : await db.paymentMethod.create({
-            data: { userId: user.id, provider: "card", brand: u.plan === "PRO" ? "humo" : "uzcard", last4: u.plan === "PRO" ? "4417" : "1234", expMonth: 12, expYear: 2029, token: `tok_seed_${user.id}` },
+            data: {
+              userId: user.id,
+              provider: "card",
+              brand: u.plan === "PRO" ? "humo" : "uzcard",
+              last4: soon ? "1111" : u.plan === "PRO" ? "4417" : "1234",
+              expMonth: 12,
+              expYear: 2029,
+              token: `tok_seed_${user.id}`,
+            },
           });
     const sub = await db.subscription.create({
       data: {
@@ -81,13 +100,15 @@ async function main() {
       },
     });
     if (card) {
-      await db.invoice.create({
+      const amount = u.plan === "PRO" ? 89000 : 49000;
+      const invoice = await db.invoice.create({
         data: {
+          number: await nextNumber(start),
           userId: user.id,
           subscriptionId: sub.id,
           tier: u.plan,
           period: months,
-          amount: u.plan === "PRO" ? 89000 : 49000,
+          amount,
           currency: "UZS",
           provider: "card",
           status: "paid",
@@ -95,8 +116,11 @@ async function main() {
           providerTxId: `seed_${user.id}`,
           paidAt: start,
           createdAt: start,
+          periodStart: start,
+          periodEnd: end,
         },
       });
+      await db.transaction.create({ data: { invoiceId: invoice.id, provider: "card", providerTxId: `seed_${user.id}`, state: "completed", amount } });
     }
   }
   console.log(`Seeded ${TOPICS.length} topics, ${rows.length} lessons, ${items.length} chunks and ${users.length} users.`);

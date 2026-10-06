@@ -11,7 +11,7 @@ export const PAID_TIERS: PaidTier[] = ["PLUS", "PRO"];
 export const PERIODS = [1, 3, 12] as const;
 export type Period = (typeof PERIODS)[number];
 
-export type Currency = "UZS" | "USD";
+export type Currency = "UZS";
 
 export const TIER_RANK: Record<Tier, number> = { FREE: 0, PLUS: 1, PRO: 2 };
 
@@ -58,21 +58,31 @@ export const DEFAULT_LIMITS: Record<Tier, Record<LimitKey, number | null>> = {
   },
 };
 
-/** Monthly list price: whole UZS, USD in cents (Stripe). */
-export const DEFAULT_PRICES: Record<PaidTier, Record<Currency, number>> = {
-  PLUS: { UZS: 49_000, USD: 399 },
-  PRO: { UZS: 89_000, USD: 699 },
-};
+/** Monthly list price in whole UZS (Stripe gets ×100). */
+export const DEFAULT_PRICES: Record<PaidTier, number> = { PLUS: 49_000, PRO: 89_000 };
 
 /** Discount in percent for longer periods. */
 export const DEFAULT_DISCOUNTS: Record<Period, number> = { 1: 0, 3: 10, 12: 25 };
 
 export const TRIAL_DAYS = 7;
+
+/** Payment, reminder and fiscal-receipt settings (MXIK and package code are test values). */
+export const BILLING_SETTINGS = {
+  "billing.noticeDays": "3",
+  "billing.stripeEnabled": "true",
+  "billing.clickEnabled": "true",
+  "billing.cardEnabled": "true",
+  "billing.mxik": "10305008003000000",
+  "billing.packageCode": "1545643",
+  "billing.vatPercent": "12",
+  "billing.sellerName": "Ustoz AI MChJ (test)",
+  "billing.sellerTin": "300000000",
+};
 export const GRACE_DAYS = 3;
 
 /** Setting key for a limit; stored as a number or "unlimited". */
 export const limitSettingKey = (tier: Tier, key: LimitKey) => `limit.${tier}.${key}`;
-export const priceSettingKey = (tier: PaidTier, cur: Currency) => `price.${tier}.${cur}`;
+export const priceSettingKey = (tier: PaidTier) => `price.${tier}.UZS`;
 export const discountSettingKey = (p: Period) => `price.discount.${p}`;
 
 export function billingDefaults(): Record<string, string> {
@@ -82,16 +92,15 @@ export function billingDefaults(): Record<string, string> {
       const v = DEFAULT_LIMITS[tier][key];
       out[limitSettingKey(tier, key)] = v === null ? "unlimited" : String(v);
     }
-  for (const tier of PAID_TIERS)
-    for (const cur of ["UZS", "USD"] as const) out[priceSettingKey(tier, cur)] = String(DEFAULT_PRICES[tier][cur]);
+  for (const tier of PAID_TIERS) out[priceSettingKey(tier)] = String(DEFAULT_PRICES[tier]);
   for (const p of PERIODS) out[discountSettingKey(p)] = String(DEFAULT_DISCOUNTS[p]);
   out["billing.trialDays"] = String(TRIAL_DAYS);
   out["billing.graceDays"] = String(GRACE_DAYS);
+  Object.assign(out, BILLING_SETTINGS);
   return out;
 }
 
-export function formatMoney(amount: number, currency: Currency | string, locale = "ru") {
-  if (currency === "USD") return `$${(amount / 100).toFixed(2)}`;
+export function formatMoney(amount: number, currency: Currency | string = "UZS", locale = "ru") {
   const n = new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(amount);
-  return `${n} ${locale === "en" ? "UZS" : "сум"}`;
+  return `${n} ${currency !== "UZS" ? currency : locale === "en" ? "UZS" : locale === "uz" ? "soʻm" : "сум"}`;
 }

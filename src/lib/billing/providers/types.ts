@@ -3,7 +3,7 @@ import type { Currency } from "../catalog";
 
 export type ProviderId = "card" | "click" | "stripe";
 
-export type ChargeResult = { ok: true; txId: string } | { ok: false; reason: string };
+export type ChargeResult = { ok: true; txId: string } | { ok: false; reason: string; txId?: string };
 
 export interface PaymentProvider {
   id: ProviderId;

@@ -7,7 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { db } from "@/lib/db";
 import { getCurrentUser, isGuest } from "@/lib/auth";
 import { isPaidTier, isPeriod } from "@/lib/billing/catalog";
-import { getProvider } from "@/lib/billing/providers";
+import { enabledProviders, getProvider } from "@/lib/billing/providers";
 import {
   applyPaidInvoice,
   createInvoice,
@@ -43,13 +43,13 @@ export async function startCheckout(input: { tier: string; period: number; provi
   if (isGuest(user)) return { error: "guest" as const };
   if (!isPaidTier(input.tier) || !isPeriod(input.period)) return { error: "bad_request" as const };
   const provider = getProvider(input.provider);
-  if (!provider?.enabled()) return { error: "provider" as const };
+  if (!provider || !(await enabledProviders()).includes(provider)) return { error: "provider" as const };
 
   const invoice = await createInvoice(user, {
     tier: input.tier,
     period: input.period,
     provider: provider.id,
-    currency: provider.currency,
+    currency: "UZS",
     saveCard: input.saveCard,
   });
   try {

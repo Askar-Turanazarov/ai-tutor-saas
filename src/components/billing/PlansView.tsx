@@ -32,7 +32,7 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
 
   const sub = data.sub?.live ? data.sub : null;
   const paid = sub && sub.status !== "trialing" && sub.provider !== "admin" ? sub : null;
-  const money = (n: number, cur: "UZS" | "USD" = "UZS") => formatMoney(n, cur, locale);
+  const money = (n: number) => formatMoney(n, "UZS", locale);
   const dateFmt = new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn" : locale, { day: "numeric", month: "long" });
 
   const n = (v: number | null, unit: (x: number) => string): Cell => (v === null ? t("unlimited") : v === 0 ? false : unit(v));
@@ -96,7 +96,7 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
         </Button>
       );
     }
-    const q = data.quotes[tier as PaidTier][period].UZS;
+    const q = data.quotes[tier as PaidTier][period];
     return (
       <Button className="w-full" icon={tier === "PRO" ? Crown : Sparkles} onClick={() => setCheckout(tier as PaidTier)}>
         {q.kind === "upgrade" ? t("upgradeTo", { tier: tierLabel(tier) }) : t("choose", { tier: tierLabel(tier) })}
@@ -153,7 +153,7 @@ export function PlansView({ data, focus }: { data: PlansData; focus?: string }) 
       <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-3">
         {(["FREE", "PLUS", "PRO"] as Tier[]).map((tier, i) => {
           const featured = tier === "PRO";
-          const price = tier === "FREE" ? null : data.prices[tier][period].UZS;
+          const price = tier === "FREE" ? null : data.prices[tier][period];
           const isCurrent = data.tier === tier;
           return (
             <motion.div

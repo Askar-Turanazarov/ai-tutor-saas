@@ -392,7 +392,6 @@
     "limit_pronunciationPerDay": "Pronunciation phrases a day",
     "limit_streakFreezesPerMonth": "Streak freezes a month",
     "pricesUzs": "Price, UZS / mo",
-    "pricesUsd": "Price, $ / mo (Stripe)",
     "discount": "Discount for {n} mo, %",
     "trialDays": "Trial, days",
     "graceDays": "Grace period, days"

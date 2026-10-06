@@ -9,8 +9,8 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   setRequestLocale(locale);
   const [session, plus, pro, free, plusLimits, proLimits] = await Promise.all([
     getSession(),
-    priceFor("PLUS", 1, "UZS"),
-    priceFor("PRO", 1, "UZS"),
+    priceFor("PLUS", 1),
+    priceFor("PRO", 1),
     limitsOf({ plan: "FREE" }),
     limitsOf({ plan: "PLUS" }),
     limitsOf({ plan: "PRO" }),
