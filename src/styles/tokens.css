@@ -1,5 +1,6 @@
 /*
- * Majolica design tokens: lapis lazuli + turquoise + ochre on warm paper.
+ * Majolica design tokens: lapis lazuli + turquoise + ochre. The light theme is a pale glaze
+ * blue, like the white-blue ground of Rishtan ceramics; the dark theme is a night lapis.
  *
  * Colour semantics are tied to learning and stay the same everywhere:
  *   accent (lapis)    — actions and progress
@@ -15,17 +16,17 @@
  */
 :root,
 .light {
-  /* Paper and ink */
-  --bg: #f6f3ec;
-  --bg-elevated: #fffdf8;
-  --bg-sunken: #efeadf;
-  --fill: rgba(31, 36, 48, 0.06);
-  --fill-2: rgba(31, 36, 48, 0.1);
-  --label: #1f2430;
-  --label-2: #535866;
-  --label-3: #666b7a;
-  --separator: rgba(31, 36, 48, 0.12);
-  --border: rgba(31, 36, 48, 0.14);
+  /* Glaze and ink */
+  --bg: #e8eff8;
+  --bg-elevated: #f7fafd;
+  --bg-sunken: #dce6f1;
+  --fill: rgba(23, 32, 54, 0.06);
+  --fill-2: rgba(23, 32, 54, 0.1);
+  --label: #172036;
+  --label-2: #46526a;
+  --label-3: #55607a;
+  --separator: rgba(23, 32, 54, 0.11);
+  --border: rgba(23, 32, 54, 0.13);
 
   /* Lapis — actions, progress */
   --accent: #2f4fa8;
@@ -34,52 +35,53 @@
   --on-accent: #ffffff;
 
   /* Turquoise — correct, learned */
-  --teal: #17736e;
+  --teal: #13706b;
   --teal-solid: #187a74;
   --teal-soft: rgba(31, 138, 132, 0.12);
   --turquoise: #1f8a84;
 
   /* Ochre — new, marker highlight */
-  --gold: #94561a;
+  --gold: #8f5217;
   --gold-solid: #a8611f;
   --gold-soft: rgba(196, 119, 46, 0.14);
   --ochre: #c4772e;
   --marker: rgba(224, 161, 94, 0.32);
 
   /* Status, muted to the palette */
-  --success: #26734b;
+  --success: #226e47;
   --success-solid: #26734b;
   --success-soft: rgba(38, 115, 75, 0.1);
-  --danger: #b03a2e;
+  --danger: #ab372b;
   --danger-solid: #b03a2e;
   --danger-soft: rgba(176, 58, 46, 0.09);
-  --warning: #8c5a10;
+  --warning: #85550e;
   --warning-soft: rgba(196, 119, 46, 0.13);
   --on-solid: #ffffff;
 
   /* Lexical chunk kinds — soft background + readable ink */
   --chunk-collocation: #2f4fa8;
   --chunk-collocation-soft: rgba(47, 79, 168, 0.1);
-  --chunk-phrasal: #17736e;
+  --chunk-phrasal: #13706b;
   --chunk-phrasal-soft: rgba(31, 138, 132, 0.12);
-  --chunk-idiom: #94561a;
+  --chunk-idiom: #8f5217;
   --chunk-idiom-soft: rgba(196, 119, 46, 0.14);
-  --chunk-fixed: #7e4a78;
+  --chunk-fixed: #7a4674;
   --chunk-fixed-soft: rgba(126, 74, 120, 0.11);
-  --chunk-word: #535866;
-  --chunk-word-soft: rgba(31, 36, 48, 0.07);
+  --chunk-word: #46526a;
+  --chunk-word-soft: rgba(23, 32, 54, 0.07);
 
-  /* Materials */
-  --glass: rgba(255, 253, 248, 0.62);
-  --glass-strong: rgba(255, 253, 248, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.7);
-  --glass-edge: rgba(31, 36, 48, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.85);
-  --shadow-card: 0 1px 2px rgba(60, 45, 20, 0.05), 0 8px 24px rgba(60, 45, 20, 0.06);
-  --shadow-float: 0 14px 44px rgba(40, 40, 80, 0.14), 0 2px 6px rgba(40, 30, 10, 0.06);
-  --ornament: rgba(47, 79, 168, 0.09);
-  --ornament-2: rgba(31, 138, 132, 0.08);
-  --ornament-3: rgba(196, 119, 46, 0.1);
+  /* Materials. --card is the glass of everyday cards; --glass* are the heavier bars and sheets. */
+  --card: rgba(247, 250, 253, 0.6);
+  --glass: rgba(247, 250, 253, 0.58);
+  --glass-strong: rgba(247, 250, 253, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-edge: rgba(23, 32, 54, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --shadow-card: 0 1px 2px rgba(20, 40, 90, 0.06), 0 10px 30px rgba(20, 40, 90, 0.08);
+  --shadow-float: 0 16px 48px rgba(20, 40, 90, 0.16), 0 2px 6px rgba(20, 40, 90, 0.06);
+  --ornament: rgba(47, 79, 168, 0.17);
+  --ornament-2: rgba(31, 138, 132, 0.15);
+  --ornament-3: rgba(196, 119, 46, 0.13);
 
   /* HeroUI mapping */
   --background: var(--bg);
@@ -87,11 +89,11 @@
   --surface: var(--bg-elevated);
   --surface-foreground: var(--label);
   --surface-secondary: var(--bg-sunken);
-  --surface-tertiary: #e8e2d4;
+  --surface-tertiary: #dfe8f2;
   --overlay: var(--bg-elevated);
   --overlay-foreground: var(--label);
   --muted: var(--label-2);
-  --default: #ece7dc;
+  --default: #e2eaf4;
   --default-foreground: var(--label);
   --accent-foreground: var(--on-accent);
   --success-foreground: var(--on-solid);
@@ -160,6 +162,7 @@
   --chunk-word: #a9adb8;
   --chunk-word-soft: rgba(230, 228, 222, 0.08);
 
+  --card: rgba(30, 38, 56, 0.55);
   --glass: rgba(26, 33, 48, 0.58);
   --glass-strong: rgba(26, 33, 48, 0.8);
   --glass-border: rgba(255, 255, 255, 0.09);
@@ -167,9 +170,9 @@
   --glass-highlight: rgba(255, 255, 255, 0.12);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.18);
   --shadow-float: 0 14px 44px rgba(0, 0, 0, 0.5);
-  --ornament: rgba(142, 166, 240, 0.07);
-  --ornament-2: rgba(92, 195, 184, 0.06);
-  --ornament-3: rgba(224, 161, 94, 0.07);
+  --ornament: rgba(142, 166, 240, 0.1);
+  --ornament-2: rgba(92, 195, 184, 0.08);
+  --ornament-3: rgba(224, 161, 94, 0.08);
 
   /* HeroUI fills --accent (light lapis here) with --accent-foreground, so it needs ink. */
   --accent-foreground: #121722;

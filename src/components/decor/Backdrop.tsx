@@ -3,14 +3,14 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { GirihField, MajolicaTile, SuzaniMedallion } from "./motifs";
+import { GirihField, MajolicaField, MajolicaTile, SuzaniMedallion } from "./motifs";
 import { cn } from "@/lib/cn";
 
 /** Focus screens: lesson, exercises, review, payment. The ornament almost disappears there. */
 const QUIET = /^\/(ru|en|uz)\/(app\/(quiz|learn|review|vocab\/review|mistakes\/train)|pay)(\/|$)/;
 
 /**
- * Global page background: warm colour washes, a faint girih lattice and a few tiles,
+ * Global page background: colour washes, a majolica tile panel along the edges, a faint girih lattice and a few tiles,
  * moving at different speeds on scroll. Static with reduced motion; dimmed on focus screens.
  */
 export function Backdrop() {
@@ -31,9 +31,19 @@ export function Backdrop() {
         <div className="absolute -bottom-[30%] left-[18%] size-[58vmax] rounded-full bg-[radial-gradient(closest-side,var(--ornament-3),transparent)]" />
       </motion.div>
 
+      {/* Majolica wall panel: at the side edges on wide screens, along the top on phones; the reading column stays clear. */}
+      <motion.div style={{ y: slow }} className={cn("absolute inset-x-0 -top-24 h-[150vh]", quiet && "hidden")}>
+        <div className="absolute inset-0 hidden opacity-70 [mask-image:linear-gradient(90deg,#000_0%,#000_5%,transparent_27%,transparent_73%,#000_95%,#000_100%)] md:block dark:opacity-45">
+          <MajolicaField className="h-full w-full" />
+        </div>
+        <div className="absolute inset-x-0 top-0 h-[46vh] opacity-60 [mask-image:linear-gradient(180deg,#000_20%,transparent)] md:hidden dark:opacity-40">
+          <MajolicaField className="h-full w-full" cell={64} />
+        </div>
+      </motion.div>
+
       {/* Girih lattice. */}
       <motion.div style={{ y: mid }} className={cn("absolute inset-x-0 -top-24 h-[140vh]", quiet && "hidden")}>
-        <GirihField className="h-full w-full text-accent opacity-[0.05] dark:opacity-[0.07]" cell={64} />
+        <GirihField className="h-full w-full text-accent opacity-[0.07] dark:opacity-[0.07]" cell={64} />
       </motion.div>
 
       {/* A few tiles drifting at the edges, outside the reading column. */}
@@ -43,8 +53,8 @@ export function Backdrop() {
         <MajolicaTile size={84} className="absolute right-[10%] top-[120vh] -rotate-6 opacity-[0.18] dark:opacity-[0.12]" />
       </motion.div>
 
-      {/* Paper grain, light theme only. */}
-      <div className="paper-grain absolute inset-0 opacity-[0.05] mix-blend-multiply dark:hidden" />
+      {/* Fine glaze grain, light theme only. */}
+      <div className="paper-grain absolute inset-0 opacity-[0.035] mix-blend-multiply dark:hidden" />
     </div>
   );
 }

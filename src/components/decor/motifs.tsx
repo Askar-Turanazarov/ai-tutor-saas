@@ -65,6 +65,38 @@ export function GirihField({ className, cell = 56 }: { className?: string; cell?
   );
 }
 
+/**
+ * Majolica tile panel: a repeating glazed tile (lapis star, turquoise petals, ochre grout and
+ * corner stars). A wall panel at the page edges, faded towards the reading column by a mask.
+ */
+export function MajolicaField({ className, cell = 76 }: { className?: string; cell?: number }) {
+  const id = sid(useId());
+  const c = cell / 2;
+  return (
+    <svg className={cn("pointer-events-none select-none", className)} aria-hidden>
+      <defs>
+        <pattern id={`mf-${id}`} width={cell} height={cell} patternUnits="userSpaceOnUse">
+          <rect x="0.5" y="0.5" width={cell - 1} height={cell - 1} rx="3" fill="none" stroke="var(--ochre)" strokeOpacity="0.28" />
+          <path d={starPath(c, c, cell * 0.36, cell * 0.26)} fill="var(--accent)" fillOpacity="0.07" stroke="var(--accent)" strokeOpacity="0.35" strokeWidth="1" />
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((d) => (
+            <path key={d} d={petal(c, c, cell * 0.22, cell * 0.06, d)} fill="var(--turquoise)" fillOpacity="0.14" stroke="var(--turquoise)" strokeOpacity="0.4" strokeWidth="0.8" />
+          ))}
+          <circle cx={c} cy={c} r={cell * 0.045} fill="var(--ochre)" fillOpacity="0.55" />
+          {[
+            [0, 0],
+            [cell, 0],
+            [0, cell],
+            [cell, cell],
+          ].map(([x, y]) => (
+            <path key={`${x}-${y}`} d={starPath(x, y, cell * 0.11, cell * 0.045, 4)} fill="var(--ochre)" fillOpacity="0.45" />
+          ))}
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#mf-${id})`} />
+    </svg>
+  );
+}
+
 /** Majolica tile: eight-point star with turquoise petals inside an ochre square. */
 export function MajolicaTile({ size = 96, className }: { size?: number; className?: string }) {
   return (
