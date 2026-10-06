@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { tashkentDate } from "@/lib/time";
+import { isForever, isLive } from "@/lib/billing/subscription";
 import { AdminTitle } from "@/components/admin/AdminShell";
 import { UsersTable } from "@/components/admin/UsersTable";
 
@@ -13,7 +14,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const t = await getTranslations("admin");
   const me = await getCurrentUser();
   const [users, usage] = await Promise.all([
-    db.user.findMany({ orderBy: { createdAt: "desc" } }),
+    db.user.findMany({ orderBy: { createdAt: "desc" }, include: { subscription: true } }),
     db.dailyUsage.findMany({ where: { date: tashkentDate() } }),
   ]);
   const used = new Map(usage.map((u) => [u.userId, u.seconds]));
@@ -33,6 +34,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
           xp: u.xp,
           seconds: used.get(u.id) ?? 0,
           created: u.createdAt.toISOString(),
+          until: u.subscription && isLive(u.subscription) ? (isForever(u.subscription) ? "forever" : u.subscription.currentPeriodEnd.toISOString()) : null,
         }))}
       />
     </>

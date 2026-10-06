@@ -13,6 +13,7 @@ import { asLang, rebuildPlan } from "@/lib/learning";
 import { LEVELS, type Level } from "@/lib/levels";
 import { grantPlan, reconcile, syncUserPlan } from "@/lib/billing/subscription";
 import { runBillingCycle } from "@/lib/billing/scheduler";
+import { fiscalize } from "@/lib/billing/fiscal";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -78,6 +79,38 @@ export async function runRenewalsNow() {
   return res;
 }
 
+/**
+ * Test helper: puts the end of a paid period N minutes from now (+2 days: reminder, +2 min: early
+ * renewal, −1 min: ended), as if the period had just started over, then the billing cycle does the rest.
+ */
+export async function shiftSubscriptionEnd(userId: string, minutesFromNow: number) {
+  await requireAdmin();
+  const sub = await db.subscription.findUnique({ where: { userId } });
+  if (!sub || !["active", "past_due", "trialing"].includes(sub.status)) return;
+  const end = new Date(Date.now() + minutesFromNow * 60_000);
+  await db.subscription.update({
+    where: { id: sub.id },
+    data: {
+      currentPeriodEnd: end,
+      currentPeriodStart: end < sub.currentPeriodStart ? new Date(end.getTime() - 30 * 86_400_000) : sub.currentPeriodStart,
+      status: sub.status === "past_due" ? "active" : sub.status,
+      graceUntil: null,
+      notifiedSoonAt: null,
+      notifiedEndAt: null,
+      renewAttempts: 0,
+      lastRenewAttemptAt: null,
+    },
+  });
+  refresh();
+}
+
+export async function retryReceipt(receiptId: string) {
+  await requireAdmin();
+  await db.receipt.update({ where: { id: receiptId }, data: { attempts: 0 } });
+  await fiscalize(receiptId);
+  refresh();
+}
+
 export async function setUserLevel(userId: string, level: string) {
   await requireAdmin();
   if (!LEVELS.includes(level as Level)) return;
@@ -119,6 +152,9 @@ function cleanSetting(key: string, value: string) {
   if (key.startsWith("limit.") && value !== "unlimited") return String(Math.max(0, Math.min(1000, Math.round(Number(value) || 0))));
   if (key.startsWith("price.discount.")) return String(Math.max(0, Math.min(90, Math.round(Number(value) || 0))));
   if (key.startsWith("price.")) return String(Math.max(0, Math.round(Number(value) || 0)));
+  if (/^billing\.\w+Enabled$/.test(key)) return value === "true" ? "true" : "false";
+  if (["billing.mxik", "billing.packageCode", "billing.sellerName", "billing.sellerTin"].includes(key)) return value.trim().slice(0, 120);
+  if (key === "billing.vatPercent") return String(Math.max(0, Math.min(50, Math.round(Number(value) || 0))));
   if (key.startsWith("billing.")) return String(Math.max(0, Math.min(90, Math.round(Number(value) || 0))));
   return value;
 }

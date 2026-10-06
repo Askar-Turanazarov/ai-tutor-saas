@@ -21,6 +21,8 @@ type Row = {
   xp: number;
   seconds: number;
   created: string;
+  /** End of the paid plan; null for Free, "forever" for an admin grant without an end. */
+  until: string | null;
 };
 
 export function UsersTable({ users, meId }: { users: Row[]; meId: string }) {
@@ -81,7 +83,15 @@ function UserCard({ u, isMe }: { u: Row; isMe: boolean }) {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="truncate font-semibold">{u.name}</span>
             {u.role === "ADMIN" && <Badge tone="accent">{tc("admin")}</Badge>}
-            <Badge tone={u.plan === "PRO" ? "gold" : u.plan === "PLUS" ? "teal" : "neutral"}>{tierLabel(u.plan)}</Badge>
+            <Badge tone={u.plan === "PRO" ? "gold" : u.plan === "PLUS" ? "teal" : "neutral"}>
+              {tierLabel(u.plan)}
+              {u.until && u.plan !== "FREE" && (
+                <span className="font-medium opacity-75">
+                  {" · "}
+                  {u.until === "forever" ? t("forever") : t("until", { date: new Date(u.until) })}
+                </span>
+              )}
+            </Badge>
           </div>
           <div className="truncate text-[13px] text-label-2">{u.email}</div>
           <div className="mt-0.5 text-[12px] text-label-3">
@@ -107,7 +117,7 @@ function UserCard({ u, isMe }: { u: Row; isMe: boolean }) {
           aria-label={t("plan")}
           title={t("grantHint")}
           disabled={pending}
-          onChange={(e) => run("plan", () => setUserPlan(u.id, e.target.value as "FREE" | "PLUS" | "PRO"))}
+          onChange={(e) => run("plan", () => setUserPlan(u.id, e.target.value as "FREE" | "PLUS" | "PRO", 0))}
           className="h-9 rounded-[10px] bg-fill px-2.5 text-[14px] font-medium outline-none"
         >
           {TIERS.map((tier) => (

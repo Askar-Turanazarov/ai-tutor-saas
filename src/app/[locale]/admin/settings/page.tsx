@@ -3,6 +3,7 @@ import { getAllSettings } from "@/lib/settings";
 import { AdminTitle } from "@/components/admin/AdminShell";
 import { SettingsAdmin } from "@/components/admin/SettingsAdmin";
 import { PlanSettings } from "@/components/admin/PlanSettings";
+import { BillingSettings } from "@/components/admin/BillingSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
       <div className="space-y-6">
         <SettingsAdmin settings={settings} />
         <PlanSettings settings={settings} />
+        <BillingSettings settings={settings} />
       </div>
     </>
   );
