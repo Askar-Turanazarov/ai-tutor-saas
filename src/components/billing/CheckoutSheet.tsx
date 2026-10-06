@@ -14,9 +14,6 @@ import { cn } from "@/lib/cn";
 
 type Method = { key: string; provider: string; icon: LucideIcon; title: string; hint: string; cardId?: string };
 
-/** Checkouts that can tokenize the card for auto-renewal. */
-const SAVES_CARD = new Set(["card", "stripe"]);
-
 const BRAND: Record<string, string> = { uzcard: "Uzcard", humo: "HUMO", visa: "Visa", mastercard: "Mastercard" };
 
 /** Payment method choice and the amount due right now (incl. upgrade proration). */
@@ -30,6 +27,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
   const [save, setSave] = useState(true);
 
   const enabled = new Set(data.providers);
+  const SAVES_CARD = new Set(data.savesCard);
   const methods: Method[] = [
     ...data.cards
       .filter((c) => enabled.has(c.provider))
@@ -144,7 +142,6 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
           </span>
         </label>
       )}
-      {method.provider === "click" && <p className="mt-3 px-1 text-[13px] leading-snug text-label-2">{t("clickRenewNote")}</p>}
 
       <Button size="lg" className="mt-5 w-full" icon={Lock} loading={pending} onClick={pay}>
         {t("payAmount", { amount: money(q.amount) })}

@@ -21,6 +21,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
       tier={tierLabel(invoice.tier)}
       period={invoice.period}
       amount={formatMoney(invoice.amount, invoice.currency, locale)}
+      saveCard={invoice.saveCard}
     />
   );
 }

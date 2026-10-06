@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { db } from "../../db";
 import { applyPaidInvoice, failInvoice } from "../subscription";
 import type { PaymentProvider } from "./types";
@@ -14,6 +14,9 @@ import type { PaymentProvider } from "./types";
  * Without a merchant contract we run the emulator page /pay/click/[invoiceId], which sends
  * exactly these signed requests to our endpoints. With CLICK_MODE=live and real keys
  * the user is redirected to my.click.uz instead and nothing else changes.
+ *
+ * Auto-renewal uses the Merchant API card tokens (https://docs.click.uz/merchant-api-request):
+ * request → SMS verify → payment by token. The emulator keeps the same three steps locally.
  */
 
 export const CLICK_ERRORS = {
@@ -30,11 +33,13 @@ export const CLICK_ERRORS = {
 
 type ErrorKey = keyof typeof CLICK_ERRORS;
 
+/** CLICK_MODE=live talks to Click; anything else (emulator, the old "mock") runs the local emulator. */
 export function clickConfig() {
   return {
     live: process.env.CLICK_MODE === "live",
     serviceId: process.env.CLICK_SERVICE_ID || "10000",
     merchantId: process.env.CLICK_MERCHANT_ID || "20000",
+    merchantUserId: process.env.CLICK_MERCHANT_USER_ID || "30000",
     secretKey: process.env.CLICK_SECRET_KEY || "mock-click-secret-key",
   };
 }
@@ -115,10 +120,93 @@ export async function readClickParams(req: Request): Promise<ClickParams> {
   return Object.fromEntries(form.entries());
 }
 
+/* ───────────── Merchant API: card tokens ───────────── */
+
+const MERCHANT_API = "https://api.click.uz/v2/merchant";
+
+function merchantAuth() {
+  const { merchantUserId, secretKey } = clickConfig();
+  const ts = Math.floor(Date.now() / 1000);
+  return `${merchantUserId}:${createHash("sha1").update(`${ts}${secretKey}`).digest("hex")}:${ts}`;
+}
+
+async function merchant<T>(path: string, body: object, method = "POST"): Promise<T> {
+  const res = await fetch(`${MERCHANT_API}${path}`, {
+    method,
+    headers: { Accept: "application/json", "Content-Type": "application/json", Auth: merchantAuth() },
+    body: method === "POST" ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = (await res.json().catch(() => ({}))) as T & { error_code?: number; error_note?: string };
+  if (!res.ok || (data.error_code ?? 0) !== 0) throw new Error(data.error_note || `Click ${path}: HTTP ${res.status}`);
+  return data;
+}
+
+/** Test cards of the emulator: …0001 pays, …0002 has no money (also on renewals). */
+export const EMULATOR_CARDS = ["8600 0000 0000 0001", "9860 0000 0000 0001", "8600 0000 0000 0002"];
+export const EMULATOR_SMS = "666666";
+const emulatorDeclines = (last4: string) => last4 === "0002";
+
+/** Step 1: Click sends an SMS code to the card owner and returns a not yet verified token. */
+export async function cardTokenRequest(cardNumber: string, expire: string) {
+  const pan = cardNumber.replace(/\D/g, "");
+  const cfg = clickConfig();
+  if (!cfg.live) {
+    if (!EMULATOR_CARDS.some((c) => c.replace(/\s/g, "") === pan)) throw new Error("card_not_found");
+    return { token: `emu_${randomBytes(12).toString("hex")}`, phone: "+998 •• ••• 45 67" };
+  }
+  const r = await merchant<{ card_token: string; phone_number: string }>("/card_token/request", {
+    service_id: Number(cfg.serviceId),
+    card_number: pan,
+    expire_date: expire.replace(/\D/g, ""),
+    temporary: 0,
+  });
+  return { token: r.card_token, phone: r.phone_number };
+}
+
+/** Step 2: the SMS code makes the token chargeable. Returns the masked card number. */
+export async function cardTokenVerify(token: string, smsCode: string, pan = "") {
+  const cfg = clickConfig();
+  if (!cfg.live) {
+    if (smsCode !== EMULATOR_SMS) throw new Error("bad_sms");
+    return { maskedPan: `${pan.slice(0, 6)}******${pan.slice(-4)}` };
+  }
+  const r = await merchant<{ card_number: string }>("/card_token/verify", { service_id: Number(cfg.serviceId), card_token: token, sms_code: Number(smsCode) });
+  return { maskedPan: r.card_number };
+}
+
+export async function cardTokenDelete(token: string) {
+  const cfg = clickConfig();
+  if (!cfg.live) return;
+  await merchant(`/card_token/${cfg.serviceId}/${token}`, {}, "DELETE").catch(() => null);
+}
+
 export const click: PaymentProvider = {
   id: "click",
   currency: "UZS",
   enabled: () => true,
+
+  /** Auto-renewal by a verified card token. */
+  async chargeToken(method, invoice) {
+    const cfg = clickConfig();
+    if (!cfg.live) {
+      await new Promise((r) => setTimeout(r, 150));
+      if (emulatorDeclines(method.last4)) return { ok: false, reason: "Insufficient funds (-5017)" };
+      return { ok: true, txId: `emu_pay_${randomBytes(6).toString("hex")}` };
+    }
+    try {
+      const r = await merchant<{ payment_id: number }>("/card_token/payment", {
+        service_id: Number(cfg.serviceId),
+        card_token: method.token,
+        amount: invoice.amount,
+        transaction_parameter: invoice.id,
+      });
+      return { ok: true, txId: String(r.payment_id) };
+    } catch (e) {
+      return { ok: false, reason: (e as Error).message };
+    }
+  },
+
   async createCheckout(invoice, { locale, origin }) {
     const cfg = clickConfig();
     if (!cfg.live) return { redirectUrl: `/${locale}/pay/click/${invoice.id}` };

@@ -425,12 +425,14 @@
     "errInvoice": "Bu hisob allaqachon toʻlangan yoki bekor qilingan",
     "declined": "Bank toʻlovni rad etdi: mablagʻ yetarli emas",
     "clickTitle": "Click emulyatori",
-    "clickNote": "my.click.uz oʻrnida. “Toʻlov”dan soʻng server API'mizga haqiqiy imzolangan Prepare va Complete soʻrovlarini yuboradi.",
-    "clickWallet": "Click hamyoni",
+    "clickNote": "my.click.uz oʻrniga. Karta va SMS ni emulyator tekshiradi, soʻng server API mizga haqiqiy imzolangan Prepare va Complete soʻrovlarini yuboradi.",
     "clickStep1": "Click buyurtmani tekshiradi (Prepare)",
-    "clickStep2": "Karta yoki hamyondan pul yechadi",
+    "clickStep2": "Karta SMS-kod orqali tokenlanadi — avtouzaytirish uchun",
     "clickStep3": "Toʻlovni tasdiqlaydi (Complete) — tarif yoqiladi",
-    "clickDecline": "Mablagʻ yetishmasligini sinash"
+    "clickSmsHint": "Emulyatordagi kod: {code}",
+    "testCardsTitle": "Test kartalar",
+    "errClickCard": "Emulyator faqat test kartalarni qabul qiladi: …0001 — toʻlov oʻtadi, …0002 — mablagʻ yetarli emas",
+    "errClickSms": "SMS-kod notoʻgʻri"
   },
   "billing": {
     "successTitle": "Toʻlov muvaffaqiyatli",
@@ -531,7 +533,6 @@
     "stripeHint": "Istalgan davlat Visa / Mastercard kartasi · soʻmda toʻlanadi",
     "autoRenew": "Avtomatik uzaytirish uchun kartani saqlash",
     "autoRenewHint": "Toʻlov uzaytirish kunida yechiladi. Istalgan vaqtda oʻchirish mumkin.",
-    "clickRenewNote": "Click obunani avtomatik uzaytirmaydi: davr tugashidan oldin toʻlovni eslatamiz.",
     "payAmount": "{amount} toʻlash",
     "checkoutError": "Toʻlovni boshlab boʻlmadi. Qayta urinib koʻring yoki boshqa usulni tanlang.",
     "guestError": "Obuna boʻlish uchun avval akkaunt yarating.",

@@ -4,6 +4,7 @@ import { db } from "../db";
 import { getAllSettings } from "../settings";
 import { LIMIT_KEYS, PAID_TIERS, PERIODS, TIERS, discountSettingKey, limitSettingKey, type LimitKey, type PaidTier, type Period, type Tier } from "./catalog";
 import { enabledProviders } from "./providers";
+import { clickConfig } from "./providers/click";
 import { isLive, priceFor, quote, tierFromSubscription } from "./subscription";
 
 /** Plain, serialisable views of the billing state for client components. */
@@ -38,6 +39,8 @@ export type PlansData = {
   /** What a checkout would charge right now (upgrade proration, renewal…). */
   quotes: Record<PaidTier, Record<Period, QuoteView>>;
   providers: string[];
+  /** Checkouts that can save the card for auto-renewal. */
+  savesCard: string[];
   cards: CardView[];
 };
 
@@ -102,6 +105,8 @@ export async function plansData(user: { id: string; trialUsedAt: Date | null }):
     prices,
     quotes,
     providers: (await enabledProviders()).map((p) => p.id),
+    // Live Click pays on my.click.uz, which doesn't hand out card tokens; the emulator does.
+    savesCard: ["card", "stripe", ...(clickConfig().live ? [] : ["click"])],
     cards: cards.map(cardView),
   };
 }

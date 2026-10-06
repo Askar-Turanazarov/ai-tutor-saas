@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
+import { randomInt } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { db } from "@/lib/db";
 import { getCurrentUser, isGuest } from "@/lib/auth";
@@ -17,7 +18,7 @@ import {
   startTrial,
 } from "@/lib/billing/subscription";
 import { declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
-import { clickConfig, clickSign } from "@/lib/billing/providers/click";
+import { EMULATOR_CARDS, EMULATOR_SMS, cardTokenDelete, cardTokenRequest, cardTokenVerify, clickConfig, clickSign } from "@/lib/billing/providers/click";
 import { detachCard } from "@/lib/billing/providers/stripe";
 
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
@@ -185,6 +186,7 @@ export async function removeCard(id: string) {
   const card = await db.paymentMethod.findFirst({ where: { id, userId: user.id } });
   if (!card) return;
   if (card.provider === "stripe") await detachCard(card.token);
+  if (card.provider === "click") await cardTokenDelete(card.token);
   await db.paymentMethod.delete({ where: { id: card.id } });
   refresh();
 }
@@ -192,29 +194,47 @@ export async function removeCard(id: string) {
 /* ───── Click emulator ───── */
 
 /**
- * Plays Click's part: sends the signed Prepare and Complete requests to our own
- * SHOP API endpoints over HTTP, exactly as my.click.uz would after the user pays.
+ * Plays Click's part: tokenizes a test card (SMS 666666), then sends the signed Prepare and
+ * Complete requests to our own SHOP API endpoints over HTTP, exactly as my.click.uz would.
  */
-export async function clickEmulatePay(input: { invoiceId: string; outcome: "success" | "insufficient" }) {
-  const { invoice } = await ownPendingInvoice(input.invoiceId);
+export async function clickEmulatePay(input: { invoiceId: string; card: string; exp: string; sms: string; save: boolean }) {
+  const { user, invoice } = await ownPendingInvoice(input.invoiceId);
   if (!invoice || invoice.status !== "pending" || invoice.provider !== "click") return { error: "invoice" as const };
   const cfg = clickConfig();
+  if (cfg.live) return { error: "invoice" as const };
+  const pan = input.card.replace(/\D/g, "");
+  if (!EMULATOR_CARDS.some((c) => c.replace(/\s/g, "") === pan)) return { error: "card" as const };
+  const m = /^(\d{2})\/?(\d{2})$/.exec(input.exp.trim());
+  if (!m || Number(m[1]) < 1 || Number(m[1]) > 12) return { error: "exp" as const };
+  if (input.sms.trim() !== EMULATOR_SMS) return { error: "code" as const };
+
+  const declined = pan.endsWith("0002");
+  let methodId: string | undefined;
+  if (input.save && !declined) {
+    const { token } = await cardTokenRequest(pan, input.exp);
+    await cardTokenVerify(token, input.sms.trim(), pan);
+    const method = await db.paymentMethod.create({
+      data: { userId: user.id, provider: "click", brand: detectBrand(pan), last4: pan.slice(-4), expMonth: Number(m[1]), expYear: 2000 + Number(m[2]), token },
+    });
+    methodId = method.id;
+  }
+  if (input.save !== invoice.saveCard) await db.invoice.update({ where: { id: invoice.id }, data: { saveCard: input.save } });
+
   const base = await origin();
-  const clickTransId = String(Date.now());
   const pad = (n: number) => String(n).padStart(2, "0");
   const d = new Date();
   const signTime = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   const common = {
-    click_trans_id: clickTransId,
+    click_trans_id: String(randomInt(1_000_000_000, 2_000_000_000)),
     service_id: cfg.serviceId,
-    click_paydoc_id: String(Math.floor(Math.random() * 1e9)),
+    click_paydoc_id: String(randomInt(10_000_000, 99_999_999)),
     merchant_trans_id: invoice.id,
     amount: invoice.amount.toFixed(2),
     sign_time: signTime,
   };
   const call = async (path: string, p: Record<string, string>) => {
     const body = new URLSearchParams({ ...p, sign_string: clickSign(p, cfg.secretKey) });
-    const res = await fetch(`${base}/api/billing/click/${path}`, {
+    const res = await fetch(`${base}/api/payments/click/${path}`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body,
@@ -229,14 +249,16 @@ export async function clickEmulatePay(input: { invoiceId: string; outcome: "succ
 
   const prepared = await call("prepare", { ...common, action: "0", error: "0", error_note: "Success" });
   if (prepared.error !== 0 || !prepared.merchant_prepare_id) return { error: "provider" as const, note: prepared.error_note };
-  const failed = input.outcome === "insufficient";
-  await call("complete", {
+  // A card without money: Click still calls Complete, with error -5017.
+  const done = await call("complete", {
     ...common,
     action: "1",
     merchant_prepare_id: String(prepared.merchant_prepare_id),
-    error: failed ? "-5017" : "0",
-    error_note: failed ? "Insufficient funds" : "Success",
+    error: declined ? "-5017" : "0",
+    error_note: declined ? "Insufficient funds" : "Success",
   });
+  // The saved card becomes the one renewals are charged to.
+  if (done.error === 0 && methodId) await db.subscription.updateMany({ where: { userId: user.id }, data: { paymentMethodId: methodId } });
   refresh();
   return { invoiceId: invoice.id };
 }

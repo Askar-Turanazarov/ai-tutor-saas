@@ -425,12 +425,14 @@
     "errInvoice": "This invoice is already paid or cancelled",
     "declined": "The bank declined the payment: insufficient funds",
     "clickTitle": "Click emulator",
-    "clickNote": "Stands in for my.click.uz. After you “pay”, the server sends real signed Prepare and Complete requests to our API.",
-    "clickWallet": "Click wallet",
+    "clickNote": "Stands in for my.click.uz. The emulator checks the card and SMS, then the server sends real signed Prepare and Complete requests to our API.",
     "clickStep1": "Click checks the order (Prepare)",
-    "clickStep2": "Charges the card or wallet",
+    "clickStep2": "The card is tokenized with the SMS code — for auto-renewal",
     "clickStep3": "Confirms the payment (Complete) — the plan turns on",
-    "clickDecline": "Simulate insufficient funds"
+    "clickSmsHint": "Emulator code: {code}",
+    "testCardsTitle": "Test cards",
+    "errClickCard": "The emulator only takes test cards: …0001 pays, …0002 has insufficient funds",
+    "errClickSms": "Wrong SMS code"
   },
   "billing": {
     "successTitle": "Payment successful",
@@ -531,7 +533,6 @@
     "stripeHint": "Visa / Mastercard from any country · paid in UZS",
     "autoRenew": "Save the card for auto-renewal",
     "autoRenewHint": "We'll charge it on the renewal date. You can turn this off any time.",
-    "clickRenewNote": "Click doesn't renew automatically: we'll remind you to pay before the period ends.",
     "payAmount": "Pay {amount}",
     "checkoutError": "Couldn't start the payment. Try again or choose another method.",
     "guestError": "Create an account first to subscribe.",

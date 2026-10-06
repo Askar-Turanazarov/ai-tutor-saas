@@ -10,9 +10,9 @@ import { Field } from "@/components/ui/primitives";
 import { cancelInvoice, cardConfirm, cardSendCode } from "@/app/actions/billing";
 import { cn } from "@/lib/cn";
 
-type Brand = "uzcard" | "humo" | "visa" | "mastercard";
+export type Brand = "uzcard" | "humo" | "visa" | "mastercard";
 
-function brandOf(digits: string): Brand | null {
+export function brandOf(digits: string): Brand | null {
   if (digits.length < 4) return null;
   if (digits.startsWith("9860")) return "humo";
   if (digits.startsWith("8600") || digits.startsWith("5614")) return "uzcard";
@@ -31,14 +31,14 @@ const BRAND_FACE: Record<Brand, string> = {
   mastercard: "from-[#3a2a22] to-[#7a4a2a]",
 };
 
-const groupCard = (v: string) =>
+export const groupCard = (v: string) =>
   v
     .replace(/\D/g, "")
     .slice(0, 16)
     .replace(/(.{4})/g, "$1 ")
     .trim();
 
-const formatExp = (v: string) => {
+export const formatExp = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 4);
   return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
 };
@@ -208,7 +208,7 @@ export function CardCheckout(props: { invoiceId: string; tier: string; period: n
   );
 }
 
-function CardFace({ number, exp, brand }: { number: string; exp: string; brand: Brand | null }) {
+export function CardFace({ number, exp, brand }: { number: string; exp: string; brand: Brand | null }) {
   const shown = (number.replace(/\s/g, "") + "•".repeat(16)).slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
   return (
     <div
