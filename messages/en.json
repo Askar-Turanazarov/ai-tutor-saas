@@ -308,7 +308,8 @@
     "danger": "Account",
     "guestTitle": "You're learning as a guest",
     "guestText": "Create an account to keep your progress and sign in from any device.",
-    "guestCta": "Save my progress"
+    "guestCta": "Save my progress",
+    "subtitle": "Profile, appearance and plan."
   },
   "admin": {
     "title": "Admin",

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { BookOpenCheck, Layers, Lock, MessageCircle, PenLine, Play, Sparkles } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/decor/EmptyState";
+import { PageHeader } from "@/components/decor/PageHeader";
 import { Correction } from "./primitives";
 import { cn } from "@/lib/cn";
 
@@ -34,10 +35,7 @@ export function MistakesView({ rows, active, resolved, canTrain, limited }: { ro
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold">{t("title")}</h1>
-        <p className="mt-1 max-w-xl text-[16px] text-label-2">{t("subtitle")}</p>
-      </div>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} icon={<PenLine />} tone="teal" />
 
       {rows.length === 0 ? (
         <div className="surface rounded-card p-5">

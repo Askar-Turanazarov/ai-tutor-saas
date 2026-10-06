@@ -166,3 +166,12 @@ export function TileBand({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/** Small eight-point star used as a bullet before section titles. */
+export function StarMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" className={cn("size-3 shrink-0", className)} aria-hidden>
+      <path d={starPath(6, 6, 6, 3)} fill="currentColor" />
+    </svg>
+  );
+}

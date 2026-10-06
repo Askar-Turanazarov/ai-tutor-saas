@@ -7,6 +7,8 @@ import { Mic, RefreshCw, Snail, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProgressRing, TypingDots } from "@/components/ui/primitives";
 import { spring } from "@/components/ui/motion";
+import { SuzaniMedallion } from "@/components/decor/motifs";
+import { PageHeader } from "@/components/decor/PageHeader";
 import { nextPhrase, pronunciationCheck } from "@/app/actions/user";
 import { createRecognition, recognitionSupported, speak } from "@/lib/speech";
 import { cn } from "@/lib/cn";
@@ -17,12 +19,7 @@ type Result = Extract<NonNullable<Awaited<ReturnType<typeof pronunciationCheck>>
 
 export function PronunciationView({ pro, initialPhrase }: { pro: boolean; initialPhrase: string }) {
   const t = useTranslations("pron");
-  const header = (
-    <div>
-      <h1 className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold">{t("title")}</h1>
-      <p className="mt-1 text-[16px] text-label-2">{t("subtitle")}</p>
-    </div>
-  );
+  const header = <PageHeader title={t("title")} subtitle={t("subtitle")} icon={<Mic />} tone="teal" />;
   if (!pro)
     return (
       <div className="space-y-6">
@@ -47,7 +44,11 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
   const [result, setResult] = useState<Result | null>(
     demo
       ? {
-          words: initial.toLowerCase().replace(/[^a-z'\s]/g, "").split(/\s+/).map((w, i) => ({ word: w, ok: i % 4 !== 1 })),
+          words: initial
+            .toLowerCase()
+            .replace(/[^a-z'\s]/g, "")
+            .split(/\s+/)
+            .map((w, i) => ({ word: w, ok: i % 4 !== 1 })),
           score: 78,
           summary: "",
           tips: [],
@@ -80,7 +81,9 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
     setResult(null);
     setError(null);
     r.onresult = (e) => {
-      heardRef.current = Array.from(e.results).map((x) => x[0].transcript).join("");
+      heardRef.current = Array.from(e.results)
+        .map((x) => x[0].transcript)
+        .join("");
       setHeard(heardRef.current);
     };
     r.onerror = (e) => {
@@ -112,7 +115,7 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
             transition={{ duration: 0.3 }}
-            className="min-h-[72px] text-[clamp(1.4rem,3.5vw,1.9rem)] font-semibold leading-snug"
+            className="min-h-[72px] font-lesson text-[clamp(1.5rem,3.6vw,2rem)] font-medium leading-snug"
           >
             {result ? (
               <span>
@@ -149,24 +152,32 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
         <div className="mt-10 flex flex-col items-center gap-3">
           {supported ? (
             <>
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                whileHover={{ scale: 1.04 }}
-                transition={spring}
-                onClick={toggle}
-                disabled={analyzing || demo}
-                aria-label={listening ? t("stop") : t("record")}
-                className={cn(
-                  "relative grid size-24 place-items-center rounded-full text-white shadow-float transition-colors",
-                  listening ? "bg-danger-solid" : "bg-accent-solid",
-                )}
-              >
-                {listening && (
-                  <span className="absolute inset-0 rounded-full bg-danger-solid" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />
-                )}
-                {listening ? <Square className="relative size-8" fill="currentColor" /> : <Mic className="size-10" />}
-              </motion.button>
-              <span className="text-[14px] font-medium text-label-2">{listening ? t("stop") : t("record")}</span>
+              <div className="relative grid place-items-center">
+                <motion.span
+                  aria-hidden
+                  className="pointer-events-none absolute"
+                  animate={listening ? { rotate: 360, scale: 1, opacity: 0.9 } : { rotate: 0, scale: 0.9, opacity: 0.5 }}
+                  transition={listening ? { rotate: { duration: 8, repeat: Infinity, ease: "linear" }, default: spring } : spring}
+                >
+                  <SuzaniMedallion size={156} tone={listening ? "gold" : "accent"} />
+                </motion.span>
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  whileHover={{ scale: 1.04 }}
+                  transition={spring}
+                  onClick={toggle}
+                  disabled={analyzing || demo}
+                  aria-label={listening ? t("stop") : t("record")}
+                  className={cn(
+                    "relative grid size-24 place-items-center rounded-full text-white shadow-float transition-colors",
+                    listening ? "bg-danger-solid" : "bg-accent-solid",
+                  )}
+                >
+                  {listening && <span className="absolute inset-0 rounded-full bg-danger-solid" style={{ animation: "pulse-ring 1.2s ease-out infinite" }} />}
+                  {listening ? <Square className="relative size-8" fill="currentColor" /> : <Mic className="size-10" />}
+                </motion.button>
+              </div>
+              <span className="mt-6 text-[14px] font-medium text-label-2">{listening ? t("stop") : t("record")}</span>
             </>
           ) : (
             <p className="max-w-sm text-[14px] text-label-2">{t("unsupported")}</p>
@@ -174,7 +185,7 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
           {error && <p className="text-[14px] text-danger">{error}</p>}
           {heard && (
             <p className="max-w-md text-[15px]">
-              <span className="text-label-2">{t("heard")}:</span> “{heard}”
+              <span className="text-label-2">{t("heard")}:</span> <span className="font-lesson">“{heard}”</span>
             </p>
           )}
         </div>
@@ -187,7 +198,13 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
       <div className="surface rounded-card p-6">
         <AnimatePresence mode="wait">
           {analyzing ? (
-            <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex h-full flex-col items-center justify-center gap-3 py-10 text-label-2">
+            <motion.div
+              key="a"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex h-full flex-col items-center justify-center gap-3 py-10 text-label-2"
+            >
               <TypingDots label={t("analyzing")} />
               {t("analyzing")}
             </motion.div>
@@ -220,7 +237,7 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
                         className="rounded-[14px] bg-fill p-3"
                       >
                         <button onClick={() => speak(tip.word, 0.7)} className="flex items-center gap-2 font-semibold hover:text-accent">
-                          <Volume2 className="size-4" /> {tip.word}
+                          <Volume2 className="size-4" /> <span className="font-lesson">{tip.word}</span>
                           {tip.ipa && <span className="font-normal text-label-2">{tip.ipa}</span>}
                         </button>
                         <p className="mt-1 text-[14px] text-label-2">{tip.tip}</p>
@@ -231,10 +248,15 @@ function Trainer({ phrase: initial, demo }: { phrase: string; demo?: boolean }) 
               )}
             </motion.div>
           ) : (
-            <motion.div key="e" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex h-full flex-col items-center justify-center gap-3 py-10 text-center text-label-2">
-              <div className="grid size-14 place-items-center rounded-[18px] bg-teal-soft text-teal">
-                <Mic className="size-7" />
-              </div>
+            <motion.div
+              key="e"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex h-full flex-col items-center justify-center gap-3 py-10 text-center text-label-2"
+            >
+              <SuzaniMedallion size={84} tone="teal">
+                <Mic className="size-6 text-teal" />
+              </SuzaniMedallion>
               <p className="max-w-[240px] text-[15px]">{t("subtitle")}</p>
             </motion.div>
           )}

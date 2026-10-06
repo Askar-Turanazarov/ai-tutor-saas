@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { ExerciseRunner } from "@/components/learn/exercises/ExerciseRunner";
 import { submitQuiz } from "@/app/actions/user";
 import { celebrate } from "@/lib/celebrate";
+import { IslimiBorder, SuzaniMedallion } from "@/components/decor/motifs";
 import { fromQuestion, type RunExercise } from "@/lib/learning/exercises";
 import type { Exercise } from "@/lib/content/types";
 import type { Question } from "@/lib/ai/schemas";
@@ -28,16 +29,18 @@ export function QuizRunner({ quizId, title, questions }: { quizId: string; title
           initial={{ scale: 0, rotate: -40 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 240, damping: 12, delay: 0.1 }}
-          className="grid size-28 place-items-center rounded-[32px] bg-gold-soft text-gold"
         >
-          <Trophy className="size-14" />
+          <SuzaniMedallion size={150} tone="gold">
+            <Trophy className="size-9 text-gold" />
+          </SuzaniMedallion>
         </motion.div>
         <h1 className="mt-6 text-[28px] font-bold">{t("finishTitle")}</h1>
         <p className="mt-2 text-[17px] text-label-2">{t("score", { score: result.score, total: result.total })}</p>
         <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent-soft px-5 py-2 text-[20px] font-bold text-accent">
           <Zap className="size-5" /> {t("xpEarned", { xp: result.xp })}
         </div>
-        <div className="mt-10 grid w-full gap-3">
+        <IslimiBorder className="mt-8 text-gold opacity-45" />
+        <div className="mt-8 grid w-full gap-3">
           <Button size="lg" onClick={() => router.push("/app/path")}>
             {t("backToPath")}
           </Button>

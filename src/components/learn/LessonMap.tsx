@@ -2,13 +2,14 @@
 
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Check, Lock, Play, Sparkles, Star } from "lucide-react";
+import { Check, Lock, Map as MapIcon, Play, Sparkles, Star } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { ButtonLink } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/primitives";
 import { TopicIcon } from "@/components/ui/TopicIcon";
 import { spring } from "@/components/ui/motion";
 import { IslimiBorder, SuzaniMedallion } from "@/components/decor/motifs";
+import { PageHeader } from "@/components/decor/PageHeader";
 import { cn } from "@/lib/cn";
 import type { LessonAccess } from "@/lib/learning/progress";
 import { AiLessons, type PersonalLesson } from "./AiLessons";
@@ -36,10 +37,7 @@ export function LessonMap({ lessons, ai }: { lessons: MapLesson[]; ai: { allowed
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold">{t("title")}</h1>
-        <p className="mt-1 max-w-xl text-[16px] text-label-2">{t("subtitle")}</p>
-      </div>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} icon={<MapIcon />} />
 
       {next && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={spring} className="surface flex flex-col gap-4 rounded-sheet p-5 sm:flex-row sm:items-center">

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, MessagesSquare } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge, Card, Segmented } from "@/components/ui/primitives";
 import { TopicIcon, LEVEL_TINT } from "@/components/ui/TopicIcon";
-import { iconAnims } from "@/components/ui/motion";
+import { iconAnims, spring } from "@/components/ui/motion";
+import { starPath } from "@/components/decor/motifs";
+import { PageHeader } from "@/components/decor/PageHeader";
 import { startConversation } from "@/app/actions/user";
 import { LEVELS } from "@/lib/levels";
 import { cn } from "@/lib/cn";
@@ -22,8 +24,7 @@ export function TopicsGrid({ topics, userLevel }: { topics: Topic[]; userLevel: 
 
   return (
     <div>
-      <h1 className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold">{t("title")}</h1>
-      <p className="mt-1 text-[16px] text-label-2">{t("subtitle")}</p>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} icon={<MessagesSquare />} tone="teal" />
       <div className="-mx-4 mt-6 overflow-x-auto px-4 pb-1">
         <Segmented
           value={filter}
@@ -64,8 +65,17 @@ export function TopicsGrid({ topics, userLevel }: { topics: Topic[]; userLevel: 
 function TopicCard({ topic, cta }: { topic: Topic; cta: string }) {
   const tint = LEVEL_TINT[topic.level];
   return (
-    <Card interactive className={cn("flex h-full flex-col p-5", topic.locked && "opacity-75")}>
-      <div className="flex items-start justify-between">
+    <Card interactive className={cn("relative flex h-full flex-col overflow-hidden p-5", topic.locked && "opacity-75")}>
+      <motion.svg
+        viewBox="0 0 100 100"
+        variants={{ hover: { rotate: 45, scale: 1.12, transition: spring } }}
+        className={cn("pointer-events-none absolute -bottom-8 -right-8 size-28 opacity-[0.07]", tint.fg)}
+        aria-hidden
+      >
+        <path d={starPath(50, 50, 48, 34)} fill="none" stroke="currentColor" strokeWidth="3" />
+        <path d={starPath(50, 50, 24, 16)} fill="currentColor" />
+      </motion.svg>
+      <div className="relative flex items-start justify-between">
         <motion.span variants={iconAnims.tilt} className={cn("grid size-12 place-items-center rounded-[16px]", tint.bg, tint.fg)}>
           <TopicIcon name={topic.icon} className="size-6" />
         </motion.span>

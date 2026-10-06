@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Snowflake, Sparkles, Trophy } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { IslimiBorder } from "@/components/decor/motifs";
+import { PageHeader } from "@/components/decor/PageHeader";
 import { setDailyGoal } from "@/app/actions/progress";
 import { DAILY_GOALS, goalName } from "@/lib/gamification/rules";
 import type { ProgressState } from "@/lib/gamification";
@@ -22,10 +23,7 @@ export function ProgressView({ state: s, plan }: { state: ProgressState; plan: s
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold">{t("title")}</h1>
-        <p className="mt-1 max-w-xl text-[16px] text-label-2">{t("subtitle")}</p>
-      </div>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} icon={<Trophy />} tone="gold" />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <section className="surface space-y-4 rounded-sheet p-5">

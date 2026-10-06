@@ -308,7 +308,8 @@
     "danger": "Akkaunt",
     "guestTitle": "Siz mehmon sifatida oʻqiyapsiz",
     "guestText": "Natijalaringizni saqlash va istalgan qurilmadan kirish uchun hisob yarating.",
-    "guestCta": "Natijani saqlash"
+    "guestCta": "Natijani saqlash",
+    "subtitle": "Profil, koʻrinish va tarif."
   },
   "admin": {
     "title": "Admin",

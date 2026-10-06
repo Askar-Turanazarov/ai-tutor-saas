@@ -3,11 +3,13 @@
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Check, Crown, Lock, LogOut, Sparkles, UserPlus } from "lucide-react";
+import { Check, Crown, Lock, LogOut, Settings2, Sparkles, UserPlus } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Reveal } from "@/components/ui/primitives";
 import { LocaleSwitcher, ThemeSwitcher } from "@/components/ui/switchers";
 import { spring } from "@/components/ui/motion";
+import { GirihField, StarMark, SuzaniMedallion } from "@/components/decor/motifs";
+import { PageHeader } from "@/components/decor/PageHeader";
 import { updateProfile } from "@/app/actions/user";
 import { logout } from "@/app/actions/auth";
 import { LEVELS, FREE_LEVELS, type Level } from "@/lib/levels";
@@ -19,7 +21,10 @@ function Section({ title, children, delay = 0 }: { title: string; children: Reac
   return (
     <Reveal delay={delay}>
       <section>
-        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-label-3">{title}</h2>
+        <h2 className="mb-2 flex items-center gap-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-label-3">
+          <StarMark className="text-gold" />
+          {title}
+        </h2>
         <div className="surface rounded-card p-5">{children}</div>
       </section>
     </Reveal>
@@ -45,16 +50,17 @@ export function SettingsView({ name, email, level, pro, plan }: { name: string; 
 
   return (
     <div className="mx-auto max-w-2xl space-y-7">
-      <h1 className="text-[clamp(1.75rem,4vw,2.25rem)] font-bold">{t("title")}</h1>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} icon={<Settings2 />} />
 
       {email.endsWith("@guest.local") && (
         <Reveal>
-          <div className="flex flex-col gap-4 rounded-card bg-accent-soft p-5 sm:flex-row sm:items-center">
-            <div className="flex-1">
+          <div className="relative flex flex-col gap-4 overflow-hidden rounded-card bg-accent-soft p-5 sm:flex-row sm:items-center">
+            <GirihField className="absolute inset-0 h-full w-full text-accent opacity-[0.12]" cell={44} />
+            <div className="relative flex-1">
               <div className="text-[17px] font-semibold">{t("guestTitle")}</div>
               <p className="mt-1 text-[14px] text-label-2">{t("guestText")}</p>
             </div>
-            <ButtonLink href="/register" icon={UserPlus}>
+            <ButtonLink href="/register" icon={UserPlus} className="relative">
               {t("guestCta")}
             </ButtonLink>
           </div>
@@ -127,12 +133,10 @@ export function SettingsView({ name, email, level, pro, plan }: { name: string; 
       <Section title={t("plan")} delay={0.1}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <motion.div
-              whileHover={{ rotate: -10, scale: 1.08 }}
-              transition={spring}
-              className={cn("grid size-12 place-items-center rounded-[16px]", pro ? "bg-gold-soft text-gold" : "bg-fill text-label-2")}
-            >
-              {pro ? <Crown className="size-6" /> : <Sparkles className="size-6" />}
+            <motion.div whileHover={{ rotate: 30, scale: 1.06 }} transition={spring}>
+              <SuzaniMedallion size={60} tone={pro ? "gold" : "accent"} muted={!pro}>
+                {pro ? <Crown className="size-5 text-gold" /> : <Sparkles className="size-5" />}
+              </SuzaniMedallion>
             </motion.div>
             <div>
               <div className="text-[13px] text-label-2">{t("currentPlan")}</div>
