@@ -8,23 +8,24 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/primitives";
 import { pingAI, refreshModels, toggleModel } from "@/app/actions/admin";
 import { cn } from "@/lib/cn";
+import { StarMark } from "@/components/decor/motifs";
 
 type Model = { id: string; name: string; pro: boolean; disabled: boolean; pausedUntil: number | null; lastError: string | null; latencyMs: number | null };
 type Provider = { id: string; label: string; configured: boolean; error: string | null; models: Model[] };
-type Log = { id: string; task: string; provider: string; model: string; ok: boolean; latencyMs: number; attempt: number; error: string | null; createdAt: string };
+type Log = {
+  id: string;
+  task: string;
+  provider: string;
+  model: string;
+  ok: boolean;
+  latencyMs: number;
+  attempt: number;
+  error: string | null;
+  createdAt: string;
+};
 type Ping = Awaited<ReturnType<typeof pingAI>>;
 
-export function AIPanel({
-  providers,
-  logs,
-  forceMock,
-  includePro,
-}: {
-  providers: Provider[];
-  logs: Log[];
-  forceMock: boolean;
-  includePro: boolean;
-}) {
+export function AIPanel({ providers, logs, forceMock, includePro }: { providers: Provider[]; logs: Log[]; forceMock: boolean; includePro: boolean }) {
   const t = useTranslations("admin");
   const [pending, start] = useTransition();
   const anyConfigured = providers.some((p) => p.configured);
@@ -44,7 +45,10 @@ export function AIPanel({
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-[19px] font-semibold">{t("chain")}</h2>
+          <h2 className="flex items-center gap-2 text-[19px] font-semibold">
+            <StarMark className="text-gold" />
+            {t("chain")}
+          </h2>
           <Button size="sm" variant="secondary" icon={RefreshCw} iconAnim="spin" loading={pending} onClick={() => start(() => refreshModels())}>
             {t("refresh")}
           </Button>
@@ -62,7 +66,10 @@ export function AIPanel({
       <PingBox />
 
       <section>
-        <h2 className="mb-3 text-[19px] font-semibold">{t("logs")}</h2>
+        <h2 className="mb-3 flex items-center gap-2 text-[19px] font-semibold">
+          <StarMark className="text-gold" />
+          {t("logs")}
+        </h2>
         <LogTable logs={logs} />
       </section>
     </div>
@@ -139,7 +146,10 @@ function PingBox() {
     });
   return (
     <section className="surface rounded-card p-5">
-      <h2 className="text-[19px] font-semibold">{t("ping")}</h2>
+      <h2 className="flex items-center gap-2 text-[19px] font-semibold">
+        <StarMark className="text-gold" />
+        {t("ping")}
+      </h2>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <input
           value={text}
@@ -202,9 +212,7 @@ function LogTable({ logs }: { logs: Log[] }) {
                 {l.provider}/{l.model}
                 {l.attempt > 1 && <span className="ml-1 text-warning">#{l.attempt}</span>}
               </td>
-              <td className="px-4 py-2">
-                {l.ok ? <CheckCircle2 className="size-4 text-success" /> : <XCircle className="size-4 text-danger" />}
-              </td>
+              <td className="px-4 py-2">{l.ok ? <CheckCircle2 className="size-4 text-success" /> : <XCircle className="size-4 text-danger" />}</td>
               <td className="px-4 py-2 tabular-nums">{l.latencyMs} ms</td>
               <td className="max-w-[260px] truncate px-4 py-2 text-danger" title={l.error ?? ""}>
                 {l.error}

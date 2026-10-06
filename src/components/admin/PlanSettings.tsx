@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { saveSettings } from "@/app/actions/admin";
 import { LIMIT_KEYS, PAID_TIERS, PERIODS, TIERS, discountSettingKey, limitSettingKey, priceSettingKey, tierLabel } from "@/lib/billing/catalog";
+import { StarMark } from "@/components/decor/motifs";
 
 /** Limits and prices of every plan. An empty limit means "unlimited", 0 means "not included". */
 export function PlanSettings({ settings }: { settings: Record<string, string> }) {
@@ -55,7 +56,10 @@ export function PlanSettings({ settings }: { settings: Record<string, string> })
     <div className="surface max-w-3xl rounded-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[19px] font-semibold">{t("plansTitle")}</h2>
+          <h2 className="flex items-center gap-2 text-[19px] font-semibold">
+            <StarMark className="text-gold" />
+            {t("plansTitle")}
+          </h2>
           <p className="mt-0.5 text-[13px] text-label-2">{t("plansHint")}</p>
         </div>
         <Button size="sm" loading={pending} icon={saved ? Check : undefined} onClick={save}>

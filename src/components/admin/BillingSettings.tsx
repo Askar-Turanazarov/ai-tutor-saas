@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { saveSettings } from "@/app/actions/admin";
 import { Switch } from "./Switch";
+import { StarMark } from "@/components/decor/motifs";
 
 const PROVIDERS = ["click", "card", "stripe"] as const;
 const FIELDS = [
@@ -40,7 +41,10 @@ export function BillingSettings({ settings }: { settings: Record<string, string>
     <div className="surface max-w-3xl rounded-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[19px] font-semibold">{t("billingSettings")}</h2>
+          <h2 className="flex items-center gap-2 text-[19px] font-semibold">
+            <StarMark className="text-gold" />
+            {t("billingSettings")}
+          </h2>
           <p className="mt-0.5 text-[13px] text-label-2">{t("billingSettingsHint")}</p>
         </div>
         <Button size="sm" loading={pending} icon={saved ? Check : undefined} onClick={save}>

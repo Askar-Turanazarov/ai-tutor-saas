@@ -1,12 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { animate, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Bot, CheckCircle2, Crown, GraduationCap, MessageSquare, Shuffle, Users, WifiOff, type LucideIcon } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Badge, Stagger, StaggerItem } from "@/components/ui/primitives";
+import { EmptyState } from "@/components/decor/EmptyState";
 import { tierLabel } from "@/lib/billing/catalog";
 import { cn } from "@/lib/cn";
+import { StarMark } from "@/components/decor/motifs";
 
 type Stats = { users: number; pro: number; messages: number; quizzes: number; calls: number; ok: number; fallbacks: number; mock: number };
 
@@ -41,7 +44,7 @@ export function Overview({
               <span className={cn("grid size-9 place-items-center rounded-[11px]", c.tone)}>
                 <c.icon className="size-[18px]" />
               </span>
-              <div className="mt-3 text-[28px] font-bold tabular-nums">{c.value.toLocaleString()}</div>
+              <CountUp value={c.value} className="mt-3 block text-[28px] font-bold tabular-nums" />
               <div className="text-[13px] text-label-2">{t(c.key)}</div>
             </motion.div>
           </StaggerItem>
@@ -51,13 +54,16 @@ export function Overview({
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="surface rounded-card p-5">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-[17px] font-semibold">{t("payments")}</h2>
+            <h2 className="flex items-center gap-2 text-[17px] font-semibold">
+              <StarMark className="text-gold" />
+              {t("payments")}
+            </h2>
             <Link href="/admin/billing" className="text-[14px] font-medium text-accent hover:underline">
               {t("billing")}
             </Link>
           </div>
           {payments.length === 0 ? (
-            <p className="mt-3 text-[14px] text-label-3">{t("empty")}</p>
+            <EmptyState className="mt-3" tone="gold" icon={<Crown />} text={t("empty")} />
           ) : (
             <ul className="mt-3 divide-y divide-separator">
               {payments.map((p) => (
@@ -79,9 +85,12 @@ export function Overview({
         </section>
 
         <section className="surface rounded-card p-5">
-          <h2 className="text-[17px] font-semibold">{t("statAiCalls")}</h2>
+          <h2 className="flex items-center gap-2 text-[17px] font-semibold">
+            <StarMark className="text-gold" />
+            {t("statAiCalls")}
+          </h2>
           {models.length === 0 ? (
-            <p className="mt-3 text-[14px] text-label-3">{t("empty")}</p>
+            <EmptyState className="mt-3" tone="teal" icon={<Bot />} text={t("empty")} />
           ) : (
             <ul className="mt-4 space-y-3">
               {models.map((m) => (
@@ -113,5 +122,26 @@ export function Overview({
         </section>
       </div>
     </div>
+  );
+}
+
+/** Number that counts up from zero on mount (static with reduced motion). */
+function CountUp({ value, className }: { value: number; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduce) {
+      el.textContent = value.toLocaleString();
+      return;
+    }
+    const c = animate(0, value, { duration: 0.9, ease: [0.22, 1, 0.36, 1], onUpdate: (v) => (el.textContent = Math.round(v).toLocaleString()) });
+    return () => c.stop();
+  }, [value, reduce]);
+  return (
+    <span ref={ref} className={className}>
+      {value.toLocaleString()}
+    </span>
   );
 }

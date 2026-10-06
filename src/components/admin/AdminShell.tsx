@@ -9,6 +9,7 @@ import { Logo } from "@/components/ui/brand";
 import { AccountMenu, PrefsMenu, type AccountUser } from "@/components/shell/menus";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import { iconAnims, spring } from "@/components/ui/motion";
+import { PageHeader } from "@/components/decor/PageHeader";
 import { cn } from "@/lib/cn";
 
 const TABS: { href: string; key: string; icon: LucideIcon; anim: keyof typeof iconAnims }[] = [
@@ -79,13 +80,8 @@ export function AdminShell({ user, children }: { user: AccountUser; children: Re
 }
 
 export function AdminTitle({ title, hint, children }: { title: string; hint?: string; children?: ReactNode }) {
-  return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-[28px] font-bold">{title}</h1>
-        {hint && <p className="mt-1 max-w-2xl text-[14px] text-label-2">{hint}</p>}
-      </div>
-      {children}
-    </div>
-  );
+  const pathname = usePathname();
+  const tab = [...TABS].reverse().find((x) => (x.href === "/admin" ? pathname === "/admin" : pathname.startsWith(x.href)));
+  const Icon = tab?.icon ?? Gauge;
+  return <PageHeader className="mb-6" title={title} subtitle={hint} icon={<Icon />} action={children} />;
 }

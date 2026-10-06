@@ -3,7 +3,8 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useFormatter, useTranslations } from "next-intl";
-import { AlertTriangle, CheckCircle2, FastForward, FileText, Gift, Play, Receipt, RotateCcw, Undo2, Users, Wallet, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FastForward, FileText, Gift, Inbox, Play, Receipt, RotateCcw, Undo2, Users, Wallet, XCircle } from "lucide-react";
+import { EmptyState } from "@/components/decor/EmptyState";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { Badge, Segmented, Stagger, StaggerItem } from "@/components/ui/primitives";
@@ -360,7 +361,11 @@ function ReceiptRow({ r, time }: { r: Rcp; time: string }) {
 
 function Empty() {
   const t = useTranslations("admin");
-  return <p className="surface rounded-card p-5 text-[14px] text-label-3">{t("empty")}</p>;
+  return (
+    <div className="surface rounded-card p-5">
+      <EmptyState tone="gold" icon={<Inbox />} text={t("empty")} />
+    </div>
+  );
 }
 
 function Table({ head, empty, children }: { head: string[]; empty: boolean; children: ReactNode }) {
