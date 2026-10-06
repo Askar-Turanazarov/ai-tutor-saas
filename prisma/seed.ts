@@ -120,7 +120,27 @@ async function main() {
           periodEnd: end,
         },
       });
-      await db.transaction.create({ data: { invoiceId: invoice.id, provider: "card", providerTxId: `seed_${user.id}`, state: "completed", amount } });
+      const tx = await db.transaction.create({ data: { invoiceId: invoice.id, provider: "card", providerTxId: `seed_${user.id}`, state: "completed", amount } });
+      // The same test receipt the mock OFD issues for a real payment (see lib/billing/fiscal.ts).
+      const vat = Math.round((amount * 12) / 112);
+      const item = { name: `Ustoz AI ${u.plan === "PRO" ? "Pro" : "Plus"}, ${months} мес.`, mxik: "10305008003000000", packageCode: "1545643", price: amount, qty: 1, vatPercent: 12, vat };
+      await db.receipt.create({
+        data: {
+          invoiceId: invoice.id,
+          transactionId: tx.id,
+          items: JSON.stringify([item]),
+          total: amount,
+          vatAmount: vat,
+          fiscalProvider: "mock-ofd",
+          fiscalStatus: "fiscalized",
+          fiscalizedAt: start,
+          terminalId: "TEST0000000001",
+          receiptNo: String(await db.receipt.count({ where: { fiscalStatus: "fiscalized" } }) + 1),
+          fiscalSign: String(100_000_000_000 + Math.floor(Math.random() * 899_999_999_999)),
+          attempts: 1,
+          createdAt: start,
+        },
+      });
     }
   }
   console.log(`Seeded ${TOPICS.length} topics, ${rows.length} lessons, ${items.length} chunks and ${users.length} users.`);

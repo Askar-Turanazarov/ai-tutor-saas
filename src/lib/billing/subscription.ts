@@ -4,6 +4,7 @@ import { db } from "../db";
 import { getAllSettings } from "../settings";
 import { FREE_LEVELS, type Level } from "../levels";
 import { notify } from "./notify";
+import { createReceipt } from "./fiscal";
 import {
   discountSettingKey,
   isPaidTier,
@@ -174,10 +175,11 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
       periodEnd: saved.currentPeriodEnd,
     },
   });
-  await completeTransaction(invoice, opts.txId ?? null, opts.raw);
+  const tx = await completeTransaction(invoice, opts.txId ?? null, opts.raw);
   // Other checkouts the user opened and abandoned are no longer payable.
   await db.invoice.updateMany({ where: { userId: invoice.userId, status: "pending", id: { not: invoice.id } }, data: { status: "canceled" } });
   await syncUserPlan(invoice.userId);
+  await createReceipt(invoice.id, tx.id);
   await notify(invoice.userId, renewal ? "renewed" : "payment_ok", {
     tier: tierLabel(tier),
     number: invoice.number,

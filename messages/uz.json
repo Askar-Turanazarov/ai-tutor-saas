@@ -452,7 +452,8 @@
     "invoiceNo": "Hisob",
     "paidAt": "Sana",
     "method": "Usul",
-    "months": "{n} oy"
+    "months": "{n} oy",
+    "openReceipt": "Chekni ochish"
   },
   "paywall": {
     "from": "{tier} va undan yuqori tarif",
@@ -579,7 +580,8 @@
     "cancelTitle": "Obunani bekor qilasizmi?",
     "cancelText": "Avtomatik uzaytirish oʻchadi. Barcha imkoniyatlar {date} gacha qoladi, keyin akkaunt Free ga oʻtadi. Natijalar va soʻzlar saqlanadi.",
     "keep": "Obunani qoldirish",
-    "cancelConfirm": "Bekor qilish"
+    "cancelConfirm": "Bekor qilish",
+    "receiptLink": "Chek"
   },
   "learn": {
     "listen": "Tinglash",
@@ -957,5 +959,28 @@
       "cta": "Obuna va toʻlovlar",
       "footer": "Bu xat sizda Ustoz AI hisobi borligi uchun yuborildi."
     }
+  },
+  "receipt": {
+    "title": "Kassa cheki",
+    "test": "Test chek — soliq idorasiga yuborilmagan",
+    "tin": "STIR",
+    "number": "Hisob",
+    "date": "Sana",
+    "mxik": "MXIK",
+    "packageCode": "Qadoq kodi",
+    "total": "Jami",
+    "vat": "Shu jumladan QQS {n}%",
+    "paidBy": "Toʻlov",
+    "status": "Fiskallashtirish",
+    "status_pending": "navbatda",
+    "status_fiscalized": "roʻyxatdan oʻtgan",
+    "status_failed": "xato, qayta urinamiz",
+    "status_skipped": "talab qilinmaydi",
+    "terminal": "Terminal",
+    "receiptNo": "Chek №",
+    "fiscalSign": "Fiskal belgi",
+    "qrHint": "Chekni tekshirish uchun skanerlang",
+    "back": "Hisobga",
+    "print": "Chop etish"
   }
 }

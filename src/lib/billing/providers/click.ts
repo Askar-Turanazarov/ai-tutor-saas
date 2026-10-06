@@ -175,6 +175,18 @@ export async function cardTokenVerify(token: string, smsCode: string, pan = "") 
   return { maskedPan: r.card_number };
 }
 
+/** Registers the fiscal receipt of a Click payment with the OFD (live mode only); amounts in tiyin. */
+export async function submitFiscalItems(paymentId: string, items: object[], receivedCard: number) {
+  return merchant<{ error_code: number }>("/payment/ofd_data/submit_items", {
+    service_id: Number(clickConfig().serviceId),
+    payment_id: Number(paymentId),
+    items,
+    received_ecash: 0,
+    received_cash: 0,
+    received_card: receivedCard,
+  });
+}
+
 export async function cardTokenDelete(token: string) {
   const cfg = clickConfig();
   if (!cfg.live) return;

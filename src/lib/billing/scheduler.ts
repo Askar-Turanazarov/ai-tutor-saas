@@ -3,6 +3,7 @@ import { db } from "../db";
 import { getAllSettings } from "../settings";
 import { tierLabel, type PaidTier, type Period } from "./catalog";
 import { notify } from "./notify";
+import { retryFailedReceipts } from "./fiscal";
 import { RENEW_AHEAD, autoRenews, isForever, priceFor, reconcile, syncUserPlan } from "./subscription";
 
 const HOUR = 60 * 60 * 1000;
@@ -70,6 +71,9 @@ export async function runBillingCycle(now = new Date()): Promise<BillingReport> 
     const voided = await db.invoice.updateMany({ where: { status: "pending", createdAt: { lt: stale } }, data: { status: "canceled" } });
     await db.transaction.updateMany({ where: { state: { in: ["created", "prepared"] }, createdAt: { lt: stale } }, data: { state: "canceled" } });
     report.cleaned = voided.count;
+
+    // 4. Receipts the OFD has not accepted yet.
+    report.receipts = await retryFailedReceipts();
 
     g.__billingLastRun = { at: now.toISOString(), report };
     return report;

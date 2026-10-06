@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, CreditCard, Crown, Receipt, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, CreditCard, Crown, FileText, Receipt, Sparkles, Trash2 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, Card, Sheet } from "@/components/ui/primitives";
@@ -169,7 +169,7 @@ export function BillingView({ data }: { data: BillingData }) {
                       {tierLabel(i.tier)} · {tb("months", { n: i.period })} <span className="text-label-3">· {t(`kind_${i.kind}`)}</span>
                     </span>
                     <span className="block text-[13px] text-label-2">
-                      {d(i.date)} · {PROVIDER[i.provider] ?? i.provider}
+                      {d(i.date)} · {PROVIDER[i.provider] ?? i.provider} · <span className="tabular-nums">{i.number}</span>
                     </span>
                   </span>
                   <span className="text-right">
@@ -177,6 +177,14 @@ export function BillingView({ data }: { data: BillingData }) {
                     <Badge tone={i.status === "paid" ? "success" : i.status === "failed" ? "danger" : "neutral"}>{t(`inv_${i.status}`)}</Badge>
                   </span>
                 </Link>
+                {i.receiptId && (
+                  <Link
+                    href={`/app/billing/receipt/${i.receiptId}`}
+                    className="-mt-1 mb-2 ml-auto flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[12.5px] font-medium text-accent hover:bg-accent-soft"
+                  >
+                    <FileText className="size-3.5" /> {t("receiptLink")}
+                  </Link>
+                )}
               </motion.li>
             ))}
           </ul>

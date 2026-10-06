@@ -31,6 +31,7 @@ export default async function Page({
     Object.assign(invoice, await db.invoice.findUniqueOrThrow({ where: { id: invoice.id } }));
   }
   const sub = await db.subscription.findUnique({ where: { userId: user.id } });
+  const slip = await db.receipt.findFirst({ where: { invoiceId: invoice.id, kind: "sale" }, select: { id: true } });
   const fmt = new Intl.DateTimeFormat(locale === "uz" ? "uz-Latn" : locale, { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Tashkent" });
   return (
     <BillingResult
@@ -39,11 +40,12 @@ export default async function Page({
       tier={tierLabel(invoice.tier)}
       until={sub ? fmt.format(sub.currentPeriodEnd) : ""}
       receipt={{
-        no: invoice.id.slice(-8).toUpperCase(),
+        no: invoice.number,
         amount: formatMoney(invoice.amount, invoice.currency, locale),
         date: fmt.format(invoice.paidAt ?? invoice.createdAt),
         provider: invoice.provider,
         period: invoice.period,
+        receiptId: slip?.id ?? null,
       }}
     />
   );

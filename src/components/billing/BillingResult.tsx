@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Ban, CircleCheck, CircleX, Loader2 } from "lucide-react";
+import { Ban, CircleCheck, CircleX, FileText, Loader2 } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/primitives";
@@ -25,7 +25,7 @@ export function BillingResult({
   reason: string | null;
   tier: string;
   until: string;
-  receipt: { no: string; amount: string; date: string; provider: string; period: number };
+  receipt: { no: string; amount: string; date: string; provider: string; period: number; receiptId: string | null };
 }) {
   const t = useTranslations("billing");
   const router = useRouter();
@@ -61,7 +61,7 @@ export function BillingResult({
 
         <dl className="mt-6 space-y-2 rounded-[16px] bg-fill p-4 text-left text-[14px]">
           {[
-            [t("invoiceNo"), `#${receipt.no}`],
+            [t("invoiceNo"), receipt.no],
             [tier, t("months", { n: receipt.period })],
             [t("method"), PROVIDER_LABEL[receipt.provider] ?? receipt.provider],
             [t("paidAt"), receipt.date],
@@ -77,7 +77,12 @@ export function BillingResult({
           </div>
         </dl>
 
-        <div className="mt-6">
+        <div className="mt-6 grid gap-2">
+          {receipt.receiptId && (
+            <ButtonLink href={`/app/billing/receipt/${receipt.receiptId}`} variant="secondary" size="lg" icon={FileText} className="w-full">
+              {t("openReceipt")}
+            </ButtonLink>
+          )}
           {status === "paid" || status === "pending" ? (
             <ButtonLink href="/app" size="lg" className="w-full">
               {t("toApp")}

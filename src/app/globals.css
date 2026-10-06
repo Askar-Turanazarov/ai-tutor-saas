@@ -215,3 +215,30 @@ h3 {
     transform: translateY(-10px) rotate(4deg);
   }
 }
+
+/* Printing a receipt: only the .print-area is put on paper. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 0 auto;
+    margin: 0 auto;
+    box-shadow: none !important;
+  }
+}
+
+/* Torn bottom edge of a paper receipt. */
+.receipt-paper {
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 16px 100%;
+}
+@media print {
+  .receipt-paper {
+    mask: none;
+  }
+}

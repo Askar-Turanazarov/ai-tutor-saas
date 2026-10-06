@@ -452,7 +452,8 @@
     "invoiceNo": "Invoice",
     "paidAt": "Date",
     "method": "Method",
-    "months": "{n, plural, one {# month} other {# months}}"
+    "months": "{n, plural, one {# month} other {# months}}",
+    "openReceipt": "View receipt"
   },
   "paywall": {
     "from": "{tier} plan and up",
@@ -579,7 +580,8 @@
     "cancelTitle": "Cancel the subscription?",
     "cancelText": "Auto-renewal turns off. Everything stays until {date}, then the account moves to Free. Your progress and words are kept.",
     "keep": "Keep subscription",
-    "cancelConfirm": "Cancel"
+    "cancelConfirm": "Cancel",
+    "receiptLink": "Receipt"
   },
   "learn": {
     "listen": "Listen",
@@ -957,5 +959,28 @@
       "cta": "Subscription & payments",
       "footer": "You received this email because you have an Ustoz AI account."
     }
+  },
+  "receipt": {
+    "title": "Receipt",
+    "test": "Test receipt — not sent to the tax office",
+    "tin": "TIN",
+    "number": "Invoice",
+    "date": "Date",
+    "mxik": "MXIK",
+    "packageCode": "Package code",
+    "total": "Total",
+    "vat": "Incl. VAT {n}%",
+    "paidBy": "Paid with",
+    "status": "Fiscalization",
+    "status_pending": "pending",
+    "status_fiscalized": "registered",
+    "status_failed": "failed, will retry",
+    "status_skipped": "not required",
+    "terminal": "Terminal",
+    "receiptNo": "Receipt no.",
+    "fiscalSign": "Fiscal sign",
+    "qrHint": "Scan to verify the receipt",
+    "back": "To invoice",
+    "print": "Print"
   }
 }

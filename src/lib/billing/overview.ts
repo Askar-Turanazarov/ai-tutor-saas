@@ -113,6 +113,8 @@ export async function plansData(user: { id: string; trialUsedAt: Date | null }):
 
 export type InvoiceView = {
   id: string;
+  number: string;
+  receiptId: string | null;
   tier: string;
   period: number;
   amount: number;
@@ -128,7 +130,12 @@ export async function billingData(userId: string) {
   const [sub, cards, invoices] = await Promise.all([
     db.subscription.findUnique({ where: { userId }, include: { paymentMethod: true } }),
     db.paymentMethod.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
-    db.invoice.findMany({ where: { userId, status: { not: "pending" } }, orderBy: { createdAt: "desc" }, take: 30 }),
+    db.invoice.findMany({
+      where: { userId, status: { not: "pending" } },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      include: { receipts: { where: { kind: "sale" }, select: { id: true }, take: 1 } },
+    }),
   ]);
   // The next automatic charge: the price of the plan that will be active after renewal.
   let next: { amount: number; currency: string; date: string } | null = null;
@@ -145,6 +152,8 @@ export async function billingData(userId: string) {
     invoices: invoices.map(
       (i): InvoiceView => ({
         id: i.id,
+        number: i.number,
+        receiptId: i.receipts[0]?.id ?? null,
         tier: i.tier,
         period: i.period,
         amount: i.amount,
