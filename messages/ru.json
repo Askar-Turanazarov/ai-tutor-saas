@@ -387,7 +387,7 @@
     "billing": "Подписки",
     "billingHint": "Подписки и платежи. Инструменты для проверки: перемотка времени, продления, возвраты.",
     "runRenewals": "Запустить биллинг-цикл",
-    "runRenewalsHint": "То же, что таймер раз в 5 минут и cron GET /api/cron/billing: автосписания за сутки до конца, напоминания, истечение, брошенные счета.",
+    "runRenewalsHint": "То же, что таймер раз в 5 минут и cron GET /api/cron/billing: автосписания за 2 дня до конца (попытки не чаще раза в 20 ч), напоминания, истечение, брошенные счета.",
     "renewResult": "Проверено: {checked}, продлено: {renewed}, ошибок оплаты: {failed}, истекло: {expired}, напоминаний: {reminded}, чеков: {receipts}",
     "subscriptions": "Подписки",
     "invoices": "Счета",
@@ -989,8 +989,13 @@
     "sub_expiring": {
       "title": "{tier} скоро закончится",
       "body": "Подписка {tier} действует до {until, date, long} — продлите её, чтобы не потерять доступ.",
-      "bodyAuto": "{until, date, long} спишем {amount, number} сум с карты {card} и продлим {tier} ещё на {months, plural, one {# месяц} few {# месяца} many {# месяцев} other {# месяца}}.",
+      "bodyAuto": "До {until, date, long} спишем {amount, number} сум с карты {card} и продлим {tier} ещё на {months, plural, one {# месяц} few {# месяца} many {# месяцев} other {# месяца}}.",
       "bodyTrial": "Пробный {tier} закончится {until, date, long} — оформите подписку, чтобы продолжить без ограничений."
+    },
+    "sub_ending": {
+      "title": "{tier} заканчивается",
+      "body": "Доступ к {tier} закончится {when, select, today {сегодня} other {завтра}} в {until, time, short}. Продлите подписку, чтобы не потерять доступ.",
+      "bodyTrial": "Пробный {tier} закончится {when, select, today {сегодня} other {завтра}} в {until, time, short}. Оформите подписку, чтобы продолжить без ограничений."
     },
     "sub_expired": {
       "title": "{tier} закончился",

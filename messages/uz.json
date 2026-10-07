@@ -387,7 +387,7 @@
     "billing": "Obunalar",
     "billingHint": "Obunalar va toʻlovlar. Tekshirish vositalari: vaqtni oldinga surish, uzaytirish, qaytarish.",
     "runRenewals": "Billing siklini ishga tushirish",
-    "runRenewalsHint": "5 daqiqalik taymer va cron GET /api/cron/billing bilan bir xil: tugashdan bir kun oldin avtoyechish, eslatmalar, muddat tugashi, tashlab ketilgan hisoblar.",
+    "runRenewalsHint": "5 daqiqalik taymer va cron GET /api/cron/billing bilan bir xil: tugashdan 2 kun oldin avtoyechish (urinishlar orasi kamida 20 soat), eslatmalar, muddat tugashi, tashlab ketilgan hisoblar.",
     "renewResult": "Tekshirildi: {checked}, uzaytirildi: {renewed}, toʻlov xatolari: {failed}, tugadi: {expired}, eslatmalar: {reminded}, cheklar: {receipts}",
     "subscriptions": "Obunalar",
     "invoices": "Hisoblar",
@@ -989,8 +989,13 @@
     "sub_expiring": {
       "title": "{tier} tez orada tugaydi",
       "body": "{tier} obunasi {until, date, long} gacha amal qiladi. Kirishni yoʻqotmaslik uchun uni uzaytiring.",
-      "bodyAuto": "{until, date, long} kuni {card} kartasidan {amount, number} soʻm yechib, {tier} ni yana {months} oyga uzaytiramiz.",
+      "bodyAuto": "{until, date, long} gacha {card} kartasidan {amount, number} soʻm yechib, {tier} ni yana {months} oyga uzaytiramiz.",
       "bodyTrial": "Sinov {tier} {until, date, long} kuni tugaydi. Cheklovlarsiz davom etish uchun obuna boʻling."
+    },
+    "sub_ending": {
+      "title": "{tier} tugayapti",
+      "body": "{tier} obunasi {when, select, today {bugun} other {ertaga}} soat {until, time, short} da tugaydi. Kirishni yoʻqotmaslik uchun uni uzaytiring.",
+      "bodyTrial": "Sinov {tier} {when, select, today {bugun} other {ertaga}} soat {until, time, short} da tugaydi. Cheklovlarsiz davom etish uchun obuna boʻling."
     },
     "sub_expired": {
       "title": "{tier} tugadi",

@@ -150,6 +150,7 @@ export async function applyPaidInvoice(invoiceId: string, opts: { txId?: string;
     pendingPeriod: null,
     notifiedSoonAt: null,
     notifiedEndAt: null,
+    notifiedLastDayAt: null,
     renewAttempts: 0,
     lastRenewAttemptAt: null,
     ...(upgrade || renewal
@@ -271,6 +272,7 @@ export async function startTrial(userId: string) {
     pendingPeriod: null,
     notifiedSoonAt: null,
     notifiedEndAt: null,
+    notifiedLastDayAt: null,
     renewAttempts: 0,
     lastRenewAttemptAt: null,
   };
@@ -319,6 +321,7 @@ export async function grantPlan(userId: string, tier: PaidTier | "FREE", days: n
     pendingPeriod: null,
     notifiedSoonAt: null,
     notifiedEndAt: null,
+    notifiedLastDayAt: null,
     renewAttempts: 0,
     lastRenewAttemptAt: null,
   };
@@ -329,11 +332,13 @@ export async function grantPlan(userId: string, tier: PaidTier | "FREE", days: n
 /* ───────────── Renewal ───────────── */
 
 const HOUR = 60 * 60 * 1000;
-/** Auto-renewal starts this long before the period ends, retries every 8 h, then once a day in grace. */
-export const RENEW_AHEAD = 24 * HOUR;
-const RETRY_BEFORE_END = 8 * HOUR;
-const RETRY_IN_GRACE = 24 * HOUR;
-const ATTEMPTS_BEFORE_END = 3;
+/**
+ * The billing cron runs once a day, so auto-renewal starts 48 h before the end: one try 1–2 days before,
+ * one in the last day, then one a day in grace. Tries are at least 20 h apart, so a run that is late or
+ * early by an hour still makes the next one; the faster local timer behaves the same way.
+ */
+export const RENEW_AHEAD = 48 * HOUR;
+const RETRY_INTERVAL = 20 * HOUR;
 
 /** Admin grants without an end date run until 2099 and are never charged or reminded about. */
 export const FOREVER = new Date("2099-12-31T00:00:00Z");
@@ -385,17 +390,15 @@ async function tryRenew(sub: Subscription, now: Date): Promise<Subscription | nu
  * Brings one subscription up to date: charges the saved card when renewal is due, moves it to
  * past_due with a grace period on failure (or when there is no card), and expires it after that.
  * Cheap when nothing is due, so it runs on every request (see getCurrentUser); `early` (the
- * billing timer) also renews in the last 24 hours before the end.
+ * billing cron) also renews in the last RENEW_AHEAD before the end.
  */
 export async function reconcile(sub: Subscription, now = new Date(), opts: { early?: boolean } = {}): Promise<Subscription> {
   if (sub.status === "expired" || sub.status === "canceled") return sub;
   const ended = sub.currentPeriodEnd <= now;
 
   if (autoRenews(sub)) {
-    const inGrace = sub.renewAttempts >= ATTEMPTS_BEFORE_END || ended;
     const window = (ended || (opts.early && sub.currentPeriodEnd.getTime() - now.getTime() <= RENEW_AHEAD)) && !(sub.graceUntil && sub.graceUntil <= now);
-    const wait = inGrace ? RETRY_IN_GRACE : RETRY_BEFORE_END;
-    const rested = !sub.lastRenewAttemptAt || now.getTime() - sub.lastRenewAttemptAt.getTime() >= wait;
+    const rested = !sub.lastRenewAttemptAt || now.getTime() - sub.lastRenewAttemptAt.getTime() >= RETRY_INTERVAL;
     if (window && rested) {
       const after = await tryRenew(sub, now);
       if (after) sub = after;

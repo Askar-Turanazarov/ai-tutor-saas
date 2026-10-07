@@ -387,7 +387,7 @@
     "billing": "Subscriptions",
     "billingHint": "Subscriptions and payments. Test tools: time travel, renewals, refunds.",
     "runRenewals": "Run billing cycle",
-    "runRenewalsHint": "Same as the 5-minute timer and cron GET /api/cron/billing: auto-renewals from a day before the end, reminders, expiry, abandoned invoices.",
+    "runRenewalsHint": "Same as the 5-minute timer and cron GET /api/cron/billing: auto-renewals from 2 days before the end (tries at least 20 h apart), reminders, expiry, abandoned invoices.",
     "renewResult": "Checked: {checked}, renewed: {renewed}, failed payments: {failed}, expired: {expired}, reminders: {reminded}, receipts: {receipts}",
     "subscriptions": "Subscriptions",
     "invoices": "Invoices",
@@ -989,8 +989,13 @@
     "sub_expiring": {
       "title": "{tier} ends soon",
       "body": "Your {tier} subscription is active until {until, date, long}. Renew it to keep access.",
-      "bodyAuto": "On {until, date, long} we'll charge {amount, number} UZS to card {card} and extend {tier} for {months, plural, one {# month} other {# months}}.",
+      "bodyAuto": "By {until, date, long} we'll charge {amount, number} UZS to card {card} and extend {tier} for {months, plural, one {# month} other {# months}}.",
       "bodyTrial": "Your {tier} trial ends on {until, date, long}. Subscribe to keep going without limits."
+    },
+    "sub_ending": {
+      "title": "{tier} ends {when, select, today {today} other {tomorrow}}",
+      "body": "Your {tier} access ends {when, select, today {today} other {tomorrow}} at {until, time, short}. Renew to keep it.",
+      "bodyTrial": "Your {tier} trial ends {when, select, today {today} other {tomorrow}} at {until, time, short}. Subscribe to keep going without limits."
     },
     "sub_expired": {
       "title": "{tier} has ended",

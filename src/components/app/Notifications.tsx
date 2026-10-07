@@ -15,6 +15,7 @@ export type ShellNotification = { id: string; type: string; params: string; crea
 
 const ICON: Record<string, { icon: LucideIcon; tone: string }> = {
   sub_expiring: { icon: Clock, tone: "bg-gold-soft text-gold" },
+  sub_ending: { icon: Clock, tone: "bg-danger-soft text-danger" },
   sub_expired: { icon: Crown, tone: "bg-fill text-label-2" },
   payment_ok: { icon: CircleCheck, tone: "bg-success-soft text-success" },
   renewed: { icon: RefreshCw, tone: "bg-teal-soft text-teal" },

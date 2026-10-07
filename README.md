@@ -95,8 +95,8 @@ Checkout saves the card (`setup_future_usage`), and renewals are charged off-ses
 
 **Renewals, reminders, notifications.** The billing job runs every 5 minutes inside the server (`src/instrumentation.ts`; `BILLING_TIMER="off"` disables it). It can also be called via `GET /api/cron/billing` with `Authorization: Bearer $CRON_SECRET` (for an external cron), or with the button in the admin panel. The job:
 
-- charges the saved card from 24 hours before the period ends: up to 3 attempts 8 hours apart, then once a day during the grace period;
-- sends a reminder `billing.noticeDays` days before the end (3 by default), saying whether the card will be charged;
+- charges the saved card from 48 hours before the period ends: one try 1–2 days before, one on the last day, then once a day during the grace period (tries at least 20 hours apart, so a daily cron is enough);
+- sends a reminder no later than `billing.noticeDays` days before the end (3 by default), saying whether the card will be charged, and, if nothing will renew it, an “ends today/tomorrow at HH:MM” notice on the last run;
 - moves an unpaid subscription to `past_due` and later back to Free, with a notification;
 - cancels checkouts abandoned for a day and retries fiscal receipts.
 
@@ -218,8 +218,8 @@ Checkout kartani saqlaydi (`setup_future_usage`), uzaytirishlarni esa boshqa usu
 
 **Uzaytirish, eslatmalar, bildirishnomalar.** Billing jarayoni server ichida har 5 daqiqada ishlaydi (`src/instrumentation.ts`; `BILLING_TIMER="off"` uni oʻchiradi). Uni `Authorization: Bearer $CRON_SECRET` bilan `GET /api/cron/billing` orqali (tashqi cron uchun) yoki admin paneldagi tugma bilan ham chaqirish mumkin. Jarayon:
 
-- davr tugashidan 24 soat oldin saqlangan kartadan yechadi: 8 soat oraliq bilan 3 tagacha urinish, soʻng imtiyozli davrda kuniga bir marta;
-- tugashdan `billing.noticeDays` kun oldin (standart 3) eslatma yuboradi, unda kartadan yechilishi yoki yechilmasligi aytiladi;
+- davr tugashidan 48 soat oldin saqlangan kartadan yechadi: 1–2 kun oldin bir urinish, oxirgi kuni bir urinish, soʻng imtiyozli davrda kuniga bir marta (urinishlar orasi kamida 20 soat, shuning uchun kuniga bir marta cron yetarli);
+- tugashdan eng kechi bilan `billing.noticeDays` kun oldin (standart 3) eslatma yuboradi, unda kartadan yechilishi yoki yechilmasligi aytiladi; hech narsa uzaytirmasa, oxirgi ishga tushishda «bugun/ertaga soat HH:MM da tugaydi» xabari keladi;
 - toʻlanmagan obunani `past_due` ga, keyin Free ga oʻtkazadi va xabar beradi;
 - bir kun tashlab ketilgan toʻlovlarni bekor qiladi va fiskal cheklarni qayta yuboradi.
 
@@ -341,8 +341,8 @@ Checkout сохраняет карту (`setup_future_usage`), а продлен
 
 **Продления, напоминания, уведомления.** Биллинг запускается внутри сервера раз в 5 минут (`src/instrumentation.ts`; `BILLING_TIMER="off"` выключает его). Его также можно вызвать через `GET /api/cron/billing` с заголовком `Authorization: Bearer $CRON_SECRET` (для внешнего cron) или кнопкой в админке. Биллинг:
 
-- списывает с сохранённой карты начиная за 24 часа до конца периода: до 3 попыток раз в 8 часов, потом раз в день в льготный период;
-- за `billing.noticeDays` дней до конца (по умолчанию 3) присылает напоминание, где сказано, спишется ли оплата с карты;
+- списывает с сохранённой карты начиная за 48 часов до конца периода: попытка за 1–2 дня, попытка в последний день, потом раз в день в льготный период (попытки не чаще раза в 20 часов, поэтому хватает cron раз в сутки);
+- не позже чем за `billing.noticeDays` дней до конца (по умолчанию 3) присылает напоминание, где сказано, спишется ли оплата с карты; если продлевать нечем — на последнем запуске сообщение «закончится сегодня/завтра в ЧЧ:ММ»;
 - переводит неоплаченную подписку в `past_due`, а затем на Free, с уведомлением;
 - отменяет оформления, брошенные на сутки, и повторяет фискализацию чеков.
 

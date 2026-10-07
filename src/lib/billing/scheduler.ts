@@ -7,6 +7,7 @@ import { retryFailedReceipts } from "./fiscal";
 import { RENEW_AHEAD, autoRenews, isForever, priceFor, reconcile, syncUserPlan } from "./subscription";
 
 const HOUR = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR;
 
 export type BillingReport = { checked: number; renewed: number; failed: number; expired: number; reminded: number; cleaned: number; receipts: number };
 
@@ -14,10 +15,14 @@ const g = globalThis as unknown as { __billingRunning?: boolean; __billingLastRu
 
 export const lastBillingRun = () => g.__billingLastRun ?? null;
 
+/** Calendar day in Tashkent, where the users are: decides "today" or "tomorrow". */
+const tashkentDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Tashkent" });
+
 /**
- * One pass of the billing engine: auto-renewals (from 24 h before the end), reminders,
- * expiry, abandoned checkouts. Runs from the timer in instrumentation.ts, GET /api/cron/billing
- * and the admin button; every step is idempotent, and a pass already running is skipped.
+ * One pass of the billing engine: auto-renewals (from RENEW_AHEAD before the end), reminders,
+ * expiry, abandoned checkouts. Runs from Vercel Cron once a day (GET /api/cron/billing), the local
+ * timer in instrumentation.ts and the admin button; every step is idempotent, and a pass already
+ * running is skipped. Windows are a day wider than the rule, so a daily run never misses a notice.
  */
 export async function runBillingCycle(now = new Date()): Promise<BillingReport> {
   const report: BillingReport = { checked: 0, renewed: 0, failed: 0, expired: 0, reminded: 0, cleaned: 0, receipts: 0 };
@@ -39,13 +44,31 @@ export async function runBillingCycle(now = new Date()): Promise<BillingReport> 
       await syncUserPlan(sub.userId);
     }
 
-    // 2. Reminder before the end: when and how much will be charged, or that access is about to end.
+    // 2a. Last notice, on the last run before access ends with nothing to renew it: "ends today/tomorrow at HH:MM".
+    const ending = await db.subscription.findMany({
+      where: { status: { in: ["active", "trialing", "past_due"] }, notifiedLastDayAt: null, currentPeriodEnd: { gt: now, lte: new Date(now.getTime() + DAY_MS) } },
+    });
+    for (const sub of ending) {
+      if (isForever(sub) || autoRenews(sub)) continue;
+      await notify(sub.userId, "sub_ending", {
+        tier: tierLabel(sub.tier),
+        until: sub.currentPeriodEnd.toISOString(),
+        when: tashkentDay(sub.currentPeriodEnd) === tashkentDay(now) ? "today" : "tomorrow",
+        trial: sub.status === "trialing",
+      });
+      // Also counts as the earlier reminder, so a short period doesn't get both at once.
+      await db.subscription.update({ where: { id: sub.id }, data: { notifiedLastDayAt: now, notifiedSoonAt: sub.notifiedSoonAt ?? now } });
+      report.reminded++;
+    }
+
+    // 2b. Reminder before the end: when and how much will be charged, or that access is about to end.
+    // Sent N to N+1 days ahead, so with a daily run it comes no later than N days before.
     const noticeDays = Number(s["billing.noticeDays"]) || 3;
     const soon = await db.subscription.findMany({
       where: {
         status: { in: ["active", "trialing", "past_due"] },
         notifiedSoonAt: null,
-        currentPeriodEnd: { gt: now, lte: new Date(now.getTime() + noticeDays * 24 * HOUR) },
+        currentPeriodEnd: { gt: now, lte: new Date(now.getTime() + (noticeDays + 1) * DAY_MS) },
       },
       include: { paymentMethod: true },
     });

@@ -231,6 +231,8 @@ model Subscription {
   /// Reminder and renewal bookkeeping for the billing cycle; reset on every paid period
   notifiedSoonAt     DateTime?
   notifiedEndAt      DateTime?
+  /// "Access ends today/tomorrow" was sent (no auto-renewal)
+  notifiedLastDayAt  DateTime?
   renewAttempts      Int            @default(0)
   lastRenewAttemptAt DateTime?
   createdAt          DateTime       @default(now())

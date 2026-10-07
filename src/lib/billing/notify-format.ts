@@ -1,4 +1,4 @@
-export const NOTIFY_TYPES = ["sub_expiring", "sub_expired", "payment_ok", "renewed", "payment_failed"] as const;
+export const NOTIFY_TYPES = ["sub_expiring", "sub_ending", "sub_expired", "payment_ok", "renewed", "payment_failed"] as const;
 export type NotifyType = (typeof NOTIFY_TYPES)[number];
 export type NotifyParams = Record<string, string | number | boolean>;
 
@@ -17,6 +17,7 @@ export function notifyValues(raw: string | NotifyParams): Record<string, string 
 /** Which message to use for the body: auto-renew reminders and trials have their own text. */
 export const bodyKey = (type: NotifyType, raw: string | NotifyParams) => {
   const p = parse(raw);
+  if (type === "sub_ending") return p.trial ? "bodyTrial" : "body";
   if (type !== "sub_expiring") return "body";
   return p.trial ? "bodyTrial" : p.autoRenew ? "bodyAuto" : "body";
 };
