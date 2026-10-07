@@ -8,6 +8,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { Logo } from "@/components/ui/brand";
 import { AccountMenu, PrefsMenu, type AccountUser } from "@/components/shell/menus";
 import { SiteHeader } from "@/components/shell/SiteHeader";
+import { SiteFooter } from "@/components/shell/SiteFooter";
 import { iconAnims, spring } from "@/components/ui/motion";
 import { PageHeader } from "@/components/decor/PageHeader";
 import { cn } from "@/lib/cn";
@@ -75,6 +76,7 @@ export function AdminShell({ user, children }: { user: AccountUser; children: Re
         className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8"
       >
         {children}
+        <SiteFooter className="mt-12" />
       </motion.main>
     </div>
   );

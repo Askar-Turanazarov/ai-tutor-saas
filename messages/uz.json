@@ -124,8 +124,7 @@
     "q3": "Kunlik limit tugasa nima boʻladi?",
     "a3": "Free tarifida mashgʻulotlar ertaga davom etadi: limit Toshkent vaqti bilan yarim tunda yangilanadi. Plus tarifida limit kattaroq, Pro tarifida esa umuman yoʻq.",
     "q4": "Obunani qanday toʻlash mumkin?",
-    "a4": "Uzcard yoki HUMO kartasi, Click orqali yoki Visa/Mastercard kartasi bilan. Bu oʻquv loyihasi: haqiqiy pul yechilmaydi.",
-    "footer": "© 2026 Ustoz AI · Toshkent, Oʻzbekiston"
+    "a4": "Uzcard yoki HUMO kartasi, Click orqali yoki Visa/Mastercard kartasi bilan. Bu oʻquv loyihasi: haqiqiy pul yechilmaydi."
   },
   "auth": {
     "loginTitle": "Xush kelibsiz",
@@ -1071,5 +1070,11 @@
       "resetCta": "Yangi parol oʻrnatish"
     },
     "verifyTitle": "Pochtani tasdiqlash"
+  },
+  "footer": {
+    "copyright": "© 2026 Ustoz AI / Askar · Toshkent, Oʻzbekiston",
+    "offer": "Ommaviy oferta",
+    "privacy": "Maxfiylik siyosati",
+    "legal": "Huquqiy hujjatlar"
   }
 }

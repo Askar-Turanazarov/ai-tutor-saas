@@ -6,9 +6,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Check, ChevronDown, Crown, Flag, Layers, MessagesSquare, Sparkles, Target } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Badge, Reveal } from "@/components/ui/primitives";
-import { Logo, LogoMark } from "@/components/ui/brand";
+import { LogoMark } from "@/components/ui/brand";
 import { spring } from "@/components/ui/motion";
 import { SiteHeader } from "@/components/shell/SiteHeader";
+import { SiteFooter } from "@/components/shell/SiteFooter";
 import { PrefsMenu } from "@/components/shell/menus";
 import { ChunkTag, Correction, Phrase, WordCard, type ChunkKind } from "@/components/learn/primitives";
 import { GirihField, IslimiBorder, MajolicaTile, TileBand } from "@/components/decor/motifs";
@@ -27,7 +28,7 @@ export function Landing({ loggedIn, pricing }: { loggedIn: boolean; pricing: Lan
       <Points />
       <Pricing pricing={pricing} />
       <Faq />
-      <Footer />
+      <SiteFooter full />
     </div>
   );
 }
@@ -494,18 +495,5 @@ function Faq() {
         ))}
       </div>
     </section>
-  );
-}
-
-function Footer() {
-  const t = useTranslations("landing");
-  return (
-    <footer>
-      <IslimiBorder className="mx-auto max-w-6xl px-6 text-accent/25" />
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-10 sm:flex-row sm:px-6">
-        <Logo />
-        <p className="text-[13px] text-label-2 sm:ml-auto">{t("footer")}</p>
-      </div>
-    </footer>
   );
 }

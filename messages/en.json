@@ -124,8 +124,7 @@
     "q3": "What happens when the daily limit runs out?",
     "a3": "On Free you continue tomorrow: the limit resets at midnight Tashkent time. Plus has a bigger limit, Pro has none.",
     "q4": "How do I pay for a subscription?",
-    "a4": "With an Uzcard or HUMO card, through Click, or with a Visa/Mastercard card. This is a study project: no real money is charged.",
-    "footer": "© 2026 Ustoz AI · Tashkent, Uzbekistan"
+    "a4": "With an Uzcard or HUMO card, through Click, or with a Visa/Mastercard card. This is a study project: no real money is charged."
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -1071,5 +1070,11 @@
       "resetCta": "Set a new password"
     },
     "verifyTitle": "Email confirmation"
+  },
+  "footer": {
+    "copyright": "© 2026 Ustoz AI / Askar · Tashkent, Uzbekistan",
+    "offer": "Public offer",
+    "privacy": "Privacy policy",
+    "legal": "Legal documents"
   }
 }

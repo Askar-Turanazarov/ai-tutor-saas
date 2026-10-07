@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { SiteFooter } from "@/components/shell/SiteFooter";
 import { useTranslations } from "next-intl";
 import { AudioLines, ChevronsUpDown, Crown, House, Layers, LayoutGrid, Medal, MessageCircle, PenLine, Route, Settings, Shield, Sparkles, Trophy, type LucideIcon } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -62,7 +63,10 @@ export function AppShell({
       <Sidebar user={user} isActive={isActive} pro={pro} notifications={notifications} />
       <MobileTopBar user={user} notifications={notifications} />
       <main className={cn("lg:pb-10 lg:pl-[276px]", focus ? "pb-6" : "pb-28")}>
-        <div className="mx-auto w-full max-w-5xl px-4 pt-5 sm:px-6 lg:pt-10">{children}</div>
+        <div className="mx-auto w-full max-w-5xl px-4 pt-5 sm:px-6 lg:pt-10">
+          {children}
+          <SiteFooter className="mt-12" />
+        </div>
       </main>
       {!focus && <TabBar isActive={isActive} />}
       <Celebrations {...celebrations} paused={focus} />
