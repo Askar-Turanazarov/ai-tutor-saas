@@ -9,6 +9,7 @@ import { limit } from "@/lib/billing/limits";
 import { pendingCelebrations } from "@/lib/gamification";
 import { AppShell } from "@/components/app/AppShell";
 import { UsageProvider } from "@/components/app/usage";
+import { VerifyBanner } from "@/components/app/VerifyBanner";
 
 export default async function AppLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -31,6 +32,7 @@ export default async function AppLayout({ children, params }: { children: ReactN
         celebrations={celebrations}
         notifications={notes.map((n) => ({ id: n.id, type: n.type, params: n.params, createdAt: n.createdAt.toISOString(), read: !!n.readAt }))}
       >
+        {!isGuest(user) && !user.emailVerifiedAt && !session?.imp && <VerifyBanner email={user.email} />}
         {children}
       </AppShell>
     </UsageProvider>

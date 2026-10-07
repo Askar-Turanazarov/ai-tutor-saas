@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { createSession, destroySession, getCurrentUser, getSession, hashPassword, isGuest, verifyPassword } from "@/lib/auth";
+import { sendVerifyEmail } from "@/lib/account/emails";
 import { redirect } from "@/i18n/navigation";
 import { getLocale } from "next-intl/server";
 
@@ -25,10 +26,12 @@ export async function register(_: AuthState, form: FormData): Promise<AuthState>
   // A guest who signs up keeps everything they've done so far.
   const current = await getCurrentUser();
   if (current && isGuest(current)) {
-    await db.user.update({ where: { id: current.id }, data: { name, email, passwordHash } });
+    const upgraded = await db.user.update({ where: { id: current.id }, data: { name, email, passwordHash } });
+    await sendVerifyEmail(upgraded);
     redirect({ href: current.onboarded ? "/app" : "/onboarding", locale });
   }
   const user = await db.user.create({ data: { name, email, passwordHash, locale } });
+  await sendVerifyEmail(user);
   await createSession(user.id);
   redirect({ href: "/onboarding", locale });
 }

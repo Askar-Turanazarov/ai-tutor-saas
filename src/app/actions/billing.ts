@@ -42,6 +42,7 @@ const refresh = () => revalidatePath("/", "layout");
 export async function startCheckout(input: { tier: string; period: number; provider: string; saveCard?: boolean }) {
   const user = await requireUser();
   if (isGuest(user)) return { error: "guest" as const };
+  if (!user.emailVerifiedAt) return { error: "unverified" as const };
   if (!isPaidTier(input.tier) || !isPeriod(input.period)) return { error: "bad_request" as const };
   const provider = getProvider(input.provider);
   if (!provider || !(await enabledProviders()).includes(provider)) return { error: "provider" as const };
@@ -66,6 +67,7 @@ export async function startCheckout(input: { tier: string; period: number; provi
 export async function payWithSavedCard(input: { tier: string; period: number; methodId: string }) {
   const user = await requireUser();
   if (isGuest(user)) return { error: "guest" as const };
+  if (!user.emailVerifiedAt) return { error: "unverified" as const };
   if (!isPaidTier(input.tier) || !isPeriod(input.period)) return { error: "bad_request" as const };
   const method = await db.paymentMethod.findFirst({ where: { id: input.methodId, userId: user.id } });
   const provider = method && getProvider(method.provider);

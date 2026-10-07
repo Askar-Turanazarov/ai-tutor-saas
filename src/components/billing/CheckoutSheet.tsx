@@ -65,7 +65,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
       if (method.cardId) {
         const res = await payWithSavedCard({ tier, period, methodId: method.cardId });
         if ("invoiceId" in res) return router.push(`/app/billing/${res.invoiceId}`);
-        return setError(t("checkoutError"));
+        return setError(res.error === "unverified" ? t("unverifiedError") : t("checkoutError"));
       }
       const res = await startCheckout({ tier, period, provider: method.provider, saveCard: SAVES_CARD.has(method.key) && save });
       if ("redirectUrl" in res && res.redirectUrl) {
@@ -73,7 +73,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
         window.location.assign(res.redirectUrl);
         return;
       }
-      setError(res.error === "guest" ? t("guestError") : t("checkoutError"));
+      setError(res.error === "guest" ? t("guestError") : res.error === "unverified" ? t("unverifiedError") : t("checkoutError"));
     });
 
   return (

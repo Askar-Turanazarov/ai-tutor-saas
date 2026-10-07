@@ -8,7 +8,7 @@ import { reconcileUser } from "./billing/subscription";
 const COOKIE = "ustoz_session";
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
 
-type SessionPayload = { uid: string; imp?: string };
+type SessionPayload = { uid: string; imp?: string; sv: number };
 
 export async function hashPassword(pw: string) {
   return bcrypt.hash(pw, 10);
@@ -18,8 +18,10 @@ export async function verifyPassword(pw: string, hash: string) {
   return bcrypt.compare(pw, hash);
 }
 
+/** Signs the session cookie; it carries the user's sessionVersion, so a password reset ends older sessions. */
 export async function createSession(uid: string, imp?: string) {
-  const token = await new SignJWT({ uid, ...(imp ? { imp } : {}) })
+  const { sessionVersion: sv } = await db.user.findUniqueOrThrow({ where: { id: uid }, select: { sessionVersion: true } });
+  const token = await new SignJWT({ uid, sv, ...(imp ? { imp } : {}) })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
@@ -42,7 +44,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
-    return { uid: String(payload.uid), imp: payload.imp ? String(payload.imp) : undefined };
+    return { uid: String(payload.uid), imp: payload.imp ? String(payload.imp) : undefined, sv: Number(payload.sv ?? 0) };
   } catch {
     return null;
   }
@@ -52,6 +54,7 @@ export async function getCurrentUser() {
   const s = await getSession();
   if (!s) return null;
   const user = await db.user.findUnique({ where: { id: s.uid }, include: { subscription: true } });
+  if (user && user.sessionVersion !== s.sv) return null;
   // Renewals and expiry are applied lazily, so the plan is always right without a cron job.
   return user ? reconcileUser(user) : null;
 }

@@ -18,6 +18,8 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     globalSetup: ["tests/setup/global.ts"],
     fileParallelism: false,
+    // next-intl imports "next/navigation" without an extension; let Vite resolve it.
+    server: { deps: { inline: ["next-intl"] } },
     testTimeout: 30_000,
     hookTimeout: 60_000,
     env: {

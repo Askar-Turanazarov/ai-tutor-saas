@@ -35,6 +35,9 @@ model User {
   /// JSON {from,to,rank} of the last settled week, shown once on the league page
   leagueLast       String?
   trialUsedAt      DateTime?
+  emailVerifiedAt  DateTime?
+  /// Bumped on password reset: sessions signed with an older version stop working
+  sessionVersion   Int              @default(0)
   stripeCustomerId String?
   createdAt        DateTime         @default(now())
   conversations    Conversation[]
@@ -56,6 +59,7 @@ model User {
   quests           DailyQuest[]
   notifications    Notification[]
   outbox           OutboxMessage[]
+  authTokens       AuthToken[]
 }
 
 model Conversation {
@@ -350,6 +354,20 @@ model OutboxMessage {
 
   @@index([userId, createdAt])
   @@index([createdAt])
+}
+
+/// One-time link token (email verification, password reset, Telegram linking). Only the SHA-256 is stored.
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // verify | reset | tg_link
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, kind])
 }
 
 /// A lexical chunk: the unit of vocabulary (collocation, phrasal verb, idiom, fixed phrase).

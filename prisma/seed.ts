@@ -53,9 +53,10 @@ async function main() {
   for (const u of users) {
     const user = await db.user.upsert({
       where: { email: u.email },
-      update: { role: u.role, plan: u.plan },
+      update: { role: u.role, plan: u.plan, emailVerifiedAt: new Date() },
       create: {
         ...u,
+        emailVerifiedAt: new Date(),
         onboarded: true,
         xp: u.plan === "FREE" ? 60 : 340,
         streak: u.plan === "FREE" ? 1 : 5,

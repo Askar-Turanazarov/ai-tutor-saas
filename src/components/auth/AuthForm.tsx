@@ -63,6 +63,11 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               error={fieldErr("password")}
               required
             />
+            {mode === "login" && (
+              <Link href="/forgot" className="mt-2 inline-block px-1 text-[13.5px] font-medium text-accent hover:underline">
+                {t("forgot")}
+              </Link>
+            )}
           </StaggerItem>
           <StaggerItem className="space-y-3 pt-2">
             <Button type="submit" size="lg" className="w-full px-4!" loading={pending} iconRight={ArrowRight}>

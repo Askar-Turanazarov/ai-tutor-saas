@@ -143,7 +143,8 @@
     "errName": "Enter your name",
     "errEmail": "Enter a valid email",
     "demoHint": "Demo accounts are listed in the README",
-    "guest": "Try without signing up"
+    "guest": "Try without signing up",
+    "forgot": "Forgot password?"
   },
   "onboarding": {
     "welcome": "Welcome, {name}!",
@@ -578,7 +579,8 @@
     "payAmount": "Pay {amount}",
     "checkoutError": "Couldn't start the payment. Try again or choose another method.",
     "guestError": "Create an account first to subscribe.",
-    "testMode": "Study project: no real money is charged"
+    "testMode": "Study project: no real money is charged",
+    "unverifiedError": "To pay for a subscription, confirm your email first: the link is in the message we sent."
   },
   "manage": {
     "title": "Subscription",
@@ -1035,5 +1037,39 @@
     "emulationTitle": "Email is in emulation mode",
     "emulationText": "SMTP_URL is not set: emails are not delivered and are stored only here. Each user sees their own emails in settings.",
     "smtpText": "Emails are sent through SMTP; a copy of each is kept here."
+  },
+  "account": {
+    "forgotTitle": "Reset your password",
+    "forgotSubtitle": "Enter your account email and we'll send a password reset link.",
+    "forgotSubmit": "Send link",
+    "forgotSent": "If an account with {email} exists, an email with a link is on its way. The link is valid for 60 minutes.",
+    "forgotDemo": "Study version: email runs in emulation mode; the message can be opened in Admin → Outbox.",
+    "backToLogin": "Back to sign in",
+    "toLogin": "Sign in",
+    "toApp": "Go to the app",
+    "resetTitle": "New password",
+    "resetSubtitle": "Choose a new password. Once saved, all other sessions will be signed out.",
+    "newPassword": "New password",
+    "resetSubmit": "Save and sign in",
+    "errShort": "Password must be at least 6 characters",
+    "linkBadTitle": "This link didn't work",
+    "resetInvalid": "The link is invalid, already used or expired. Request a new one.",
+    "requestNew": "Request a new link",
+    "verifyOkTitle": "Email confirmed",
+    "verifyOkText": "Thank you! You can now pay for a subscription.",
+    "verifyBadText": "The link is invalid, already used or expired. Send the email again from the app.",
+    "bannerText": "Confirm your email {email}: the link is in the message we sent. Payments are unavailable until then.",
+    "resend": "Send again",
+    "resent": "Email sent, check your inbox.",
+    "wait": "Already sent: you can resend in a minute.",
+    "mail": {
+      "verifySubject": "Confirm your email",
+      "verifyText": "To confirm {email}, press the button below. The link is valid for 24 hours.",
+      "verifyCta": "Confirm email",
+      "resetSubject": "Password reset",
+      "resetText": "We received a request to reset the password for {email}. The link is valid for 60 minutes. If it wasn't you, just ignore this email.",
+      "resetCta": "Set a new password"
+    },
+    "verifyTitle": "Email confirmation"
   }
 }

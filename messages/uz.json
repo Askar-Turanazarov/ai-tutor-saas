@@ -143,7 +143,8 @@
     "errName": "Ismingizni kiriting",
     "errEmail": "Toʻgʻri email kiriting",
     "demoHint": "Test akkauntlari README faylida",
-    "guest": "Roʻyxatdan oʻtmasdan sinab koʻrish"
+    "guest": "Roʻyxatdan oʻtmasdan sinab koʻrish",
+    "forgot": "Parolni unutdingizmi?"
   },
   "onboarding": {
     "welcome": "Xush kelibsiz, {name}!",
@@ -578,7 +579,8 @@
     "payAmount": "{amount} toʻlash",
     "checkoutError": "Toʻlovni boshlab boʻlmadi. Qayta urinib koʻring yoki boshqa usulni tanlang.",
     "guestError": "Obuna boʻlish uchun avval akkaunt yarating.",
-    "testMode": "Oʻquv loyiha: haqiqiy pul yechilmaydi"
+    "testMode": "Oʻquv loyiha: haqiqiy pul yechilmaydi",
+    "unverifiedError": "Obuna uchun toʻlash uchun avval pochtani tasdiqlang — havola xatda."
   },
   "manage": {
     "title": "Obuna",
@@ -1035,5 +1037,39 @@
     "emulationTitle": "Pochta emulyatsiya rejimida",
     "emulationText": "SMTP_URL berilmagan: xatlar hech qayerga yuborilmaydi va faqat shu yerda saqlanadi. Har bir foydalanuvchi oʻz xatlarini sozlamalarda koʻradi.",
     "smtpText": "Xatlar SMTP orqali yuboriladi, har birining nusxasi shu yerda saqlanadi."
+  },
+  "account": {
+    "forgotTitle": "Parolni tiklash",
+    "forgotSubtitle": "Akkaunt pochtasini kiriting — parolni tiklash havolasini yuboramiz.",
+    "forgotSubmit": "Havolani yuborish",
+    "forgotSent": "Agar {email} pochtali akkaunt mavjud boʻlsa, havolali xat allaqachon yuborildi. Havola 60 daqiqa amal qiladi.",
+    "forgotDemo": "Oʻquv versiya: pochta emulyatsiya rejimida ishlaydi, xatni admin panelidagi «Chiquvchi» boʻlimida ochish mumkin.",
+    "backToLogin": "Kirishga qaytish",
+    "toLogin": "Kirish",
+    "toApp": "Ilovaga oʻtish",
+    "resetTitle": "Yangi parol",
+    "resetSubtitle": "Yangi parol oʻylab toping. Saqlangandan soʻng boshqa barcha seanslar yakunlanadi.",
+    "newPassword": "Yangi parol",
+    "resetSubmit": "Saqlash va kirish",
+    "errShort": "Parol kamida 6 belgidan iborat boʻlishi kerak",
+    "linkBadTitle": "Havola ishlamadi",
+    "resetInvalid": "Havola yaroqsiz, allaqachon ishlatilgan yoki muddati oʻtgan. Yangisini soʻrang.",
+    "requestNew": "Yangi havola soʻrash",
+    "verifyOkTitle": "Pochta tasdiqlandi",
+    "verifyOkText": "Rahmat! Endi obuna uchun toʻlov qilishingiz mumkin.",
+    "verifyBadText": "Havola yaroqsiz, allaqachon ishlatilgan yoki muddati oʻtgan. Xatni ilovadan qayta yuboring.",
+    "bannerText": "{email} pochtasini tasdiqlang — havola xatda. Tasdiqlanmaguncha toʻlov mavjud emas.",
+    "resend": "Qayta yuborish",
+    "resent": "Xat yuborildi, pochtangizni tekshiring.",
+    "wait": "Xat allaqachon yuborilgan — bir daqiqadan soʻng qayta yuborish mumkin.",
+    "mail": {
+      "verifySubject": "Pochtani tasdiqlang",
+      "verifyText": "{email} manzilini tasdiqlash uchun quyidagi tugmani bosing. Havola 24 soat amal qiladi.",
+      "verifyCta": "Pochtani tasdiqlash",
+      "resetSubject": "Parolni tiklash",
+      "resetText": "{email} uchun parolni tiklash soʻrovini oldik. Havola 60 daqiqa amal qiladi. Agar bu siz boʻlmasangiz, xatga eʼtibor bermang.",
+      "resetCta": "Yangi parol oʻrnatish"
+    },
+    "verifyTitle": "Pochtani tasdiqlash"
   }
 }
