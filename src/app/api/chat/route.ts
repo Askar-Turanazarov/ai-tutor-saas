@@ -27,6 +27,9 @@ const Scenario = z.object({
   scripted: z.boolean().default(false),
 });
 
+// Streaming tutor replies can take a while; Vercel stops a function after maxDuration seconds.
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

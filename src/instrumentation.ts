@@ -1,6 +1,9 @@
-/** Starts the billing timer (renewals, reminders, expiry) inside the Node.js server process. */
+/**
+ * Starts the billing timer (renewals, reminders, expiry) inside the Node.js server process.
+ * Not on Vercel: functions there don't live between requests, Vercel Cron calls /api/cron/billing instead.
+ */
 export async function register() {
-  if (process.env.NEXT_RUNTIME !== "nodejs" || process.env.BILLING_TIMER === "off") return;
+  if (process.env.NEXT_RUNTIME !== "nodejs" || process.env.BILLING_TIMER === "off" || process.env.VERCEL) return;
   const g = globalThis as unknown as { __billingTimer?: ReturnType<typeof setInterval> };
   if (g.__billingTimer) return;
   const { runBillingCycle } = await import("./lib/billing/scheduler");
