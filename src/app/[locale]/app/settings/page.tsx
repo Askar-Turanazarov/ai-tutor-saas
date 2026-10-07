@@ -4,6 +4,7 @@ import { getCurrentUser, isGuest } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/plans";
 import { SettingsView } from "@/components/app/SettingsView";
+import { botConfigured } from "@/lib/messaging/telegram";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const t = await getTranslations({ locale: (await params).locale, namespace: "nav" });
@@ -24,6 +25,10 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
       level={user.level}
       pro={can(user, "allLevels")}
       plan={user.plan}
+      phone={user.phone}
+      phoneVerified={!!user.phoneVerifiedAt}
+      telegram={user.telegramChatId ? { username: user.telegramUsername, since: user.telegramLinkedAt!.toISOString(), notify: user.notifyTelegram } : null}
+      tgEmulator={!botConfigured()}
       mail={mail.map((m) => ({ id: m.id, channel: m.channel, to: m.to, subject: m.subject, body: m.body, status: m.status, error: m.error, at: m.createdAt.toISOString() }))}
     />
   );

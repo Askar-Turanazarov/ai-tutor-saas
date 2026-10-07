@@ -13,7 +13,9 @@
     "setup": "prisma db push && tsx --env-file=.env prisma/seed.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "tg:poll": "node scripts/tg-poll.mjs",
+    "tg:setup": "node scripts/tg-setup.mjs"
   },
   "dependencies": {
     "@heroui/react": "^3.2.6",

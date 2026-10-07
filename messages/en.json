@@ -311,7 +311,22 @@
     "guestCta": "Save my progress",
     "subtitle": "Profile, appearance and plan.",
     "mail": "Emails from Ustoz (demo)",
-    "mailHint": "Study version: emails sent to your address appear here, including email confirmation and password reset links."
+    "mailHint": "Study version: emails sent to your address appear here, including email confirmation and password reset links.",
+    "phone": "Phone",
+    "phoneHint": "Optional. Confirmed through Telegram.",
+    "phoneError": "Check the number: +998 XX XXX XX XX",
+    "phoneVerified": "Confirmed via Telegram",
+    "telegram": "Telegram",
+    "telegramHint": "Subscription and payment notifications in Telegram.",
+    "tgConnect": "Connect Telegram",
+    "tgConnected": "Connected {username}",
+    "tgSince": "since {date}",
+    "tgDisconnect": "Disconnect",
+    "tgNotify": "Notifications in Telegram",
+    "tgEmulator": "No bot is configured — connecting works through the in-app emulator.",
+    "tgOpenChat": "Open chat",
+    "tgWaiting": "Open the bot in Telegram and tap “Start”. This page will update by itself.",
+    "tgConfigError": "The bot isn’t fully configured: TELEGRAM_BOT_USERNAME is missing."
   },
   "admin": {
     "title": "Admin",
@@ -1089,5 +1104,29 @@
     "acceptRegister": "By signing up, you accept the <offer>Offer</offer> and the <privacy>Privacy Policy</privacy>.",
     "acceptPay": "By pressing “Pay”, you accept the <offer>Offer</offer>; the subscription renews automatically — turn it off in “<billing>Subscription</billing>”.",
     "acceptGateway": "By confirming the payment, you accept the <offer>Offer</offer>; the subscription renews automatically — turn it off in “Subscription”."
+  },
+  "telegram": {
+    "welcome": "Hello, {name}! Telegram is now connected to Ustoz AI — subscription and payment notifications will come here.\n\nTap “Share my number” to confirm the phone in your profile.",
+    "shareButton": "📱 Share my number",
+    "alreadyLinked": "This chat is already connected to {name}’s account. Notifications come here; you can change them in Settings on the website.",
+    "linkExpired": "The connection link has expired or was already used. Open Settings on the Ustoz AI website and tap “Connect Telegram” again.",
+    "notOwnContact": "Please send your own number with the “Share my number” button.",
+    "phoneSaved": "Number {phone} is saved to your profile and confirmed ✅",
+    "phoneConfirmed": "Number {phone} is confirmed ✅",
+    "phoneDiffersNote": "Thanks!",
+    "phoneDiffers": "Your Telegram number ({phone}) differs from the one in your profile ({profile}). Update the number in your profile?",
+    "updateButton": "Update my profile number",
+    "phoneUpdated": "Profile number updated: {phone} ✅",
+    "help": "I send Ustoz AI notifications: subscription renewals, payments and access ending. Settings are on the website, under Settings."
+  },
+  "tgEmu": {
+    "title": "Bot chat (emulator)",
+    "subtitle": "Training version: no Telegram bot is configured, so its messages are shown here.",
+    "bot": "Ustoz AI bot",
+    "start": "Start",
+    "share": "Share contact",
+    "phoneLabel": "Number “in Telegram”",
+    "empty": "No messages yet. Tap “Start”.",
+    "back": "Back to Settings"
   }
 }

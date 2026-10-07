@@ -41,6 +41,13 @@ model User {
   /// When and which edition of the offer and privacy policy the user accepted (sign-up or payment)
   termsAcceptedAt  DateTime?
   termsVersion     String?
+  /// E.164; phoneVerifiedAt is set when the same number is shared from Telegram
+  phone            String?
+  phoneVerifiedAt  DateTime?
+  telegramChatId   String?          @unique
+  telegramUsername String?
+  telegramLinkedAt DateTime?
+  notifyTelegram   Boolean          @default(true)
   stripeCustomerId String?
   createdAt        DateTime         @default(now())
   conversations    Conversation[]
@@ -350,7 +357,9 @@ model OutboxMessage {
   channel   String // email | telegram
   to        String
   subject   String?
-  body      String // email: HTML; telegram: text
+  body      String // email: HTML; telegram: text with Telegram HTML tags
+  /// telegram: JSON reply_markup (buttons), so the bot emulator can show them
+  meta      String?
   status    String // sent | emulated | failed
   error     String?
   createdAt DateTime @default(now())

@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 
 /** Throwaway user in the test database; removed by the caller (cascade cleans the rest). */
-export function makeUser(data: { plan?: string; level?: string; email?: string } = {}) {
+export function makeUser(data: { plan?: string; level?: string; email?: string; phone?: string } = {}) {
   return db.user.create({
-    data: { email: data.email ?? `t-${randomUUID()}@test.local`, name: "Test", passwordHash: "-", plan: data.plan ?? "FREE", level: data.level ?? "B1", onboarded: true, emailVerifiedAt: new Date() },
+    data: { email: data.email ?? `t-${randomUUID()}@test.local`, name: "Test", passwordHash: "-", plan: data.plan ?? "FREE", level: data.level ?? "B1", onboarded: true, emailVerifiedAt: new Date(), phone: data.phone },
   });
 }
 

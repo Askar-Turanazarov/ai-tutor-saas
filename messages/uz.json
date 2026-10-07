@@ -311,7 +311,22 @@
     "guestCta": "Natijani saqlash",
     "subtitle": "Profil, koʻrinish va tarif.",
     "mail": "Ustoz xatlari (demo)",
-    "mailHint": "Oʻquv versiya: pochtangizga yuborilgan xatlar shu yerda koʻrinadi, jumladan pochtani tasdiqlash va parolni tiklash havolalari."
+    "mailHint": "Oʻquv versiya: pochtangizga yuborilgan xatlar shu yerda koʻrinadi, jumladan pochtani tasdiqlash va parolni tiklash havolalari.",
+    "phone": "Telefon",
+    "phoneHint": "Ixtiyoriy. Telegram orqali tasdiqlanadi.",
+    "phoneError": "Raqamni tekshiring: +998 XX XXX XX XX",
+    "phoneVerified": "Telegram orqali tasdiqlangan",
+    "telegram": "Telegram",
+    "telegramHint": "Obuna va toʻlovlar haqidagi bildirishnomalar Telegramda.",
+    "tgConnect": "Telegramni ulash",
+    "tgConnected": "Ulangan: {username}",
+    "tgSince": "{date} dan",
+    "tgDisconnect": "Uzish",
+    "tgNotify": "Telegramdagi bildirishnomalar",
+    "tgEmulator": "Bot sozlanmagan — ulanish ilova ichidagi emulyator orqali ishlaydi.",
+    "tgOpenChat": "Chatni ochish",
+    "tgWaiting": "Telegramda botni oching va «Start» tugmasini bosing. Sahifa oʻzi yangilanadi.",
+    "tgConfigError": "Bot toʻliq sozlanmagan: TELEGRAM_BOT_USERNAME kerak."
   },
   "admin": {
     "title": "Admin",
@@ -1089,5 +1104,29 @@
     "acceptRegister": "Roʻyxatdan oʻtish orqali siz <offer>Oferta</offer> va <privacy>Maxfiylik siyosati</privacy>ni qabul qilasiz.",
     "acceptPay": "«Toʻlash» tugmasini bosish orqali siz <offer>Oferta</offer>ni qabul qilasiz; obuna avtomatik uzaytiriladi, oʻchirish — «<billing>Obuna</billing>» boʻlimida.",
     "acceptGateway": "Toʻlovni tasdiqlash orqali siz <offer>Oferta</offer>ni qabul qilasiz; obuna avtomatik uzaytiriladi, oʻchirish — «Obuna» boʻlimida."
+  },
+  "telegram": {
+    "welcome": "Assalomu alaykum, {name}! Telegram Ustoz AI ga ulandi — obuna va toʻlovlar haqidagi bildirishnomalar shu yerga keladi.\n\nProfildagi telefonni tasdiqlash uchun «Raqamni yuborish» tugmasini bosing.",
+    "shareButton": "📱 Raqamni yuborish",
+    "alreadyLinked": "Bu chat allaqachon {name} akkauntiga ulangan. Bildirishnomalar shu yerga keladi; ularni saytdagi «Sozlamalar» boʻlimida oʻzgartirish mumkin.",
+    "linkExpired": "Ulanish havolasining muddati tugagan yoki u allaqachon ishlatilgan. Ustoz AI saytida «Sozlamalar»ni oching va «Telegramni ulash» tugmasini yana bosing.",
+    "notOwnContact": "Iltimos, oʻz raqamingizni «Raqamni yuborish» tugmasi orqali yuboring.",
+    "phoneSaved": "{phone} raqami profilga saqlandi va tasdiqlandi ✅",
+    "phoneConfirmed": "{phone} raqami tasdiqlandi ✅",
+    "phoneDiffersNote": "Rahmat!",
+    "phoneDiffers": "Telegramdagi raqam ({phone}) profildagi raqamdan ({profile}) farq qiladi. Profildagi raqam yangilansinmi?",
+    "updateButton": "Profildagi raqamni yangilash",
+    "phoneUpdated": "Profildagi raqam yangilandi: {phone} ✅",
+    "help": "Men Ustoz AI bildirishnomalarini yuboraman: obunani uzaytirish, toʻlovlar va kirish muddati tugashi haqida. Sozlamalar — saytdagi «Sozlamalar» boʻlimida."
+  },
+  "tgEmu": {
+    "title": "Bot bilan chat (emulyator)",
+    "subtitle": "Oʻquv versiyasi: Telegram boti sozlanmagan, shuning uchun uning xabarlari shu yerda koʻrsatiladi.",
+    "bot": "Ustoz AI bot",
+    "start": "Boshlash",
+    "share": "Kontaktni yuborish",
+    "phoneLabel": "«Telegramdagi» raqam",
+    "empty": "Hozircha xabarlar yoʻq. «Boshlash» tugmasini bosing.",
+    "back": "Sozlamalarga qaytish"
   }
 }

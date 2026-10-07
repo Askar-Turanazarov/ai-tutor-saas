@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Check, Crown, Lock, LogOut, Settings2, Sparkles, UserPlus } from "lucide-react";
+import { BadgeCheck, Check, Crown, Lock, LogOut, Settings2, Sparkles, UserPlus } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Reveal } from "@/components/ui/primitives";
 import { LocaleSwitcher, ThemeSwitcher } from "@/components/ui/switchers";
@@ -11,6 +11,9 @@ import { spring } from "@/components/ui/motion";
 import { GirihField, StarMark, SuzaniMedallion } from "@/components/decor/motifs";
 import { PageHeader } from "@/components/decor/PageHeader";
 import { updateProfile } from "@/app/actions/user";
+import { updatePhone } from "@/app/actions/telegram";
+import { formatPhone, maskPhoneInput, normalizePhone } from "@/lib/account/phone";
+import { TelegramSettings, type TelegramState } from "./TelegramSettings";
 import { logout } from "@/app/actions/auth";
 import { LEVELS, FREE_LEVELS, type Level } from "@/lib/levels";
 import { cn } from "@/lib/cn";
@@ -32,18 +35,49 @@ function Section({ title, children, delay = 0 }: { title: string; children: Reac
   );
 }
 
-export function SettingsView({ name, email, level, pro, plan, mail }: { name: string; email: string; level: string; pro: boolean; plan: string; mail: OutboxItem[] }) {
+export function SettingsView({
+  name,
+  email,
+  level,
+  pro,
+  plan,
+  mail,
+  phone,
+  phoneVerified,
+  telegram,
+  tgEmulator,
+}: {
+  name: string;
+  email: string;
+  level: string;
+  pro: boolean;
+  plan: string;
+  mail: OutboxItem[];
+  phone: string | null;
+  phoneVerified: boolean;
+  telegram: TelegramState;
+  tgEmulator: boolean;
+}) {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
   const tl = useTranslations("levels");
   const [n, setN] = useState(name);
   const [lv, setLv] = useState(level);
+  const [ph, setPh] = useState(phone ? formatPhone(phone) : "");
+  const [phoneErr, setPhoneErr] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
-  const dirty = n.trim() !== name || lv !== level;
+  const guest = email.endsWith("@guest.local");
+  const phoneDirty = (ph.trim() ? normalizePhone(ph) : null) !== phone || (!!ph.trim() && !normalizePhone(ph));
+  const dirty = n.trim() !== name || lv !== level || phoneDirty;
 
   const save = () =>
     start(async () => {
+      if (phoneDirty) {
+        const r = await updatePhone(ph);
+        setPhoneErr("error" in r);
+        if ("error" in r) return;
+      }
       await updateProfile({ name: n, level: lv });
       setSaved(true);
       setTimeout(() => setSaved(false), 1800);
@@ -53,7 +87,7 @@ export function SettingsView({ name, email, level, pro, plan, mail }: { name: st
     <div className="mx-auto max-w-2xl space-y-7">
       <PageHeader title={t("title")} subtitle={t("subtitle")} icon={<Settings2 />} />
 
-      {email.endsWith("@guest.local") && (
+      {guest && (
         <Reveal>
           <div className="relative flex flex-col gap-4 overflow-hidden rounded-card bg-accent-soft p-5 sm:flex-row sm:items-center">
             <GirihField className="absolute inset-0 h-full w-full text-accent opacity-[0.12]" cell={44} />
@@ -77,6 +111,33 @@ export function SettingsView({ name, email, level, pro, plan, mail }: { name: st
           </div>
         </div>
         <Field label={t("name")} value={n} onChange={(e) => setN(e.target.value)} maxLength={60} />
+        {!guest && (
+          <div className="mt-4">
+            <Field
+              label={t("phone")}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="+998 90 123 45 67"
+              value={ph}
+              onChange={(e) => {
+                setPh(maskPhoneInput(e.target.value));
+                setPhoneErr(false);
+              }}
+              error={phoneErr ? t("phoneError") : undefined}
+            />
+            <p className="mt-1.5 flex items-center gap-1.5 px-1 text-[13px] text-label-2">
+              {phoneVerified && !phoneDirty ? (
+                <>
+                  <BadgeCheck className="size-4 text-success" />
+                  {t("phoneVerified")}
+                </>
+              ) : (
+                t("phoneHint")
+              )}
+            </p>
+          </div>
+        )}
         <div className="mt-5">
           <div className="mb-1.5 text-[13px] font-medium text-label-2">{t("level")}</div>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6" role="radiogroup" aria-label={t("level")}>
@@ -152,7 +213,13 @@ export function SettingsView({ name, email, level, pro, plan, mail }: { name: st
         </div>
       </Section>
 
-      {!email.endsWith("@guest.local") && (
+      {!guest && (
+        <Section title={t("telegram")} delay={0.12}>
+          <TelegramSettings telegram={telegram} emulator={tgEmulator} />
+        </Section>
+      )}
+
+      {!guest && (
         <Reveal delay={0.15}>
           <section>
             <h2 className="mb-1 flex items-center gap-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-label-3">
