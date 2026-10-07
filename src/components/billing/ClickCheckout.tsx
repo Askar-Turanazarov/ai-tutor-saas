@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { FlaskConical, MessageSquareText } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
+import { TermsNote } from "@/components/legal/TermsNote";
 import { Field } from "@/components/ui/primitives";
 import { cancelInvoice, clickEmulatePay } from "@/app/actions/billing";
 import { CardFace, brandOf, formatExp, groupCard } from "./CardCheckout";
@@ -128,6 +129,7 @@ export function ClickCheckout(props: { invoiceId: string; tier: string; period: 
                   <Button className="mt-5 w-full" size="lg" onClick={next} disabled={digits.length < 16 || exp.length < 5}>
                     {t("getCode")}
                   </Button>
+                  <TermsNote kind="gateway" className="mt-3" />
                 </motion.div>
               ) : (
                 <motion.div key="sms" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }}>

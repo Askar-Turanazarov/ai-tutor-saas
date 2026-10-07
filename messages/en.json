@@ -1076,5 +1076,18 @@
     "offer": "Public offer",
     "privacy": "Privacy policy",
     "legal": "Legal documents"
+  },
+  "legal": {
+    "banner": "Training project. This document is a training version and is not a public offer; Askar SaaS Corporation LLC is a fictitious entity; all details are fictitious.",
+    "edition": "Edition of {date}",
+    "contents": "Contents",
+    "print": "Print",
+    "other": {
+      "offer": "Privacy Policy",
+      "privacy": "Public Offer"
+    },
+    "acceptRegister": "By signing up, you accept the <offer>Offer</offer> and the <privacy>Privacy Policy</privacy>.",
+    "acceptPay": "By pressing “Pay”, you accept the <offer>Offer</offer>; the subscription renews automatically — turn it off in “<billing>Subscription</billing>”.",
+    "acceptGateway": "By confirming the payment, you accept the <offer>Offer</offer>; the subscription renews automatically — turn it off in “Subscription”."
   }
 }

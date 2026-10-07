@@ -38,6 +38,9 @@ model User {
   emailVerifiedAt  DateTime?
   /// Bumped on password reset: sessions signed with an older version stop working
   sessionVersion   Int              @default(0)
+  /// When and which edition of the offer and privacy policy the user accepted (sign-up or payment)
+  termsAcceptedAt  DateTime?
+  termsVersion     String?
   stripeCustomerId String?
   createdAt        DateTime         @default(now())
   conversations    Conversation[]

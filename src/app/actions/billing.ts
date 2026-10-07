@@ -20,6 +20,7 @@ import {
 import { declinesPayment, detectBrand, newCardToken, newTxId } from "@/lib/billing/providers/card-mock";
 import { EMULATOR_CARDS, EMULATOR_SMS, cardTokenDelete, cardTokenRequest, cardTokenVerify, clickConfig, clickSign } from "@/lib/billing/providers/click";
 import { detachCard } from "@/lib/billing/providers/stripe";
+import { termsAccepted } from "@/lib/legal";
 
 const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret-change-me");
 
@@ -44,6 +45,8 @@ export async function startCheckout(input: { tier: string; period: number; provi
   if (isGuest(user)) return { error: "guest" as const };
   if (!user.emailVerifiedAt) return { error: "unverified" as const };
   if (!isPaidTier(input.tier) || !isPeriod(input.period)) return { error: "bad_request" as const };
+  // Pressing "Pay" accepts the current edition of the offer.
+  await db.user.update({ where: { id: user.id }, data: termsAccepted() });
   const provider = getProvider(input.provider);
   if (!provider || !(await enabledProviders()).includes(provider)) return { error: "provider" as const };
 
@@ -69,6 +72,7 @@ export async function payWithSavedCard(input: { tier: string; period: number; me
   if (isGuest(user)) return { error: "guest" as const };
   if (!user.emailVerifiedAt) return { error: "unverified" as const };
   if (!isPaidTier(input.tier) || !isPeriod(input.period)) return { error: "bad_request" as const };
+  await db.user.update({ where: { id: user.id }, data: termsAccepted() });
   const method = await db.paymentMethod.findFirst({ where: { id: input.methodId, userId: user.id } });
   const provider = method && getProvider(method.provider);
   if (!method || !provider?.chargeToken) return { error: "provider" as const };

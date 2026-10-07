@@ -1076,5 +1076,18 @@
     "offer": "Ommaviy oferta",
     "privacy": "Maxfiylik siyosati",
     "legal": "Huquqiy hujjatlar"
+  },
+  "legal": {
+    "banner": "Oʻquv loyihasi. Hujjat oʻquv versiyasi boʻlib, ommaviy oferta hisoblanmaydi; «Askar SaaS Corporation» MChJ — toʻqima shaxs; rekvizitlar toʻqima.",
+    "edition": "{date} tahriri",
+    "contents": "Mundarija",
+    "print": "Chop etish",
+    "other": {
+      "offer": "Maxfiylik siyosati",
+      "privacy": "Ommaviy oferta"
+    },
+    "acceptRegister": "Roʻyxatdan oʻtish orqali siz <offer>Oferta</offer> va <privacy>Maxfiylik siyosati</privacy>ni qabul qilasiz.",
+    "acceptPay": "«Toʻlash» tugmasini bosish orqali siz <offer>Oferta</offer>ni qabul qilasiz; obuna avtomatik uzaytiriladi, oʻchirish — «<billing>Obuna</billing>» boʻlimida.",
+    "acceptGateway": "Toʻlovni tasdiqlash orqali siz <offer>Oferta</offer>ni qabul qilasiz; obuna avtomatik uzaytiriladi, oʻchirish — «Obuna» boʻlimida."
   }
 }

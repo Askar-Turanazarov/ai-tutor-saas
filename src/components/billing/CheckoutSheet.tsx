@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { CreditCard, Globe, Lock, Smartphone, Zap, type LucideIcon } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
+import { TermsNote } from "@/components/legal/TermsNote";
 import { Sheet } from "@/components/ui/primitives";
 import { payWithSavedCard, startCheckout } from "@/app/actions/billing";
 import { formatMoney, tierLabel, type PaidTier, type Period } from "@/lib/billing/catalog";
@@ -146,6 +147,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
       <Button size="lg" className="mt-5 w-full" icon={Lock} loading={pending} onClick={pay}>
         {t("payAmount", { amount: money(q.amount) })}
       </Button>
+      <TermsNote kind="pay" className="mt-3" />
       {error && <p className="mt-3 text-center text-[13px] text-danger">{error}</p>}
       <p className="mt-3 text-center text-[12px] text-label-3">{t("testMode")}</p>
     </Sheet>

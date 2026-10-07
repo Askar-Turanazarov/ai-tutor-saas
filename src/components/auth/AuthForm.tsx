@@ -11,6 +11,7 @@ import { LogoMark } from "@/components/ui/brand";
 import { IslimiBorder } from "@/components/decor/motifs";
 import { Crest, StageCard } from "@/components/decor/OrnamentStage";
 import { login, register, type AuthState } from "@/app/actions/auth";
+import { TermsNote } from "@/components/legal/TermsNote";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const t = useTranslations("auth");
@@ -73,6 +74,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             <Button type="submit" size="lg" className="w-full px-4!" loading={pending} iconRight={ArrowRight}>
               {mode === "login" ? tc("login") : tc("register")}
             </Button>
+            {mode === "register" && <TermsNote kind="register" />}
             <ButtonLink href="/app" variant="secondary" size="lg" className="w-full px-4! max-sm:text-[15px]" icon={Sparkles}>
               {t("guest")}
             </ButtonLink>
