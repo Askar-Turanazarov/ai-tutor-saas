@@ -93,20 +93,60 @@ To go live, set `CLICK_MODE="live"`, `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `C
 
 Checkout saves the card (`setup_future_usage`), and renewals are charged off-session by our own billing job, the same way as for the other methods. Nothing needs to be set up in the Stripe Dashboard.
 
-**Renewals, reminders, notifications.** The billing job runs every 5 minutes inside the server (`src/instrumentation.ts`; `BILLING_TIMER="off"` disables it). It can also be called via `GET /api/cron/billing` with `Authorization: Bearer $CRON_SECRET` (for an external cron), or with the button in the admin panel. The job:
+**Renewals, reminders, notifications.** Locally the billing job runs every 5 minutes inside the server (`src/instrumentation.ts`; `BILLING_TIMER="off"` disables it). On Vercel the timer is off and Vercel Cron calls the job once a day at 05:00 UTC (`vercel.json`); access still switches exactly on time, because every request checks the subscription. It can also be called via `GET /api/cron/billing` with `Authorization: Bearer $CRON_SECRET` (for an external cron), or with the button in the admin panel. The job:
 
 - charges the saved card from 48 hours before the period ends: one try 1–2 days before, one on the last day, then once a day during the grace period (tries at least 20 hours apart, so a daily cron is enough);
 - sends a reminder no later than `billing.noticeDays` days before the end (3 by default), saying whether the card will be charged, and, if nothing will renew it, an “ends today/tomorrow at HH:MM” notice on the last run;
 - moves an unpaid subscription to `past_due` and later back to Free, with a notification;
 - cancels checkouts abandoned for a day and retries fiscal receipts.
 
-Notifications appear under the bell in the app and on the **Today** banner, and are sent by email. With `SMTP_URL` they go through SMTP; without it they are saved as `.eml` files in `.mail/`. In **Admin → Subscriptions**, the "in 2 days / in 2 min / a minute ago" buttons let you try the whole cycle right away.
+Notifications appear under the bell in the app and on the **Today** banner, and are sent by email and, if it is linked, to Telegram (see below). In **Admin → Subscriptions**, the "in 2 days / in 2 min / a minute ago" buttons let you try the whole cycle right away.
 
 **Fiscal receipts.** In Uzbekistan every payment needs a receipt registered with the OFD (soliq.uz). Each paid invoice gets a printable receipt with a QR code at `/app/billing/receipt/…`. It shows the MXIK code, package code, 12% VAT, seller name and TIN (set in **Settings**).
 
 - `FISCAL_PROVIDER="mock-ofd"` (default) issues receipts marked TEST; nothing is sent to the tax office.
 - `click-ofd` sends Click payments to the OFD (`ofd_data/submit_items`) and needs a live merchant.
 - `none` turns receipts off.
+
+### Account
+
+- Sign-up sends a confirmation email (the link works for 24 hours). Until the email is confirmed, the app shows a banner with **Send again**, and payments are unavailable. Demo accounts are already confirmed.
+- **Forgot password?** on the login page sends a one-time link (60 minutes). Setting a new password signs out all other sessions.
+- **Settings:** phone number (optional), Telegram, and **Emails from Ustoz (demo)** — the emails sent to this account.
+- Public offer and privacy policy: `/legal/offer` and `/legal/privacy`, in all three languages. They are a study version: the company and its details are fictional. Sign-up and payment record that the user accepted them.
+
+### Email
+
+Every email and Telegram message is saved to the outbox (**Admin → Outbox**). With `SMTP_URL` (for example `smtps://user:pass@smtp.example.com:465`) and `MAIL_FROM`, emails are really sent. Without them the app works in emulation mode: nothing is delivered, and each user can read their own emails in **Settings**.
+
+### Telegram
+
+Users link Telegram in **Settings** and then get the same notifications in the bot, with an **Open** button.
+
+- **Without a bot** (no `TELEGRAM_BOT_TOKEN`): **Connect** opens a bot emulator in the app (`/app/settings/telegram`) with Start and **Share contact** buttons and the bot's messages.
+- **Real bot:** create it with [@BotFather](https://t.me/BotFather) and set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` and `TELEGRAM_WEBHOOK_SECRET`. Locally, run `npm run tg:poll` next to `npm run dev`: it fetches updates from Telegram and forwards them to the local webhook. **Connect** opens `t.me/<bot>?start=<code>` (a one-time code for 15 minutes); the bot then asks for the phone number and compares it with the profile.
+- **Mini App** (`/tg`): profile, plan, invoices with receipts and notifications, inside Telegram. It signs in with Telegram's `initData` (HMAC check). Locally, `/en/tg?dev=1` opens it in a normal browser with the current site session. A real Mini App needs HTTPS, so it works after deployment: `npm run tg:setup` sets the webhook, commands and menu button for `APP_URL`.
+
+### Tests
+
+```bash
+npm test                  # Vitest, a separate prisma/test.db; dev.db is not touched
+npx tsc --noEmit && npm run lint
+```
+
+The tests cover learning, exercises, XP and leagues, prices and payments, the whole billing cycle day by day, Click signatures, the Stripe webhook, email, password reset, Telegram and the legal pages. GitHub Actions (`.github/workflows/ci.yml`) runs the type check, lint, tests and build on every push.
+
+### Deploying to Vercel + Neon
+
+Locally the app keeps using SQLite. For Vercel, `npm run db:pg:schema` generates the Postgres schema `prisma/postgres/schema.prisma` from `prisma/schema.prisma`, and `prisma/postgres/migrations` holds its migrations. CI fails if the generated schema is out of date.
+
+1. Create a project at [neon.tech](https://neon.tech) and copy two connection strings: the **pooled** one (host with `-pooler`) and the **direct** one.
+2. Put them into `.env.neon` as `DATABASE_URL` (pooled) and `DIRECT_URL` (direct), then run `npm run db:pg:seed`: it applies the migrations and fills the database with the demo data. The file is ignored by git.
+3. Import the repository into [Vercel](https://vercel.com). The `vercel-build` script applies new migrations and builds the app.
+4. Set the environment variables: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `APP_URL` (the production URL), `CRON_SECRET`, plus AI, Stripe, Click, SMTP and Telegram keys as needed (see `.env.example`).
+5. After deploying: add the Stripe webhook `https://<domain>/api/payments/stripe/webhook`, run `npm run tg:setup` with the production `APP_URL`, and enter the Click URLs in the merchant cabinet.
+
+If the pooled connection fails with "prepared statement … already exists", add `&pgbouncer=true` to `DATABASE_URL`. To change the schema later: edit `prisma/schema.prisma` → `npm run db:push` (local) → `npm run db:pg:diff <name>` → review the SQL and commit; Vercel applies it on the next deploy.
 
 ### AI
 
@@ -123,11 +163,12 @@ Add keys to `.env`: `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`. Any
 - **Subscriptions** — revenue for 30 days, subscriptions, invoices, transactions, webhooks and receipts (with retry); test tools: "run the billing cycle", move the period end, "fast-forward to the period end / grace end", refunds, grant a plan for N days or forever.
 - **AI models** — fallback chain, paused models, a test request, call log.
 - **Topics** — which topics are Pro-only.
+- **Outbox** — emails and Telegram messages, with a preview.
 - **Settings** — limits and prices of every plan, discounts, trial and grace length, payment methods, reminder timing, receipt data, offline mode, provider order.
 
 ### Stack
 
-Next.js 15 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · Framer Motion · Prisma + SQLite · next-intl · Stripe · Web Speech API.
+Next.js 15 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · Framer Motion · Prisma + SQLite / Neon Postgres · Vitest · next-intl · Stripe · Web Speech API.
 
 ---
 
@@ -216,20 +257,60 @@ Haqiqiy rejimga oʻtish uchun `CLICK_MODE="live"`, `CLICK_SERVICE_ID`, `CLICK_ME
 
 Checkout kartani saqlaydi (`setup_future_usage`), uzaytirishlarni esa boshqa usullardagi kabi oʻzimizning billing jarayonimiz off-session yechadi. Stripe Dashboard da hech narsa sozlash shart emas.
 
-**Uzaytirish, eslatmalar, bildirishnomalar.** Billing jarayoni server ichida har 5 daqiqada ishlaydi (`src/instrumentation.ts`; `BILLING_TIMER="off"` uni oʻchiradi). Uni `Authorization: Bearer $CRON_SECRET` bilan `GET /api/cron/billing` orqali (tashqi cron uchun) yoki admin paneldagi tugma bilan ham chaqirish mumkin. Jarayon:
+**Uzaytirish, eslatmalar, bildirishnomalar.** Lokal muhitda billing jarayoni server ichida har 5 daqiqada ishlaydi (`src/instrumentation.ts`; `BILLING_TIMER="off"` uni oʻchiradi). Vercelʼda taymer oʻchiq, jarayonni Vercel Cron kuniga bir marta 05:00 UTC da chaqiradi (`vercel.json`); kirish huquqi baribir aynan oʻz vaqtida oʻzgaradi, chunki har bir soʻrov obunani tekshiradi. Uni `Authorization: Bearer $CRON_SECRET` bilan `GET /api/cron/billing` orqali (tashqi cron uchun) yoki admin paneldagi tugma bilan ham chaqirish mumkin. Jarayon:
 
 - davr tugashidan 48 soat oldin saqlangan kartadan yechadi: 1–2 kun oldin bir urinish, oxirgi kuni bir urinish, soʻng imtiyozli davrda kuniga bir marta (urinishlar orasi kamida 20 soat, shuning uchun kuniga bir marta cron yetarli);
 - tugashdan eng kechi bilan `billing.noticeDays` kun oldin (standart 3) eslatma yuboradi, unda kartadan yechilishi yoki yechilmasligi aytiladi; hech narsa uzaytirmasa, oxirgi ishga tushishda «bugun/ertaga soat HH:MM da tugaydi» xabari keladi;
 - toʻlanmagan obunani `past_due` ga, keyin Free ga oʻtkazadi va xabar beradi;
 - bir kun tashlab ketilgan toʻlovlarni bekor qiladi va fiskal cheklarni qayta yuboradi.
 
-Bildirishnomalar ilovadagi qoʻngʻiroqcha ostida va **Bugun** banerida koʻrinadi hamda emailga yuboriladi. `SMTP_URL` boʻlsa SMTP orqali, boʻlmasa `.mail/` papkasiga `.eml` fayl sifatida saqlanadi. **Admin → Obunalar** dagi “2 kundan keyin / 2 daqiqadan keyin / bir daqiqa oldin” tugmalari butun siklni darhol sinab koʻrish imkonini beradi.
+Bildirishnomalar ilovadagi qoʻngʻiroqcha ostida va **Bugun** banerida koʻrinadi hamda emailga va, ulangan boʻlsa, Telegramga yuboriladi (pastga qarang). **Admin → Obunalar** dagi “2 kundan keyin / 2 daqiqadan keyin / bir daqiqa oldin” tugmalari butun siklni darhol sinab koʻrish imkonini beradi.
 
 **Fiskal cheklar.** Oʻzbekistonda har bir toʻlov uchun OFD (soliq.uz) da roʻyxatdan oʻtgan chek kerak. Har bir toʻlangan hisob uchun `/app/billing/receipt/…` da QR-kodli, chop etsa boʻladigan chek yaratiladi. Unda MXIK, qadoq kodi, 12% QQS, sotuvchi nomi va STIR (**Sozlamalar** da) koʻrsatiladi.
 
 - `FISCAL_PROVIDER="mock-ofd"` (standart) TEST belgili cheklar beradi, soliq idorasiga hech narsa yuborilmaydi.
 - `click-ofd` Click toʻlovlarini OFD ga yuboradi (`ofd_data/submit_items`), haqiqiy merchant kerak.
 - `none` cheklarni oʻchiradi.
+
+### Hisob
+
+- Roʻyxatdan oʻtgach, tasdiqlash xati yuboriladi (havola 24 soat amal qiladi). Email tasdiqlanmaguncha ilovada **Yana yuborish** tugmali banner koʻrinadi va toʻlov mavjud emas. Demo hisoblar allaqachon tasdiqlangan.
+- Kirish sahifasidagi **Parolni unutdingizmi?** bir martalik havola yuboradi (60 daqiqa). Yangi parol oʻrnatilgach, boshqa barcha seanslar yopiladi.
+- **Sozlamalar:** telefon raqami (ixtiyoriy), Telegram va **Ustoz xatlari (demo)** — shu hisobga yuborilgan xatlar.
+- Ommaviy oferta va maxfiylik siyosati: `/legal/offer` va `/legal/privacy`, uchala tilda. Bular oʻquv versiyasi: kompaniya va uning rekvizitlari oʻylab topilgan. Roʻyxatdan oʻtish va toʻlovda foydalanuvchi ularni qabul qilgani qayd etiladi.
+
+### Pochta
+
+Har bir xat va Telegram xabari chiquvchi xabarlarga saqlanadi (**Admin → Chiquvchi**). `SMTP_URL` (masalan, `smtps://user:pass@smtp.example.com:465`) va `MAIL_FROM` boʻlsa, xatlar haqiqatan yuboriladi. Ular boʻlmasa, ilova emulyatsiya rejimida ishlaydi: hech narsa yetkazilmaydi, har bir foydalanuvchi oʻz xatlarini **Sozlamalar**da oʻqiy oladi.
+
+### Telegram
+
+Foydalanuvchi Telegramni **Sozlamalar**da ulaydi va keyin oʻsha bildirishnomalarni botda **Ochish** tugmasi bilan oladi.
+
+- **Botsiz** (`TELEGRAM_BOT_TOKEN` yoʻq): **Ulash** ilova ichida bot emulyatorini ochadi (`/app/settings/telegram`) — Start va **Kontaktni ulashish** tugmalari hamda bot xabarlari bilan.
+- **Haqiqiy bot:** [@BotFather](https://t.me/BotFather) orqali yarating va `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` ni kiriting. Lokal muhitda `npm run dev` yonida `npm run tg:poll` ni ishga tushiring: u Telegramdan yangilanishlarni olib, lokal webhookka uzatadi. **Ulash** `t.me/<bot>?start=<kod>` ni ochadi (15 daqiqalik bir martalik kod); soʻng bot telefon raqamini soʻraydi va profildagisi bilan solishtiradi.
+- **Mini App** (`/tg`): Telegram ichida profil, tarif, cheklar bilan hisob-fakturalar va bildirishnomalar. Telegramning `initData` si orqali kiradi (HMAC tekshiruvi). Lokal muhitda `/uz/tg?dev=1` uni oddiy brauzerda joriy sayt seansi bilan ochadi. Haqiqiy Mini App HTTPS talab qiladi, shuning uchun deploydan keyin ishlaydi: `npm run tg:setup` `APP_URL` uchun webhook, buyruqlar va menyu tugmasini oʻrnatadi.
+
+### Testlar
+
+```bash
+npm test                  # Vitest, alohida prisma/test.db; dev.db ga tegilmaydi
+npx tsc --noEmit && npm run lint
+```
+
+Testlar oʻqish, mashqlar, XP va ligalar, narxlar va toʻlovlar, kunma-kun butun billing sikli, Click imzolari, Stripe webhooki, pochta, parolni tiklash, Telegram va huquqiy sahifalarni qamraydi. GitHub Actions (`.github/workflows/ci.yml`) har bir pushda tiplar tekshiruvi, lint, testlar va buildni ishga tushiradi.
+
+### Vercel + Neon ga deploy
+
+Lokal muhitda ilova SQLite bilan ishlashda davom etadi. Vercel uchun `npm run db:pg:schema` `prisma/schema.prisma` dan Postgres sxemasini (`prisma/postgres/schema.prisma`) yaratadi, uning migratsiyalari `prisma/postgres/migrations` da. Yaratilgan sxema eskirgan boʻlsa, CI xato beradi.
+
+1. [neon.tech](https://neon.tech) da loyiha yarating va ikki ulanish satrini oling: **pooled** (hostida `-pooler` bor) va **direct**.
+2. Ularni `.env.neon` ga `DATABASE_URL` (pooled) va `DIRECT_URL` (direct) sifatida yozing, soʻng `npm run db:pg:seed` ni ishga tushiring: u migratsiyalarni qoʻllaydi va bazani demo maʼlumotlar bilan toʻldiradi. Fayl gitga tushmaydi.
+3. Repozitoriyni [Vercel](https://vercel.com) ga import qiling. `vercel-build` skripti yangi migratsiyalarni qoʻllaydi va ilovani yigʻadi.
+4. Muhit oʻzgaruvchilari: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `APP_URL` (prod manzil), `CRON_SECRET`, kerak boʻlsa AI, Stripe, Click, SMTP va Telegram kalitlari (`.env.example` ga qarang).
+5. Deploydan keyin: Stripe webhookini `https://<domen>/api/payments/stripe/webhook` ga qoʻshing, prod `APP_URL` bilan `npm run tg:setup` ni ishga tushiring va Click URL manzillarini merchant kabinetiga kiriting.
+
+Agar pooled ulanish “prepared statement … already exists” xatosini bersa, `DATABASE_URL` oxiriga `&pgbouncer=true` qoʻshing. Keyinchalik sxemani oʻzgartirish: `prisma/schema.prisma` ni tahrirlang → `npm run db:push` (lokal) → `npm run db:pg:diff <nom>` → SQLni tekshirib, commit qiling; Vercel uni keyingi deployda qoʻllaydi.
 
 ### AI
 
@@ -246,11 +327,12 @@ Bildirishnomalar ilovadagi qoʻngʻiroqcha ostida va **Bugun** banerida koʻrina
 - **Obunalar** — 30 kunlik tushum, obunalar, hisob-fakturalar, tranzaksiyalar, webhooklar va cheklar (qayta urinish bilan); test vositalari: “billing siklini ishga tushirish”, muddat oxirini koʻchirish, “davr / imtiyoz oxiriga oʻtkazish”, qaytarish, N kunga yoki muddatsiz tarif berish.
 - **AI modellar** — zaxira zanjiri, pauzadagi modellar, test soʻrovi, chaqiruvlar jurnali.
 - **Mavzular** — qaysi mavzular faqat Pro uchun.
+- **Chiquvchi** — xatlar va Telegram xabarlari, koʻrib chiqish bilan.
 - **Sozlamalar** — har bir tarifning limitlari va narxlari, chegirmalar, sinov va imtiyozli davr, toʻlov usullari, eslatma muddati, chek rekvizitlari, oflayn rejim, provayderlar tartibi.
 
 ### Texnologiyalar
 
-Next.js 15 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · Framer Motion · Prisma + SQLite · next-intl · Stripe · Web Speech API.
+Next.js 15 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · Framer Motion · Prisma + SQLite / Neon Postgres · Vitest · next-intl · Stripe · Web Speech API.
 
 ---
 
@@ -339,20 +421,60 @@ npm run dev               # http://localhost:3000
 
 Checkout сохраняет карту (`setup_future_usage`), а продления списывает off-session наш собственный биллинг, так же как для остальных способов. В Stripe Dashboard ничего настраивать не нужно.
 
-**Продления, напоминания, уведомления.** Биллинг запускается внутри сервера раз в 5 минут (`src/instrumentation.ts`; `BILLING_TIMER="off"` выключает его). Его также можно вызвать через `GET /api/cron/billing` с заголовком `Authorization: Bearer $CRON_SECRET` (для внешнего cron) или кнопкой в админке. Биллинг:
+**Продления, напоминания, уведомления.** Локально биллинг запускается внутри сервера раз в 5 минут (`src/instrumentation.ts`; `BILLING_TIMER="off"` выключает его). На Vercel таймер выключен, и биллинг раз в сутки в 05:00 UTC вызывает Vercel Cron (`vercel.json`); доступ при этом всё равно переключается точно в срок, потому что каждый запрос проверяет подписку. Его также можно вызвать через `GET /api/cron/billing` с заголовком `Authorization: Bearer $CRON_SECRET` (для внешнего cron) или кнопкой в админке. Биллинг:
 
 - списывает с сохранённой карты начиная за 48 часов до конца периода: попытка за 1–2 дня, попытка в последний день, потом раз в день в льготный период (попытки не чаще раза в 20 часов, поэтому хватает cron раз в сутки);
 - не позже чем за `billing.noticeDays` дней до конца (по умолчанию 3) присылает напоминание, где сказано, спишется ли оплата с карты; если продлевать нечем — на последнем запуске сообщение «закончится сегодня/завтра в ЧЧ:ММ»;
 - переводит неоплаченную подписку в `past_due`, а затем на Free, с уведомлением;
 - отменяет оформления, брошенные на сутки, и повторяет фискализацию чеков.
 
-Уведомления видны под колокольчиком в приложении и на баннере **«Сегодня»**, а также приходят на почту. С `SMTP_URL` письма уходят через SMTP, без него сохраняются как `.eml` в `.mail/`. В **Админке → Подписки** кнопки «через 2 дня / через 2 мин / минуту назад» позволяют сразу пройти весь цикл.
+Уведомления видны под колокольчиком в приложении и на баннере **«Сегодня»**, а также приходят на почту и, если он привязан, в Telegram (см. ниже). В **Админке → Подписки** кнопки «через 2 дня / через 2 мин / минуту назад» позволяют сразу пройти весь цикл.
 
 **Фискальные чеки.** В Узбекистане на каждый платёж нужен чек, зарегистрированный в ОФД (soliq.uz). На каждый оплаченный счёт создаётся чек с QR-кодом для печати: `/app/billing/receipt/…`. В нём указаны ИКПУ (MXIK), код упаковки, НДС 12 %, продавец и ИНН (задаются в **«Параметрах»**).
 
 - `FISCAL_PROVIDER="mock-ofd"` (по умолчанию) выдаёт чеки с пометкой ТЕСТОВЫЙ, в налоговую ничего не уходит.
 - `click-ofd` отправляет платежи Click в ОФД (`ofd_data/submit_items`), нужен боевой мерчант.
 - `none` выключает чеки.
+
+### Аккаунт
+
+- После регистрации приходит письмо для подтверждения почты (ссылка действует 24 часа). Пока почта не подтверждена, в приложении виден баннер с кнопкой **«Отправить ещё раз»**, а оплата недоступна. Демо-аккаунты уже подтверждены.
+- **«Забыли пароль?»** на странице входа присылает одноразовую ссылку (60 минут). После смены пароля все остальные сессии закрываются.
+- **Настройки:** телефон (необязательно), Telegram и **«Письма от Ustoz (демо)»** — письма, отправленные этому аккаунту.
+- Публичная оферта и политика конфиденциальности: `/legal/offer` и `/legal/privacy`, на трёх языках. Это учебная версия: компания и реквизиты вымышлены. При регистрации и оплате записывается, что пользователь их принял.
+
+### Почта
+
+Каждое письмо и сообщение в Telegram сохраняется в исходящих (**Админка → Исходящие**). С `SMTP_URL` (например, `smtps://user:pass@smtp.example.com:465`) и `MAIL_FROM` письма действительно отправляются. Без них работает эмуляция: ничего не доставляется, а каждый пользователь видит свои письма в **«Настройках»**.
+
+### Telegram
+
+Пользователь привязывает Telegram в **«Настройках»** и получает в боте те же уведомления с кнопкой **«Открыть»**.
+
+- **Без бота** (нет `TELEGRAM_BOT_TOKEN`): **«Подключить»** открывает эмулятор бота в приложении (`/app/settings/telegram`) с кнопками Start и **«Поделиться контактом»** и сообщениями бота.
+- **Настоящий бот:** создайте его через [@BotFather](https://t.me/BotFather) и задайте `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` и `TELEGRAM_WEBHOOK_SECRET`. Локально рядом с `npm run dev` запустите `npm run tg:poll`: он забирает обновления у Telegram и передаёт их на локальный вебхук. **«Подключить»** открывает `t.me/<бот>?start=<код>` (одноразовый код на 15 минут); затем бот просит номер телефона и сверяет его с профилем.
+- **Mini App** (`/tg`): профиль, тариф, счета с чеками и уведомления прямо в Telegram. Вход по `initData` от Telegram (проверка HMAC). Локально `/ru/tg?dev=1` открывает его в обычном браузере с текущей сессией сайта. Настоящему Mini App нужен HTTPS, поэтому он заработает после деплоя: `npm run tg:setup` ставит вебхук, команды и кнопку меню для `APP_URL`.
+
+### Тесты
+
+```bash
+npm test                  # Vitest, отдельная prisma/test.db; dev.db не трогается
+npx tsc --noEmit && npm run lint
+```
+
+Тесты покрывают обучение, упражнения, XP и лиги, цены и оплату, весь биллинг-цикл по дням, подписи Click, вебхук Stripe, почту, сброс пароля, Telegram и юридические страницы. GitHub Actions (`.github/workflows/ci.yml`) на каждый push запускает проверку типов, линтер, тесты и сборку.
+
+### Деплой на Vercel + Neon
+
+Локально приложение работает на SQLite, как и раньше. Для Vercel `npm run db:pg:schema` генерирует из `prisma/schema.prisma` схему Postgres `prisma/postgres/schema.prisma`, а её миграции лежат в `prisma/postgres/migrations`. Если сгенерированная схема устарела, CI падает.
+
+1. Создайте проект на [neon.tech](https://neon.tech) и возьмите две строки подключения: **pooled** (в хосте есть `-pooler`) и **direct**.
+2. Запишите их в `.env.neon` как `DATABASE_URL` (pooled) и `DIRECT_URL` (direct) и выполните `npm run db:pg:seed`: он применит миграции и заполнит базу демо-данными. Файл не попадает в git.
+3. Импортируйте репозиторий в [Vercel](https://vercel.com). Скрипт `vercel-build` применяет новые миграции и собирает приложение.
+4. Переменные окружения: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `APP_URL` (адрес прода), `CRON_SECRET`, а также по необходимости ключи AI, Stripe, Click, SMTP и Telegram (см. `.env.example`).
+5. После деплоя: добавьте вебхук Stripe `https://<домен>/api/payments/stripe/webhook`, выполните `npm run tg:setup` с прод-`APP_URL` и укажите адреса Click в кабинете мерчанта.
+
+Если pooled-подключение падает с ошибкой «prepared statement … already exists», добавьте в конец `DATABASE_URL` `&pgbouncer=true`. Как менять схему потом: правка `prisma/schema.prisma` → `npm run db:push` (локально) → `npm run db:pg:diff <имя>` → проверить SQL и закоммитить; Vercel применит миграцию при следующем деплое.
 
 ### AI
 
@@ -369,8 +491,9 @@ Checkout сохраняет карту (`setup_future_usage`), а продлен
 - **Подписки** — выручка за 30 дней, подписки, счета, транзакции, вебхуки и чеки (с повтором); инструменты для проверки: «запустить биллинг-цикл», перенос конца срока, «перемотать к концу периода / льготы», возврат, выдать тариф на N дней или навсегда.
 - **AI-модели** — цепочка фолбэка, модели на паузе, тестовый запрос, журнал вызовов.
 - **Темы** — какие темы доступны только в Pro.
+- **Исходящие** — письма и сообщения в Telegram с просмотром.
 - **Параметры** — лимиты и цены каждого тарифа, скидки, пробный и льготный период, способы оплаты, срок напоминания, реквизиты чека, офлайн-режим, порядок провайдеров.
 
 ### Стек
 
-Next.js 15 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · Framer Motion · Prisma + SQLite · next-intl · Stripe · Web Speech API.
+Next.js 15 (App Router, Turbopack) · TypeScript · Tailwind CSS v4 · Framer Motion · Prisma + SQLite / Neon Postgres · Vitest · next-intl · Stripe · Web Speech API.
