@@ -1128,5 +1128,28 @@
     "phoneLabel": "Номер «в Telegram»",
     "empty": "Сообщений пока нет. Нажмите «Начать».",
     "back": "Назад к настройкам"
+  },
+  "tg": {
+    "title": "Ustoz в Telegram",
+    "subtitle": "Аккаунт и подписка",
+    "profile": "Профиль",
+    "xp": "{n} XP",
+    "streak": "{n, plural, one {# день} few {# дня} many {# дней} other {# дня}} подряд",
+    "autoRenew": "Автопродление",
+    "on": "Включено",
+    "off": "Выключено",
+    "card": "Карта",
+    "notifications": "Уведомления",
+    "noNotifications": "Уведомлений пока нет.",
+    "openApp": "Открыть Ustoz",
+    "plans": "Тарифы",
+    "openSettings": "Открыть настройки",
+    "retry": "Повторить",
+    "outsideTitle": "Откройте в Telegram",
+    "outsideText": "Эта страница работает внутри Telegram: откройте её кнопкой меню в чате с ботом Ustoz.",
+    "unlinkedTitle": "Подключите Telegram",
+    "unlinkedText": "Этот Telegram не привязан к аккаунту. Подключите его в настройках сайта — раздел «Telegram».",
+    "errorTitle": "Не удалось загрузить",
+    "errorText": "Проверьте соединение и попробуйте ещё раз."
   }
 }

@@ -1128,5 +1128,28 @@
     "phoneLabel": "Number “in Telegram”",
     "empty": "No messages yet. Tap “Start”.",
     "back": "Back to Settings"
+  },
+  "tg": {
+    "title": "Ustoz in Telegram",
+    "subtitle": "Account and subscription",
+    "profile": "Profile",
+    "xp": "{n} XP",
+    "streak": "{n, plural, one {# day} other {# days}} in a row",
+    "autoRenew": "Auto-renewal",
+    "on": "On",
+    "off": "Off",
+    "card": "Card",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications yet.",
+    "openApp": "Open Ustoz",
+    "plans": "Plans",
+    "openSettings": "Open settings",
+    "retry": "Try again",
+    "outsideTitle": "Open in Telegram",
+    "outsideText": "This page works inside Telegram: open it with the menu button in the chat with the Ustoz bot.",
+    "unlinkedTitle": "Connect Telegram",
+    "unlinkedText": "This Telegram account isn't linked yet. Connect it in the site settings, under “Telegram”.",
+    "errorTitle": "Couldn't load",
+    "errorText": "Check your connection and try again."
   }
 }

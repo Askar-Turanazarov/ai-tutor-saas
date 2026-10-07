@@ -1128,5 +1128,28 @@
     "phoneLabel": "«Telegramdagi» raqam",
     "empty": "Hozircha xabarlar yoʻq. «Boshlash» tugmasini bosing.",
     "back": "Sozlamalarga qaytish"
+  },
+  "tg": {
+    "title": "Ustoz Telegramda",
+    "subtitle": "Akkaunt va obuna",
+    "profile": "Profil",
+    "xp": "{n} XP",
+    "streak": "{n} kun ketma-ket",
+    "autoRenew": "Avtoyangilash",
+    "on": "Yoqilgan",
+    "off": "Oʻchirilgan",
+    "card": "Karta",
+    "notifications": "Bildirishnomalar",
+    "noNotifications": "Hozircha bildirishnomalar yoʻq.",
+    "openApp": "Ustozni ochish",
+    "plans": "Tariflar",
+    "openSettings": "Sozlamalarni ochish",
+    "retry": "Qayta urinish",
+    "outsideTitle": "Telegramda oching",
+    "outsideText": "Bu sahifa Telegram ichida ishlaydi: uni Ustoz boti bilan chatdagi menyu tugmasi orqali oching.",
+    "unlinkedTitle": "Telegramni ulang",
+    "unlinkedText": "Bu Telegram akkauntga bogʻlanmagan. Uni sayt sozlamalarida, «Telegram» boʻlimida ulang.",
+    "errorTitle": "Yuklab boʻlmadi",
+    "errorText": "Internet aloqasini tekshirib, qayta urinib koʻring."
   }
 }
