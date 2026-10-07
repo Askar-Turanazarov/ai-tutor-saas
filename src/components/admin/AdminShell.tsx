@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Cpu, Gauge, LayoutGrid, SlidersHorizontal, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Cpu, Gauge, LayoutGrid, Mail, SlidersHorizontal, Users, Wallet, type LucideIcon } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Logo } from "@/components/ui/brand";
 import { AccountMenu, PrefsMenu, type AccountUser } from "@/components/shell/menus";
@@ -16,6 +16,7 @@ const TABS: { href: string; key: string; icon: LucideIcon; anim: keyof typeof ic
   { href: "/admin", key: "overview", icon: Gauge, anim: "tilt" },
   { href: "/admin/users", key: "users", icon: Users, anim: "bounce" },
   { href: "/admin/billing", key: "billing", icon: Wallet, anim: "pop" },
+  { href: "/admin/outbox", key: "outbox", icon: Mail, anim: "nudge" },
   { href: "/admin/ai", key: "ai", icon: Cpu, anim: "spin" },
   { href: "/admin/content", key: "content", icon: LayoutGrid, anim: "pop" },
   { href: "/admin/settings", key: "settings", icon: SlidersHorizontal, anim: "wiggle" },

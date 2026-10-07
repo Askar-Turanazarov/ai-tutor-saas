@@ -309,7 +309,9 @@
     "guestTitle": "You're learning as a guest",
     "guestText": "Create an account to keep your progress and sign in from any device.",
     "guestCta": "Save my progress",
-    "subtitle": "Profile, appearance and plan."
+    "subtitle": "Profile, appearance and plan.",
+    "mail": "Emails from Ustoz (demo)",
+    "mailHint": "Study version: emails sent to your address appear here, including email confirmation and password reset links."
   },
   "admin": {
     "title": "Admin",
@@ -431,7 +433,9 @@
     "set_mxik": "MXIK code",
     "set_packageCode": "Package code",
     "set_sellerName": "Seller",
-    "set_sellerTin": "Seller TIN"
+    "set_sellerTin": "Seller TIN",
+    "outbox": "Outbox",
+    "outboxHint": "Emails and Telegram messages sent by the app."
   },
   "pay": {
     "gatewayTitle": "Test payment gateway",
@@ -1016,5 +1020,20 @@
     "qrHint": "Scan to verify the receipt",
     "back": "To invoice",
     "print": "Print"
+  },
+  "outbox": {
+    "channel": "Channel",
+    "all": "All",
+    "email": "Email",
+    "telegram": "Telegram",
+    "sent": "Sent",
+    "emulated": "Emulated",
+    "failed": "Failed",
+    "noSubject": "No subject",
+    "empty": "No messages yet",
+    "preview": "Email preview",
+    "emulationTitle": "Email is in emulation mode",
+    "emulationText": "SMTP_URL is not set: emails are not delivered and are stored only here. Each user sees their own emails in settings.",
+    "smtpText": "Emails are sent through SMTP; a copy of each is kept here."
   }
 }

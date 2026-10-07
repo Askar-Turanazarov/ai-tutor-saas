@@ -15,6 +15,7 @@ import { logout } from "@/app/actions/auth";
 import { LEVELS, FREE_LEVELS, type Level } from "@/lib/levels";
 import { cn } from "@/lib/cn";
 import { tierLabel } from "@/lib/billing/catalog";
+import { MessageList, type OutboxItem } from "@/components/messaging/MessageList";
 import { Avatar } from "./AppShell";
 
 function Section({ title, children, delay = 0 }: { title: string; children: React.ReactNode; delay?: number }) {
@@ -31,7 +32,7 @@ function Section({ title, children, delay = 0 }: { title: string; children: Reac
   );
 }
 
-export function SettingsView({ name, email, level, pro, plan }: { name: string; email: string; level: string; pro: boolean; plan: string }) {
+export function SettingsView({ name, email, level, pro, plan, mail }: { name: string; email: string; level: string; pro: boolean; plan: string; mail: OutboxItem[] }) {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
   const tl = useTranslations("levels");
@@ -151,7 +152,20 @@ export function SettingsView({ name, email, level, pro, plan }: { name: string; 
         </div>
       </Section>
 
-      <Section title={t("danger")} delay={0.15}>
+      {!email.endsWith("@guest.local") && (
+        <Reveal delay={0.15}>
+          <section>
+            <h2 className="mb-1 flex items-center gap-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-label-3">
+              <StarMark className="text-gold" />
+              {t("mail")}
+            </h2>
+            <p className="mb-2 px-1 text-[13px] text-label-2">{t("mailHint")}</p>
+            <MessageList items={mail} />
+          </section>
+        </Reveal>
+      )}
+
+      <Section title={t("danger")} delay={0.2}>
         <form action={logout}>
           <Button type="submit" variant="danger" icon={LogOut} iconAnim="nudge">
             {tc("logout")}

@@ -55,6 +55,7 @@ model User {
   achievements     UserAchievement[]
   quests           DailyQuest[]
   notifications    Notification[]
+  outbox           OutboxMessage[]
 }
 
 model Conversation {
@@ -331,6 +332,24 @@ model Notification {
   createdAt   DateTime  @default(now())
 
   @@index([userId, readAt])
+}
+
+/// Every email and Telegram message the app sends. Without SMTP_URL / TELEGRAM_BOT_TOKEN nothing leaves
+/// the app (status "emulated") and this log is the only copy: admins see all, users see their own.
+model OutboxMessage {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   String // email | telegram
+  to        String
+  subject   String?
+  body      String // email: HTML; telegram: text
+  status    String // sent | emulated | failed
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 /// A lexical chunk: the unit of vocabulary (collocation, phrasal verb, idiom, fixed phrase).

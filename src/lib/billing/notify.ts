@@ -1,7 +1,7 @@
 import "server-only";
 import { createTranslator } from "next-intl";
 import { db } from "../db";
-import { sendMail } from "./mail";
+import { sendMail } from "../messaging/mail";
 import { bodyKey, notifyValues, type NotifyParams, type NotifyType } from "./notify-format";
 
 async function messagesFor(locale: string) {
@@ -31,7 +31,7 @@ export async function notify(userId: string, type: NotifyType, params: NotifyPar
 <h2 style="margin:0 0 12px">${esc(title)}</h2><p>${esc(hello)}</p><p style="line-height:1.5">${esc(body)}</p>
 <p><a href="${link}" style="display:inline-block;background:#2f5bd3;color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none">${esc(t("email.cta"))}</a></p>
 <p style="color:#86868b;font-size:12px">${esc(t("email.footer"))}</p></div>`;
-    await sendMail(user.email, `Ustoz AI · ${title}`, text, html);
+    await sendMail({ to: user.email, subject: `Ustoz AI · ${title}`, text, html, userId });
     await db.notification.update({ where: { id: n.id }, data: { emailSentAt: new Date() } });
   } catch (e) {
     console.error("[notify]", type, (e as Error).message);

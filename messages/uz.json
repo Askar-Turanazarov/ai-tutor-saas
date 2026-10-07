@@ -309,7 +309,9 @@
     "guestTitle": "Siz mehmon sifatida oʻqiyapsiz",
     "guestText": "Natijalaringizni saqlash va istalgan qurilmadan kirish uchun hisob yarating.",
     "guestCta": "Natijani saqlash",
-    "subtitle": "Profil, koʻrinish va tarif."
+    "subtitle": "Profil, koʻrinish va tarif.",
+    "mail": "Ustoz xatlari (demo)",
+    "mailHint": "Oʻquv versiya: pochtangizga yuborilgan xatlar shu yerda koʻrinadi, jumladan pochtani tasdiqlash va parolni tiklash havolalari."
   },
   "admin": {
     "title": "Admin",
@@ -431,7 +433,9 @@
     "set_mxik": "MXIK",
     "set_packageCode": "Qadoq kodi",
     "set_sellerName": "Sotuvchi",
-    "set_sellerTin": "Sotuvchi STIRi"
+    "set_sellerTin": "Sotuvchi STIRi",
+    "outbox": "Chiquvchi",
+    "outboxHint": "Ilova yuborgan xatlar va Telegram xabarlari."
   },
   "pay": {
     "gatewayTitle": "Test toʻlov shlyuzi",
@@ -1016,5 +1020,20 @@
     "qrHint": "Chekni tekshirish uchun skanerlang",
     "back": "Hisobga",
     "print": "Chop etish"
+  },
+  "outbox": {
+    "channel": "Kanal",
+    "all": "Barchasi",
+    "email": "Pochta",
+    "telegram": "Telegram",
+    "sent": "Yuborildi",
+    "emulated": "Emulyatsiya",
+    "failed": "Xato",
+    "noSubject": "Mavzusiz",
+    "empty": "Hozircha xabarlar yoʻq",
+    "preview": "Xatni koʻrish",
+    "emulationTitle": "Pochta emulyatsiya rejimida",
+    "emulationText": "SMTP_URL berilmagan: xatlar hech qayerga yuborilmaydi va faqat shu yerda saqlanadi. Har bir foydalanuvchi oʻz xatlarini sozlamalarda koʻradi.",
+    "smtpText": "Xatlar SMTP orqali yuboriladi, har birining nusxasi shu yerda saqlanadi."
   }
 }

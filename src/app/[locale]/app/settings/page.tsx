@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isGuest } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { can } from "@/lib/plans";
 import { SettingsView } from "@/components/app/SettingsView";
 
@@ -14,5 +15,16 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   setRequestLocale(locale);
   const user = await getCurrentUser();
   if (!user) return redirect({ href: "/login", locale });
-  return <SettingsView name={user.name} email={user.email} level={user.level} pro={can(user, "allLevels")} plan={user.plan} />;
+  // Demo inbox: the emails sent to this user (guests get none).
+  const mail = isGuest(user) ? [] : await db.outboxMessage.findMany({ where: { userId: user.id, channel: "email" }, orderBy: { createdAt: "desc" }, take: 20 });
+  return (
+    <SettingsView
+      name={user.name}
+      email={user.email}
+      level={user.level}
+      pro={can(user, "allLevels")}
+      plan={user.plan}
+      mail={mail.map((m) => ({ id: m.id, channel: m.channel, to: m.to, subject: m.subject, body: m.body, status: m.status, error: m.error, at: m.createdAt.toISOString() }))}
+    />
+  );
 }
