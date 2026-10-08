@@ -138,12 +138,12 @@ The tests cover learning, exercises, XP and leagues, prices and payments, the wh
 
 ### Deploying to Vercel + Neon
 
-Locally the app keeps using SQLite. For Vercel, `npm run db:pg:schema` generates the Postgres schema `prisma/postgres/schema.prisma` from `prisma/schema.prisma`, and `prisma/postgres/migrations` holds its migrations. CI fails if the generated schema is out of date.
+Locally the app keeps using SQLite. For Vercel, `npm run db:pg:schema` generates the Postgres schema `prisma/postgres/schema.prisma` from `prisma/schema.prisma`, and `prisma/postgres/migrations` holds its migrations. The variable names match Vercel's Neon integration. CI fails if the generated schema is out of date.
 
-1. Create a project at [neon.tech](https://neon.tech) and copy two connection strings: the **pooled** one (host with `-pooler`) and the **direct** one.
-2. Put them into `.env.neon` as `DATABASE_URL` (pooled) and `DIRECT_URL` (direct), then run `npm run db:pg:seed`: it applies the migrations and fills the database with the demo data. The file is ignored by git.
-3. Import the repository into [Vercel](https://vercel.com). The `vercel-build` script applies new migrations and builds the app.
-4. Set the environment variables: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `APP_URL` (the production URL), `CRON_SECRET`, plus AI, Stripe, Click, SMTP and Telegram keys as needed (see `.env.example`).
+1. Import the repository into [Vercel](https://vercel.com) and add the environment variables: `AUTH_SECRET`, `APP_URL` (the production URL), `CRON_SECRET`, plus AI, Stripe, Click, SMTP and Telegram keys as needed (see `.env.example`). The first build fails without a database — that's expected.
+2. In the project, open **Storage → Create Database → Neon** and connect it to the project. Vercel adds `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) on its own. Then **Redeploy**: the `vercel-build` script applies the migrations and builds the app.
+3. Fill the database with the demo data once: copy `DATABASE_URL` and `DATABASE_URL_UNPOOLED` from **Storage → <database> → .env.local** into `.env.neon` (ignored by git) and run `npm run db:pg:seed`.
+4. Check that **Settings → Cron Jobs** lists `/api/cron/billing`.
 5. After deploying: add the Stripe webhook `https://<domain>/api/payments/stripe/webhook`, run `npm run tg:setup` with the production `APP_URL`, and enter the Click URLs in the merchant cabinet.
 
 If the pooled connection fails with "prepared statement … already exists", add `&pgbouncer=true` to `DATABASE_URL`. To change the schema later: edit `prisma/schema.prisma` → `npm run db:push` (local) → `npm run db:pg:diff <name>` → review the SQL and commit; Vercel applies it on the next deploy.
@@ -302,12 +302,12 @@ Testlar oʻqish, mashqlar, XP va ligalar, narxlar va toʻlovlar, kunma-kun butun
 
 ### Vercel + Neon ga deploy
 
-Lokal muhitda ilova SQLite bilan ishlashda davom etadi. Vercel uchun `npm run db:pg:schema` `prisma/schema.prisma` dan Postgres sxemasini (`prisma/postgres/schema.prisma`) yaratadi, uning migratsiyalari `prisma/postgres/migrations` da. Yaratilgan sxema eskirgan boʻlsa, CI xato beradi.
+Lokal muhitda ilova SQLite bilan ishlashda davom etadi. Vercel uchun `npm run db:pg:schema` `prisma/schema.prisma` dan Postgres sxemasini (`prisma/postgres/schema.prisma`) yaratadi, uning migratsiyalari `prisma/postgres/migrations` da. Oʻzgaruvchilar nomlari Vercelʼning Neon integratsiyasiga mos. Yaratilgan sxema eskirgan boʻlsa, CI xato beradi.
 
-1. [neon.tech](https://neon.tech) da loyiha yarating va ikki ulanish satrini oling: **pooled** (hostida `-pooler` bor) va **direct**.
-2. Ularni `.env.neon` ga `DATABASE_URL` (pooled) va `DIRECT_URL` (direct) sifatida yozing, soʻng `npm run db:pg:seed` ni ishga tushiring: u migratsiyalarni qoʻllaydi va bazani demo maʼlumotlar bilan toʻldiradi. Fayl gitga tushmaydi.
-3. Repozitoriyni [Vercel](https://vercel.com) ga import qiling. `vercel-build` skripti yangi migratsiyalarni qoʻllaydi va ilovani yigʻadi.
-4. Muhit oʻzgaruvchilari: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `APP_URL` (prod manzil), `CRON_SECRET`, kerak boʻlsa AI, Stripe, Click, SMTP va Telegram kalitlari (`.env.example` ga qarang).
+1. Repozitoriyni [Vercel](https://vercel.com) ga import qiling va muhit oʻzgaruvchilarini kiriting: `AUTH_SECRET`, `APP_URL` (prod manzil), `CRON_SECRET`, kerak boʻlsa AI, Stripe, Click, SMTP va Telegram kalitlari (`.env.example` ga qarang). Bazasiz birinchi build xato bilan tugaydi — bu kutilgan holat.
+2. Loyihada **Storage → Create Database → Neon** ni oching va uni loyihaga ulang. Vercel `DATABASE_URL` (pooled) va `DATABASE_URL_UNPOOLED` (direct) ni oʻzi qoʻshadi. Soʻng **Redeploy**: `vercel-build` skripti migratsiyalarni qoʻllaydi va ilovani yigʻadi.
+3. Bazani bir marta demo maʼlumotlar bilan toʻldiring: **Storage → <baza> → .env.local** dan `DATABASE_URL` va `DATABASE_URL_UNPOOLED` ni `.env.neon` ga (gitga tushmaydi) koʻchiring va `npm run db:pg:seed` ni ishga tushiring.
+4. **Settings → Cron Jobs** da `/api/cron/billing` borligini tekshiring.
 5. Deploydan keyin: Stripe webhookini `https://<domen>/api/payments/stripe/webhook` ga qoʻshing, prod `APP_URL` bilan `npm run tg:setup` ni ishga tushiring va Click URL manzillarini merchant kabinetiga kiriting.
 
 Agar pooled ulanish “prepared statement … already exists” xatosini bersa, `DATABASE_URL` oxiriga `&pgbouncer=true` qoʻshing. Keyinchalik sxemani oʻzgartirish: `prisma/schema.prisma` ni tahrirlang → `npm run db:push` (lokal) → `npm run db:pg:diff <nom>` → SQLni tekshirib, commit qiling; Vercel uni keyingi deployda qoʻllaydi.
@@ -466,12 +466,12 @@ npx tsc --noEmit && npm run lint
 
 ### Деплой на Vercel + Neon
 
-Локально приложение работает на SQLite, как и раньше. Для Vercel `npm run db:pg:schema` генерирует из `prisma/schema.prisma` схему Postgres `prisma/postgres/schema.prisma`, а её миграции лежат в `prisma/postgres/migrations`. Если сгенерированная схема устарела, CI падает.
+Локально приложение работает на SQLite, как и раньше. Для Vercel `npm run db:pg:schema` генерирует из `prisma/schema.prisma` схему Postgres `prisma/postgres/schema.prisma`, а её миграции лежат в `prisma/postgres/migrations`. Имена переменных совпадают с интеграцией Neon в Vercel. Если сгенерированная схема устарела, CI падает.
 
-1. Создайте проект на [neon.tech](https://neon.tech) и возьмите две строки подключения: **pooled** (в хосте есть `-pooler`) и **direct**.
-2. Запишите их в `.env.neon` как `DATABASE_URL` (pooled) и `DIRECT_URL` (direct) и выполните `npm run db:pg:seed`: он применит миграции и заполнит базу демо-данными. Файл не попадает в git.
-3. Импортируйте репозиторий в [Vercel](https://vercel.com). Скрипт `vercel-build` применяет новые миграции и собирает приложение.
-4. Переменные окружения: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `APP_URL` (адрес прода), `CRON_SECRET`, а также по необходимости ключи AI, Stripe, Click, SMTP и Telegram (см. `.env.example`).
+1. Импортируйте репозиторий в [Vercel](https://vercel.com) и задайте переменные окружения: `AUTH_SECRET`, `APP_URL` (адрес прода), `CRON_SECRET`, а также по необходимости ключи AI, Stripe, Click, SMTP и Telegram (см. `.env.example`). Первая сборка без базы упадёт — это ожидаемо.
+2. В проекте откройте **Storage → Create Database → Neon** и подключите базу к проекту. Vercel сам добавит `DATABASE_URL` (pooled) и `DATABASE_URL_UNPOOLED` (direct). Затем **Redeploy**: скрипт `vercel-build` применит миграции и соберёт приложение.
+3. Один раз заполните базу демо-данными: скопируйте `DATABASE_URL` и `DATABASE_URL_UNPOOLED` из **Storage → <база> → .env.local** в `.env.neon` (не попадает в git) и выполните `npm run db:pg:seed`.
+4. Проверьте, что в **Settings → Cron Jobs** есть `/api/cron/billing`.
 5. После деплоя: добавьте вебхук Stripe `https://<домен>/api/payments/stripe/webhook`, выполните `npm run tg:setup` с прод-`APP_URL` и укажите адреса Click в кабинете мерчанта.
 
 Если pooled-подключение падает с ошибкой «prepared statement … already exists», добавьте в конец `DATABASE_URL` `&pgbouncer=true`. Как менять схему потом: правка `prisma/schema.prisma` → `npm run db:push` (локально) → `npm run db:pg:diff <имя>` → проверить SQL и закоммитить; Vercel применит миграцию при следующем деплое.

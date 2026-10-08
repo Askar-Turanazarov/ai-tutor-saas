@@ -1,5 +1,5 @@
 // After changing prisma/schema.prisma: writes prisma/postgres/migrations/NNNN_<name>/migration.sql with the SQL
-// that brings the Neon database (DIRECT_URL in .env.neon) to the new schema. Review it, commit it, deploy.
+// that brings the Neon database (DATABASE_URL_UNPOOLED in .env.neon) to the new schema. Review it, commit it, deploy.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { PG_SCHEMA, neonEnv, run } from "./pg-env.mjs";
@@ -14,7 +14,7 @@ run("node", ["scripts/pg-schema.mjs"]);
 
 const dir = "prisma/postgres/migrations";
 const next = (existsSync(dir) ? readdirSync(dir).filter((d) => /^\d{4}_/.test(d)).length : 0) + 1;
-const r = spawnSync("npx", ["prisma", "migrate", "diff", "--from-url", env.DIRECT_URL, "--to-schema-datamodel", PG_SCHEMA, "--script"], {
+const r = spawnSync("npx", ["prisma", "migrate", "diff", "--from-url", env.DATABASE_URL_UNPOOLED, "--to-schema-datamodel", PG_SCHEMA, "--script"], {
   env,
   encoding: "utf8",
   shell: process.platform === "win32",

@@ -1,5 +1,5 @@
 // Environment for commands against Neon: .env (seed accounts, secrets) overlaid with .env.neon
-// (DATABASE_URL = pooled, DIRECT_URL = direct connection string). Both files are gitignored.
+// (DATABASE_URL = pooled, DATABASE_URL_UNPOOLED = direct connection string). Both files are gitignored.
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
@@ -16,8 +16,8 @@ const read = (file) =>
 
 export function neonEnv() {
   const neon = read(".env.neon");
-  if (!neon?.DATABASE_URL?.startsWith("postgres") || !neon.DIRECT_URL?.startsWith("postgres")) {
-    console.error("Create .env.neon with DATABASE_URL (pooled) and DIRECT_URL (direct) from the Neon console — see tasks/todo.md or README.");
+  if (!neon?.DATABASE_URL?.startsWith("postgres") || !neon.DATABASE_URL_UNPOOLED?.startsWith("postgres")) {
+    console.error("Create .env.neon with DATABASE_URL (pooled) and DATABASE_URL_UNPOOLED (direct) from the Neon console — see tasks/todo.md or README.");
     process.exit(1);
   }
   return { ...process.env, ...read(".env"), ...neon };
