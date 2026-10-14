@@ -593,6 +593,8 @@
     "payAmount": "Pay {amount}",
     "checkoutError": "Couldn't start the payment. Try again or choose another method.",
     "guestError": "Create an account first to subscribe.",
+    "guestCta": "Create an account — your progress stays",
+    "unverifiedCta": "Open the emails in Settings",
     "testMode": "Study project: no real money is charged",
     "unverifiedError": "To pay for a subscription, confirm your email first: the link is in the message we sent."
   },

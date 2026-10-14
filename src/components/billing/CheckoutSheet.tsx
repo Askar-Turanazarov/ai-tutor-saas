@@ -3,9 +3,9 @@
 import { useEffect, useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { CreditCard, Globe, Lock, Smartphone, Zap, type LucideIcon } from "lucide-react";
+import { CreditCard, Globe, Lock, Mail, Smartphone, UserPlus, Zap, type LucideIcon } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { TermsNote } from "@/components/legal/TermsNote";
 import { Sheet } from "@/components/ui/primitives";
 import { payWithSavedCard, startCheckout } from "@/app/actions/billing";
@@ -25,6 +25,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<string | null>(null);
   const [save, setSave] = useState(true);
 
   const enabled = new Set(data.providers);
@@ -50,6 +51,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
     if (tier) {
       setChoice(methods[0]?.key);
       setError(null);
+      setErrorKind(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tier]);
@@ -66,6 +68,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
       if (method.cardId) {
         const res = await payWithSavedCard({ tier, period, methodId: method.cardId });
         if ("invoiceId" in res) return router.push(`/app/billing/${res.invoiceId}`);
+        setErrorKind(res.error ?? null);
         return setError(res.error === "unverified" ? t("unverifiedError") : t("checkoutError"));
       }
       const res = await startCheckout({ tier, period, provider: method.provider, saveCard: SAVES_CARD.has(method.key) && save });
@@ -74,6 +77,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
         window.location.assign(res.redirectUrl);
         return;
       }
+      setErrorKind(res.error ?? null);
       setError(res.error === "guest" ? t("guestError") : res.error === "unverified" ? t("unverifiedError") : t("checkoutError"));
     });
 
@@ -149,6 +153,16 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
       </Button>
       <TermsNote kind="pay" className="mt-3" />
       {error && <p className="mt-3 text-center text-[13px] text-danger">{error}</p>}
+      {errorKind === "guest" && (
+        <ButtonLink href="/register" variant="secondary" icon={UserPlus} className="mt-3 w-full">
+          {t("guestCta")}
+        </ButtonLink>
+      )}
+      {errorKind === "unverified" && (
+        <ButtonLink href="/app/settings" variant="secondary" icon={Mail} className="mt-3 w-full">
+          {t("unverifiedCta")}
+        </ButtonLink>
+      )}
       <p className="mt-3 text-center text-[12px] text-label-3">{t("testMode")}</p>
     </Sheet>
   );

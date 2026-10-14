@@ -46,9 +46,14 @@ function Header({ loggedIn }: { loggedIn: boolean }) {
         <>
           <PrefsMenu />
           {!loggedIn && (
-            <ButtonLink href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
-              {t("common.login")}
-            </ButtonLink>
+            <>
+              <ButtonLink href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
+                {t("common.login")}
+              </ButtonLink>
+              <ButtonLink href="/register" variant="secondary" size="sm">
+                {t("common.register")}
+              </ButtonLink>
+            </>
           )}
           <ButtonLink href="/app" size="sm">
             {loggedIn ? t("common.continue") : t("common.start")}

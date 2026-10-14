@@ -30,6 +30,8 @@ export async function completeOnboarding(input: { goal: string; answers: (number
   const measured = levelFromScore(correct);
   const level: Level = canAccessLevel(user, measured) ? measured : "A2";
   await db.user.update({ where: { id: user.id }, data: { goal: input.goal, level, onboarded: true } });
+  // The client router may still hold /app's earlier redirect to /onboarding; drop it.
+  revalidatePath("/", "layout");
   return { measured, level };
 }
 

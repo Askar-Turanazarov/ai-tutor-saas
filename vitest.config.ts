@@ -33,6 +33,8 @@ export default defineConfig({
       STRIPE_SECRET_KEY: "sk_test_dummy",
       STRIPE_WEBHOOK_SECRET: "whsec_test",
       SMTP_URL: "",
+      TELEGRAM_BOT_TOKEN: "",
+      TELEGRAM_WEBHOOK_SECRET: "",
       FISCAL_PROVIDER: "mock-ofd",
     },
   },

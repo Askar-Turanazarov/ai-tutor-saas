@@ -593,6 +593,8 @@
     "payAmount": "{amount} toʻlash",
     "checkoutError": "Toʻlovni boshlab boʻlmadi. Qayta urinib koʻring yoki boshqa usulni tanlang.",
     "guestError": "Obuna boʻlish uchun avval akkaunt yarating.",
+    "guestCta": "Akkaunt yaratish — natijalar saqlanadi",
+    "unverifiedCta": "Sozlamalardagi xatlarni ochish",
     "testMode": "Oʻquv loyiha: haqiqiy pul yechilmaydi",
     "unverifiedError": "Obuna uchun toʻlash uchun avval pochtani tasdiqlang — havola xatda."
   },
