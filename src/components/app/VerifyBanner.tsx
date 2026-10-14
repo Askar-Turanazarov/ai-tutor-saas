@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Check, MailWarning, Send } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Check, Inbox, MailWarning, Send } from "lucide-react";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { resendVerification } from "@/app/actions/account";
 
 /** Shown in the app until the email address is confirmed; paying is blocked until then. */
@@ -30,6 +30,9 @@ export function VerifyBanner({ email }: { email: string }) {
         {t("bannerText", { email })}
         {note && <span className="mt-0.5 block text-[13px] text-label-2">{t(note === "sent" ? "resent" : "wait")}</span>}
       </p>
+      <ButtonLink href="/app/settings#mail" size="sm" icon={Inbox} className="shrink-0">
+        {t("openMail")}
+      </ButtonLink>
       <Button size="sm" variant="secondary" loading={pending} icon={note === "sent" ? Check : Send} onClick={resend} className="shrink-0">
         {t("resend")}
       </Button>

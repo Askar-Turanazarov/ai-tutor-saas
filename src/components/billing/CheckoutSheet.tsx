@@ -159,7 +159,7 @@ export function CheckoutSheet({ data, tier, period, onClose }: { data: PlansData
         </ButtonLink>
       )}
       {errorKind === "unverified" && (
-        <ButtonLink href="/app/settings" variant="secondary" icon={Mail} className="mt-3 w-full">
+        <ButtonLink href="/app/settings#mail" variant="secondary" icon={Mail} className="mt-3 w-full">
           {t("unverifiedCta")}
         </ButtonLink>
       )}

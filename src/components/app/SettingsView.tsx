@@ -221,7 +221,7 @@ export function SettingsView({
 
       {!guest && (
         <Reveal delay={0.15}>
-          <section>
+          <section id="mail" className="scroll-mt-24">
             <h2 className="mb-1 flex items-center gap-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-label-3">
               <StarMark className="text-gold" />
               {t("mail")}

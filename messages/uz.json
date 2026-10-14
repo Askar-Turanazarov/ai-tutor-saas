@@ -1081,6 +1081,7 @@
     "verifyBadText": "Havola yaroqsiz, allaqachon ishlatilgan yoki muddati oʻtgan. Xatni ilovadan qayta yuboring.",
     "bannerText": "{email} pochtasini tasdiqlang — havola xatda. Tasdiqlanmaguncha toʻlov mavjud emas.",
     "resend": "Qayta yuborish",
+    "openMail": "Xatni ochish",
     "resent": "Xat yuborildi, pochtangizni tekshiring.",
     "wait": "Xat allaqachon yuborilgan — bir daqiqadan soʻng qayta yuborish mumkin.",
     "mail": {

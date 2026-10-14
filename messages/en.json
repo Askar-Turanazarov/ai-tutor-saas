@@ -1081,6 +1081,7 @@
     "verifyBadText": "The link is invalid, already used or expired. Send the email again from the app.",
     "bannerText": "Confirm your email {email}: the link is in the message we sent. Payments are unavailable until then.",
     "resend": "Send again",
+    "openMail": "Open the email",
     "resent": "Email sent, check your inbox.",
     "wait": "Already sent: you can resend in a minute.",
     "mail": {
